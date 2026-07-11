@@ -62,6 +62,9 @@ models/
 # Exceção: gráficos de relatório são evidências/deliverables (versionados)
 !reports/figures/*.png
 
+# Keypoints JSON do OpenPose (centenas de arquivos por vídeo) — não versionar
+reports/json/
+
 # ===== Binários externos (OpenPose, etc.) — baixados localmente =====
 tools/
 

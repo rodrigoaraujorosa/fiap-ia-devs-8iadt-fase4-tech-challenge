@@ -52,6 +52,14 @@ def _contiguous_runs(mask: pd.Series) -> list[tuple[int, int]]:
 def plot_angles(res: pd.DataFrame, out_path: str, title: str = "") -> str:
     """Salva o gráfico de ângulos com os instantes de desvio destacados. Retorna o path."""
     cols = [c for c in _PLOT_ANGLES if c in res.columns]
+    # garante que a articulação mais sinalizada (citada na Análise) apareça no gráfico,
+    # evitando que a análise mencione um ângulo que não está plotado
+    anoms = res[res["is_anomaly"] == 1]
+    if not anoms.empty:
+        top = anoms["worst_angle"].value_counts().index[0]
+        if top in res.columns and top not in cols:
+            cols.append(top)
+
     fig, ax = plt.subplots(figsize=(13, 5))
     for col in cols:
         ax.plot(res["time_s"], res[col], label=ANGLE_PT.get(col, col),
