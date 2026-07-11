@@ -13,12 +13,12 @@ seaborn>=0.13
 tqdm>=4.66
 python-dotenv>=1.0
 
-# ----- Entrega 1: Análise de Vídeo (OpenPose / YOLOv8) -----
-# OpenPose puro é difícil de compilar; usamos MediaPipe Pose como
-# estimador de pose prático e equivalente para análise postural.
-ultralytics>=8.1          # YOLOv8
-opencv-python>=4.9
-mediapipe>=0.10
+# ----- Entrega 1: Análise de Vídeo (OpenPose) -----
+# O OpenPose é um binário EXTERNO (não instala via pip) — ver docs/openpose_setup.md.
+# Nosso código só processa os keypoints JSON que ele gera; as libs abaixo bastam.
+# (numpy/pandas/matplotlib já estão na seção base.)
+opencv-python>=4.9        # metadados do vídeo (fps) e overlays opcionais
+tabulate>=0.9            # tabelas Markdown no relatório (DataFrame.to_markdown)
 
 # ----- Entrega 2: Análise de Áudio (Azure Cognitive Services) -----
 azure-cognitiveservices-speech>=1.36   # Speech-to-Text
@@ -32,3 +32,6 @@ soundfile>=0.12
 # ----- Notebooks / exploração -----
 jupyter>=1.0
 ipykernel>=6.29
+
+# ----- Testes -----
+pytest>=8.0

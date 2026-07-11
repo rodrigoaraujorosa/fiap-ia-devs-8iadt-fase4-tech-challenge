@@ -1,15 +1,48 @@
-# 🎥 Entrega 1 — Análise de Vídeo
+# 🎥 Entrega 1 — Análise de Vídeo (OpenPose)
 
-Processar vídeos clínicos e detectar movimentos/eventos fora do padrão, gerando
-relatórios automáticos de desvios.
+Processa vídeos clínicos (fisioterapia — dataset **KIMORE**), estima a pose com
+**OpenPose** e detecta **desvios posturais fora do padrão**, gerando um relatório
+automático.
 
-## Caminhos
-- **Postura (fisioterapia):** OpenPose / MediaPipe Pose sobre o dataset **KIMORE**
-  (clinical scores servem de ground-truth para validar desvios posturais).
-- **Objetos (cirurgia):** **YOLOv8** para detecção de instrumentos/áreas críticas sobre
-  **Cholec80 + Cholec80-Boxes** (15.691 frames com bounding boxes de 7 instrumentos).
+## Arquitetura
 
-> ⚠️ Decisão pendente: seguir OpenPose/KIMORE (postura) **ou** YOLOv8/Cholec80 (instrumentos).
-> Datasets diferentes — ver `CLAUDE.md`.
+O OpenPose (binário externo) só extrai os keypoints; **todo o resto é Python puro**
+processando os JSON — então roda igual na máquina local ou no Google Colab.
 
-Dados em `data/video/`. Saídas (frames anotados, relatórios) em `reports/`.
+```
+vídeo .mp4 ──[OpenPose]──► JSON por frame ──► [nosso pipeline] ──► relatório + gráfico
+```
+
+| Módulo | Papel |
+|--------|-------|
+| `run_openpose.py` | invoca o `OpenPoseDemo` sobre um vídeo → pasta de JSONs |
+| `keypoints.py` | carrega os JSON BODY_25 → DataFrame (frame × junta x,y,conf); escolhe a pessoa principal e descarta juntas de baixa confiança |
+| `posture.py` | ângulos articulares por frame (tronco, quadril, joelho, ombro, cotovelo) |
+| `anomaly.py` | desvios = z-score robusto por ângulo **∪** IsolationForest multivariado |
+| `report.py` | relatório Markdown + gráfico dos ângulos com anomalias marcadas |
+| `cli.py` | pipeline fim-a-fim |
+
+## Uso
+
+```bash
+# A partir de JSONs já extraídos (ex.: gerados no Colab)
+python -m src.video.cli --json-dir data/video/kimore_ex1_json --fps 30
+
+# A partir de um vídeo (roda o OpenPose antes — precisa do binário local)
+python -m src.video.cli --video data/video/kimore_ex1.mp4 \
+    --openpose-root tools/openpose --fps 30
+```
+
+Saídas em `reports/` (relatório `.md`) e `reports/figures/` (gráfico `.png`).
+
+## OpenPose
+
+- Setup do binário: [`docs/openpose_setup.md`](../../docs/openpose_setup.md).
+- Sem GPU boa? Use o notebook [`notebooks/openpose_kimore_colab.ipynb`](../../notebooks/openpose_kimore_colab.ipynb)
+  (GPU gratuita do Colab só para extrair os JSONs; a análise roda depois na sua máquina).
+
+## Testes
+
+```bash
+pytest tests/test_video.py -v   # usa keypoints sintéticos, não precisa de OpenPose/KIMORE
+```
