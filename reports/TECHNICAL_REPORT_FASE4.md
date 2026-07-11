@@ -234,9 +234,31 @@ REHAB24-6. Para cada repetição, calcula-se a taxa de frames anômalos; a expec
 **repetições incorretas concentrem mais desvios que as corretas**. O parâmetro `frame_step`
 ajusta o mapeamento quando o vídeo foi subamostrado (índice `i` ↔ frame original `N*i`).
 
-**Resultados quantitativos (PM_008):** [Em desenvolvimento — a preencher após a execução do
-OpenPose sobre o PM_008; tabela de taxa de anomalia por repetição e média por classe
-correto/incorreto.]
+**Resultados quantitativos (PM_008).** O OpenPose foi executado sobre o vídeo subamostrado
+(1.731 frames, 10 fps efetivos; ~35 min na GPU local). A cobertura de detecção das juntas
+principais (quadril, joelhos) foi de 100%. O detector sinalizou 576 dos 1.731 frames (33,3%)
+como desvio. Cruzando com os rótulos `correctness` das 27 repetições (21 corretas, 6
+incorretas):
+
+| Classe da repetição | Taxa média de frames anômalos |
+|:--|:--:|
+| Correta (21 repetições) | 0,430 |
+| Incorreta (6 repetições) | 0,614 |
+
+As repetições **incorretas concentram ~43% mais frames de desvio** que as corretas —
+confirmando que o detector separa execução boa de execução ruim. Os eventos de maior
+severidade (|z| até 25,7) situam-se em t≈155–171 s, correspondendo exatamente às repetições
+23–27 (todas rotuladas como incorretas), com o **joelho direito** (`r_knee`) como ângulo
+predominante. A inclinação do tronco atinge 56° nessas repetições, indicando o padrão
+clássico de má execução do agachamento (tronco projetado para a frente com flexão de joelho
+excessiva).
+
+> **Observação de método.** A taxa de anomalia é alta mesmo nas repetições corretas (0,430)
+> porque o z-score robusto sinaliza os extremos do agachamento (fase de descida) como desvio
+> em relação à postura ereta mediana do vídeo. Como esse efeito incide igualmente sobre as
+> duas classes, o sinal discriminante é a **diferença relativa** entre corretas e incorretas,
+> que é consistente. A repetição 17 (incorreta) teve taxa 0,42, próxima da média das corretas
+> — nem toda execução incorreta se separa com a mesma força.
 
 ### 3.9 Relatório e Vídeo Anotado (`report.py`, `overlay.py`)
 
@@ -522,10 +544,12 @@ pytest -q
 
 **[Em desenvolvimento — a consolidar ao final das três entregas.]**
 
-Até o momento, a Entrega 1 (Análise de Vídeo) está implementada e validada tecnicamente: um
-pipeline OpenPose → ângulos posturais → detecção de desvios → relatório e vídeo anotado,
-executado com sucesso sobre dados reais e sobre o dataset REHAB24-6, com validação contra
-rótulos de execução correta/incorreta. A Entrega 3 (Detecção de Anomalias) possui baseline
+Até o momento, a Entrega 1 (Análise de Vídeo) está implementada e validada: o pipeline
+OpenPose → ângulos posturais → detecção de desvios → relatório e vídeo anotado foi executado
+sobre o vídeo PM_008 do REHAB24-6 (agachamentos), e a validação contra os rótulos de execução
+mostrou taxa média de desvio de **0,614 nas repetições incorretas contra 0,430 nas corretas**
+— separação consistente na direção esperada, com os desvios mais severos coincidindo com as
+repetições rotuladas como incorretas. A Entrega 3 (Detecção de Anomalias) possui baseline
 funcional (IsolationForest) para sinais vitais e movimentação. A Entrega 2 (Análise de Áudio)
 e a camada de integração em nuvem estão em desenvolvimento.
 
