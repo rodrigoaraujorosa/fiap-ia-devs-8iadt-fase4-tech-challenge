@@ -14,34 +14,43 @@ OpenPose v1.7.0 — [releases da CMU](https://github.com/CMU-Perceptual-Computin
 
 Extraia em `tools/openpose/` (essa pasta é ignorada pelo git).
 
-## 2. Baixar os modelos
+## 2. Baixar o modelo BODY_25
 
-Dentro da pasta extraída:
+O script oficial é `models\getBaseModels.bat`, mas ele aponta para o servidor da CMU
+(`posefs1.perception.cs.cmu.edu`) que está **fora do ar** (confirmado — DNS não resolve
+mais). Para a análise postural só precisamos do modelo **BODY_25** (~100 MB); baixe de um
+mirror direto para a pasta certa:
 
-```bat
-cd tools\openpose\models
-getModels.bat
+```bash
+# mirror HuggingFace (commit fixado, ~100 MB) — testado e funcionando
+curl -L -o tools/openpose/models/pose/body_25/pose_iter_584000.caffemodel \
+  "https://huggingface.co/camenduru/openpose/resolve/f4a22b0e6fa2a4a2b1e2d50bd589e8bb11ebea7c/pose_iter_584000.caffemodel"
 ```
 
-> ⚠️ Os links da CMU (`posefs1.perception.cs.cmu.edu`) **caem com frequência**. Se
-> falhar, baixe o `pose_iter_584000.caffemodel` (BODY_25) de um mirror e coloque em
-> `models\pose\body_25\`.
+Os `.prototxt` já vêm no zip; só falta esse `.caffemodel`. (Face/hand são dispensáveis
+para esta entrega.) Mirror alternativo: `http://vcl.snu.ac.kr/OpenPose/models/pose/body_25/`.
 
 ## 3. Testar
 
 ```bat
 cd tools\openpose
-bin\OpenPoseDemo.exe --video examples\media\video.avi --write_json out_json --display 0 --render_pose 0
+bin\OpenPoseDemo.exe --video examples\media\video.avi --write_json out_json ^
+  --model_pose BODY_25 --net_resolution 320x176 --display 0 --render_pose 0
 ```
 
-Se gerar JSONs em `out_json\`, está funcionando.
+Se gerar JSONs em `out_json\`, está funcionando. ✅ (Testado nesta máquina: GPU MX330
+2 GB, ~1,2 s/frame com `320x176`, sem estouro de VRAM.)
 
 ## 4. GPU fraca (pouca VRAM)
 
-A resolução padrão (`656x368`) pode estourar a memória de GPUs com ~2 GB (ex.: MX330).
-Reduza com `--net_resolution 320x176` (o nosso `run_openpose.py` já usa esse valor por
-padrão). Se ainda faltar memória ou o CUDA reclamar, use o build **CPU** (lento, mas
-funciona) ou o **Colab** (`notebooks/openpose_kimore_colab.ipynb`).
+A resolução padrão (`656x368`) estoura a memória de GPUs com ~2 GB (ex.: MX330). Reduza
+com `--net_resolution 320x176` — o nosso `run_openpose.py` já usa esse valor por padrão e
+foi **confirmado funcionando** na MX330. Se ainda faltar memória ou o CUDA reclamar, use o
+build **CPU** (lento) ou o **Colab** (`notebooks/openpose_kimore_colab.ipynb`).
+
+> ⏱️ **Desempenho:** ~1,2 s/frame na MX330. Um exercício do KIMORE (~30–60 s a 30 fps =
+> 900–1800 frames) leva ~20–35 min por vídeo aqui. Para processar vários vídeos, o **Colab**
+> (GPU T4) compensa muito.
 
 ## 5. Rodar pelo nosso pipeline
 
