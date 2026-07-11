@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "Se você usar este software, por favor cite conforme os metadados abaixo."
+title: "Sistema de Monitoramento Hospitalar Multimodal — Tech Challenge Fase 4"
+abstract: >-
+  Sistema de monitoramento hospitalar multimodal (vídeo, áudio e séries temporais
+  de sinais vitais) desenvolvido no Tech Challenge Fase 4 da PosTech FIAP
+  (IA para DEVs, turma 8IADT, Grupo 30).
+type: software
+authors:
+  - given-names: "Rodrigo"
+    family-names: "de Araújo Rosa"
+  - given-names: "Elias"
+    family-names: "Maximiano da Silva"
+  - given-names: "Fábia"
+    family-names: "Gomes de Jesus"
+  - given-names: "Danilo"
+    family-names: "Pereira"
+version: "0.1.0"
+date-released: "2026-07-11"
+license: MIT
+repository-code: "https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge"
+keywords:
+  - "OpenPose"
+  - "estimação de pose"
+  - "detecção de anomalias"
+  - "monitoramento hospitalar"
+  - "Azure Cognitive Services"
+# Após arquivar o repositório no Zenodo (ver README → Créditos e Citação),
+# descomente a linha abaixo e preencha com o DOI emitido:
+# doi: "10.5281/zenodo.XXXXXXX"

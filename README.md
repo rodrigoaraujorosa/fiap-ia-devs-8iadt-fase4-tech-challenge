@@ -6,7 +6,6 @@
 ![Python](https://img.shields.io/badge/Python-3.10%20ou%20superior-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![OpenPose](https://img.shields.io/badge/OpenPose-BODY__25-00FFFF)
-[![DOI do dataset REHAB24-6](https://zenodo.org/badge/DOI/10.5281/zenodo.13305826.svg)](https://doi.org/10.5281/zenodo.13305826)
 ![Azure](https://img.shields.io/badge/Azure-Cognitive%20Services-0078D4?logo=microsoftazure&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -57,6 +56,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── pyproject.toml
 ├── .env.example              # modelo de credenciais Azure
 ├── LICENSE                   # MIT (código); datasets têm licença própria
+├── CITATION.cff              # metadados de citação (DOI a emitir no Zenodo)
 └── README.md
 ```
 
@@ -143,9 +143,26 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 
 ## 📚 Créditos e Citação
 
-O badge **DOI** no topo refere-se ao **dataset REHAB24-6** (Entrega 1) — não a um DOI deste
-repositório. O dataset é usado sob licença **CC BY-NC 4.0** (uso acadêmico, não-comercial).
-Ao usar o dataset, cite:
+### Como citar este repositório
+
+Metadados de citação em [`CITATION.cff`](CITATION.cff) (o GitHub exibe o botão
+*"Cite this repository"*).
+
+> Rosa, R. A., Silva, E. M., Jesus, F. G., & Pereira, D. (2026). *Sistema de Monitoramento
+> Hospitalar Multimodal — Tech Challenge Fase 4* (Grupo 30, 8IADT) [Software]. Zenodo.
+> DOI: `10.5281/zenodo.XXXXXXX` *(a ser emitido — ver "Emitir o DOI no Zenodo" abaixo)*.
+
+**Emitir o DOI no Zenodo** (uma vez, após publicar o repositório no GitHub):
+
+1. Publique o repositório no GitHub.
+2. Em [zenodo.org](https://zenodo.org) → *Log in with GitHub* e autorize.
+3. Em *Account → GitHub*, ative o toggle deste repositório.
+4. Crie um *Release* no GitHub (ex.: `v0.1.0`) — o Zenodo arquiva e **emite o DOI**.
+5. Copie o DOI e o badge do Zenodo; atualize o `CITATION.cff` (campo `doi`) e o topo do README.
+
+### Dataset REHAB24-6
+
+Usado na Entrega 1 sob licença **CC BY-NC 4.0** (uso acadêmico, não-comercial). Cite:
 
 > Černek, A., Sedmidubsky, J., Budikova, P., Jánošová, M., Katzer, L., & Procházka, M. (2024).
 > *REHAB24-6: A multi-modal dataset of physical rehabilitation exercises* (v1) [Data set].
