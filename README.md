@@ -3,9 +3,9 @@
 > **Tech Challenge — Fase 4** · PosTech FIAP · IA para DEVs (turma 8IADT)
 
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
-![YOLOv8](https://img.shields.io/badge/YOLOv8-vídeo-00FFFF)
+![OpenPose](https://img.shields.io/badge/OpenPose-BODY__25-00FFFF)
 ![Azure](https://img.shields.io/badge/Azure-Cognitive%20Services-0078D4?logo=microsoftazure&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -55,6 +55,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── requirements.txt
 ├── pyproject.toml
 ├── .env.example              # modelo de credenciais Azure
+├── LICENSE                   # MIT (código); datasets têm licença própria
 └── README.md
 ```
 
