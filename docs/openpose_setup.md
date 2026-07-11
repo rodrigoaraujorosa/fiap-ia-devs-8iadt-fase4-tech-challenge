@@ -46,14 +46,14 @@ Se gerar JSONs em `out_json\`, está funcionando. ✅ (Testado nesta máquina: G
 A resolução padrão (`656x368`) estoura a memória de GPUs com ~2 GB (ex.: MX330). Reduza
 com `--net_resolution 320x176` — o nosso `run_openpose.py` já usa esse valor por padrão e
 foi **confirmado funcionando** na MX330. Se ainda faltar memória ou o CUDA reclamar, use o
-build **CPU** (lento) ou o **Colab** (`notebooks/openpose_kimore_colab.ipynb`).
+build **CPU** (lento) ou o **Colab** (`notebooks/openpose_rehab24-6_colab.ipynb`).
 
-> ⏱️ **Desempenho:** ~1,2 s/frame na MX330. Um exercício do KIMORE (~30–60 s a 30 fps =
-> 900–1800 frames) leva ~20–35 min por vídeo aqui. Para processar vários vídeos, o **Colab**
-> (GPU T4) compensa muito.
+> ⏱️ **Desempenho:** ~1,2 s/frame na MX330. Um vídeo do REHAB24-6 (ex.: `PM_008`, ~5200
+> frames a 30 fps) levaria ~1h45 — por isso subamostramos (1 a cada 3 frames) para ~35 min.
+> Para processar vários vídeos, o **Colab** (GPU T4) compensa muito.
 
 ## 5. Rodar pelo nosso pipeline
 
 ```bash
-python -m src.video.cli --video data/video/kimore_ex1.mp4 --openpose-root tools/openpose
+python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 --openpose-root tools/openpose
 ```

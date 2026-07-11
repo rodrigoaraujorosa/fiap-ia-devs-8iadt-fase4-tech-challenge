@@ -4,11 +4,11 @@ Pipeline fim-a-fim da Entrega 1 (Análise de Vídeo).
 Duas formas de uso:
 
 1. A partir de um vídeo (roda o OpenPose primeiro):
-     python -m src.video.cli --video data/video/kimore_ex1.mp4 \
+     python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
          --openpose-root tools/openpose --fps 30
 
 2. A partir de uma pasta de JSONs já extraídos (ex.: gerados no Colab):
-     python -m src.video.cli --json-dir data/video/kimore_ex1_json --fps 30
+     python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 
 Gera o relatório e o gráfico em ``reports/``.
 """

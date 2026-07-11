@@ -2,8 +2,8 @@
 Cálculo de ângulos articulares a partir dos keypoints (análise postural).
 
 Converte as coordenadas 2D das juntas (BODY_25) em uma série temporal de
-ângulos clinicamente relevantes para os exercícios de reabilitação lombar do
-KIMORE (flexão de tronco, quadril, joelho, etc.). Esses ângulos são a base
+ângulos clinicamente relevantes para os exercícios de reabilitação física do
+REHAB24-6 (agachamento, lunge, abdução de braço/perna, etc.). Esses ângulos são a base
 para detectar desvios posturais.
 """
 from __future__ import annotations

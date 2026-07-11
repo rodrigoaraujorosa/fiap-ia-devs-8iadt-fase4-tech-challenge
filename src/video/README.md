@@ -1,8 +1,8 @@
 # 🎥 Entrega 1 — Análise de Vídeo (OpenPose)
 
-Processa vídeos clínicos (fisioterapia — dataset **KIMORE**), estima a pose com
-**OpenPose** e detecta **desvios posturais fora do padrão**, gerando um relatório
-automático.
+Processa vídeos clínicos de reabilitação física (dataset **REHAB24-6** — RGB, com
+rótulos de execução correta/incorreta), estima a pose com **OpenPose** e detecta
+**desvios posturais fora do padrão**, gerando um relatório automático.
 
 ## Arquitetura
 
@@ -28,7 +28,7 @@ vídeo .mp4 ──[OpenPose]──► JSON por frame ──► [nosso pipeline] 
 
 ```bash
 # A partir de JSONs já extraídos (ex.: gerados no Colab)
-python -m src.video.cli --json-dir data/video/kimore_ex1_json --fps 30
+python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 
 # A partir de um vídeo (roda o OpenPose antes — precisa do binário local)
 # --overlay também gera o vídeo anotado (esqueleto + desvios)
@@ -45,11 +45,11 @@ Saídas em `reports/` (relatório `.md`, vídeo `_overlay.mp4`) e `reports/figur
 ## OpenPose
 
 - Setup do binário: [`docs/openpose_setup.md`](../../docs/openpose_setup.md).
-- Sem GPU boa? Use o notebook [`notebooks/openpose_kimore_colab.ipynb`](../../notebooks/openpose_kimore_colab.ipynb)
+- Sem GPU boa? Use o notebook [`notebooks/openpose_rehab24-6_colab.ipynb`](../../notebooks/openpose_rehab24-6_colab.ipynb)
   (GPU gratuita do Colab só para extrair os JSONs; a análise roda depois na sua máquina).
 
 ## Testes
 
 ```bash
-pytest tests/test_video.py -v   # usa keypoints sintéticos, não precisa de OpenPose/KIMORE
+pytest tests/test_video.py -v   # usa keypoints sintéticos, não precisa de OpenPose nem vídeo real
 ```

@@ -19,7 +19,7 @@ import pandas as pd  # noqa: E402
 
 from .posture import angle_columns  # noqa: E402
 
-# Ângulos mais informativos para o gráfico dos exercícios lombares do KIMORE.
+# Ângulos mais informativos para o gráfico dos exercícios do REHAB24-6 (ex.: agachamento).
 _PLOT_ANGLES = ["trunk_inclination", "r_hip", "l_hip", "r_knee", "l_knee"]
 
 

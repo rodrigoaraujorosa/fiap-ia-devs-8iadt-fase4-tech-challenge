@@ -8,8 +8,8 @@ _(Como vídeo, áudio e séries temporais são processados e como os alertas se 
 ## 2. Modelos aplicados por tipo de dado
 
 ### 2.1 🎥 Vídeo
-- Modelo(s): _(OpenPose/MediaPipe Pose ou YOLOv8)_
-- Dataset: _(KIMORE ou Cholec80)_
+- Modelo: OpenPose (BODY_25) — estimação de pose 2D
+- Dataset: REHAB24-6 (reabilitação física, RGB + rótulos correto/incorreto)
 - Abordagem: _..._
 
 ### 2.2 🎙️ Áudio

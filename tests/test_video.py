@@ -1,5 +1,5 @@
 """
-Testes do pipeline de vídeo usando keypoints sintéticos (sem OpenPose/KIMORE).
+Testes do pipeline de vídeo usando keypoints sintéticos (sem OpenPose nem vídeo real).
 
 Gera JSONs no formato do OpenPose: um esqueleto em pé "normal" com ruído leve e,
 no meio, alguns frames com o joelho direito bruscamente flexionado (anomalia).
