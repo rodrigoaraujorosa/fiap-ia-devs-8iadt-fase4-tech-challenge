@@ -50,6 +50,38 @@ def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0
     return res
 
 
+def _downsample_video(src: str, out_dir: str, step: int) -> str:
+    """
+    Escreve um vídeo com 1 a cada ``step`` frames (subamostragem para acelerar o
+    OpenPose em GPU fraca). Retorna o caminho do vídeo reduzido.
+    """
+    import cv2
+
+    os.makedirs(out_dir, exist_ok=True)
+    cap = cv2.VideoCapture(src)
+    if not cap.isOpened():
+        raise FileNotFoundError(f"Não foi possível abrir o vídeo: {src}")
+    src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    name = os.path.splitext(os.path.basename(src))[0]
+    dst = os.path.join(out_dir, f"{name}-ds{step}.mp4")
+    writer = cv2.VideoWriter(dst, cv2.VideoWriter_fourcc(*"mp4v"), src_fps / step, (w, h))
+    i = kept = 0
+    while True:
+        ok, fr = cap.read()
+        if not ok:
+            break
+        if i % step == 0:
+            writer.write(fr)
+            kept += 1
+        i += 1
+    cap.release()
+    writer.release()
+    print(f"      {kept} frames mantidos (1 a cada {step}) -> {dst}")
+    return dst
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Análise postural de vídeo clínico (OpenPose).")
     src = ap.add_mutually_exclusive_group(required=True)
@@ -63,6 +95,9 @@ def main() -> None:
     ap.add_argument("--overlay", action="store_true",
                     help="também gera vídeo com esqueleto e desvios sobrepostos "
                          "(requer --video)")
+    ap.add_argument("--frame-step", type=int, default=1,
+                    help="processa 1 a cada N frames (subamostragem p/ GPU fraca; "
+                         "requer --video). Ex.: 3 reduz o tempo do OpenPose em ~3x")
     args = ap.parse_args()
 
     if args.video:
@@ -70,21 +105,31 @@ def main() -> None:
             ap.error("--openpose-root é obrigatório quando se usa --video")
         from .run_openpose import run_openpose
         video_name = os.path.splitext(os.path.basename(args.video))[0]
+        video_path = args.video
+        eff_fps = args.fps
+        if args.frame_step > 1:
+            print(f"[0/4] Subamostrando 1 a cada {args.frame_step} frames ...")
+            video_path = _downsample_video(args.video, os.path.join(args.out, "video"),
+                                           args.frame_step)
+            eff_fps = args.fps / args.frame_step
         json_dir = os.path.join(args.out, "json", video_name)
-        run_openpose(args.video, args.openpose_root, json_dir,
+        run_openpose(video_path, args.openpose_root, json_dir,
                      net_resolution=args.net_resolution)
     else:
         if args.overlay:
             ap.error("--overlay requer --video (precisamos do vídeo original)")
+        if args.frame_step > 1:
+            ap.error("--frame-step só se aplica com --video")
         json_dir = args.json_dir
         video_name = os.path.basename(os.path.normpath(json_dir)).replace("_json", "")
+        video_path, eff_fps = None, args.fps
 
-    res = run_pipeline(json_dir, video_name, args.out, fps=args.fps)
+    res = run_pipeline(json_dir, video_name, args.out, fps=eff_fps)
 
     if args.overlay:
         from .overlay import render_overlay
         overlay_path = os.path.join(args.out, f"{video_name}_overlay.mp4")
-        render_overlay(args.video, json_dir, overlay_path, res=res, fps=args.fps)
+        render_overlay(video_path, json_dir, overlay_path, res=res, fps=eff_fps)
 
 
 if __name__ == "__main__":

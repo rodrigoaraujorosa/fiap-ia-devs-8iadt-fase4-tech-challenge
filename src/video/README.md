@@ -31,9 +31,9 @@ vídeo .mp4 ──[OpenPose]──► JSON por frame ──► [nosso pipeline] 
 python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 
 # A partir de um vídeo (roda o OpenPose antes — precisa do binário local)
-# --overlay também gera o vídeo anotado (esqueleto + desvios)
-python -m src.video.cli --video data/video/rehab24-6/PM_008.mp4 \
-    --openpose-root tools/openpose --fps 30 --overlay
+# --overlay gera o vídeo anotado; --frame-step 3 subamostra (GPU fraca)
+python -m src.video.cli --video data/video/rehab24-6/PM_006-Camera17-30fps.mp4 \
+    --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay
 
 # Overlay isolado (a partir de JSONs já extraídos + o vídeo)
 python -m src.video.overlay --video data/video/rehab24-6/PM_008.mp4 \
