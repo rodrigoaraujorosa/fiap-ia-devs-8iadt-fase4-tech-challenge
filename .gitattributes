@@ -1,0 +1,17 @@
+# Normaliza finais de linha: LF no repositório, checkout nativo no SO
+* text=auto
+
+# Scripts sempre LF
+*.py text eol=lf
+*.sh text eol=lf
+
+# Binários — nunca normalizar
+*.pdf binary
+*.png binary
+*.jpg binary
+*.mp4 binary
+*.wav binary
+*.pkl binary
+*.joblib binary
+*.pt binary
+*.onnx binary

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "monitoramento-hospitalar-multimodal"
+version = "0.1.0"
+description = "Sistema de monitoramento hospitalar multimodal (vídeo, áudio, sinais vitais) — Tech Challenge Fase 4, PosTech FIAP IA para DEVs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[tool.setuptools]
+packages = ["src", "src.video", "src.audio", "src.anomaly", "src.common"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
