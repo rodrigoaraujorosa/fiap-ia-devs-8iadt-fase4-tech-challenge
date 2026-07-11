@@ -32,25 +32,32 @@ def load_segmentation(csv_path: str, video_id: str | None = None) -> pd.DataFram
     return df
 
 
-def label_frames(res: pd.DataFrame, seg: pd.DataFrame) -> pd.DataFrame:
+def label_frames(res: pd.DataFrame, seg: pd.DataFrame, frame_step: int = 1) -> pd.DataFrame:
     """
     Anota cada frame de ``res`` com ``repetition``, ``exercise_id`` e ``correctness``,
     segundo os intervalos de frame do ``seg``. Frames fora de qualquer repetição
     (ex.: preparação entre séries) ficam como ``NA``.
+
+    ``frame_step`` trata vídeos subamostrados: se o OpenPose rodou em 1 a cada N
+    frames, o índice ``i`` do keypoint corresponde ao frame original ``N*i``. Os
+    rótulos do REHAB24-6 estão em frames originais (30 fps), então comparamos
+    ``N*i`` contra os intervalos.
     """
     out = res.copy()
     out["repetition"] = pd.NA
     out["exercise_id"] = pd.NA
     out["correctness"] = pd.NA
+    orig_frame = out.index.to_numpy() * frame_step
     for _, row in seg.iterrows():
-        mask = (out.index >= row["first_frame"]) & (out.index <= row["last_frame"])
+        mask = (orig_frame >= row["first_frame"]) & (orig_frame <= row["last_frame"])
         out.loc[mask, "repetition"] = row["repetition_number"]
         out.loc[mask, "exercise_id"] = row["exercise_id"]
         out.loc[mask, "correctness"] = row["correctness"]
     return out
 
 
-def validate(res: pd.DataFrame, seg: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+def validate(res: pd.DataFrame, seg: pd.DataFrame,
+             frame_step: int = 1) -> tuple[pd.DataFrame, pd.Series]:
     """
     Retorna (per_rep, by_class):
       - ``per_rep``: taxa de frames anômalos por repetição (com sua correctness);
@@ -59,7 +66,7 @@ def validate(res: pd.DataFrame, seg: pd.DataFrame) -> tuple[pd.DataFrame, pd.Ser
     A expectativa (a validar com os dados) é ``by_class[0] > by_class[1]``: repetições
     incorretas devem acumular mais frames sinalizados.
     """
-    labeled = label_frames(res, seg)
+    labeled = label_frames(res, seg, frame_step=frame_step)
     inside = labeled.dropna(subset=["correctness"])
     per_rep = (
         inside.groupby(["repetition", "exercise_id", "correctness"])["is_anomaly"]
