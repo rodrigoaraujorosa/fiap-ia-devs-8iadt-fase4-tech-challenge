@@ -121,6 +121,34 @@ def test_report_structure(tmp_path):
     assert txt.index("## Estatística") < txt.index("## Resumo e principais eventos")
 
 
+def test_select_person_prefers_large_foreground(tmp_path):
+    """A pessoa grande em primeiro plano deve vencer a pessoa menor ao fundo,
+    mesmo que a do fundo tenha confiança maior (bug da seleção antiga)."""
+    def _kp(coords, conf):
+        out = []
+        for name in BODY_25:
+            x, y = coords[name]
+            out += [float(x), float(y), conf]
+        return out
+
+    # paciente = _BASE (grande, conf 0.8); fundo = _BASE encolhido 0.3x e afastado, conf 0.95
+    main = _BASE
+    bg = {k: (500 + x * 0.3, 20 + y * 0.3) for k, (x, y) in _BASE.items()}
+    for i in range(10):
+        # fundo listado primeiro, de propósito, para não depender da ordem
+        payload = {"version": 1.3, "people": [
+            {"pose_keypoints_2d": _kp(bg, 0.95)},
+            {"pose_keypoints_2d": _kp(main, 0.8)},
+        ]}
+        with open(tmp_path / f"two_{i:012d}_keypoints.json", "w", encoding="utf-8") as fh:
+            json.dump(payload, fh)
+
+    kp = load_keypoints_dir(str(tmp_path))
+    # Neck do paciente ~ (100, 80); do fundo ~ (530, 44). Deve escolher o paciente.
+    assert abs(kp.loc[0, "Neck_x"] - 100) < 5
+    assert abs(kp.loc[0, "Neck_y"] - 80) < 5
+
+
 def test_validate_separates_correct_incorrect():
     """validate() deve acusar mais anomalia nas repetições incorretas."""
     import pandas as pd

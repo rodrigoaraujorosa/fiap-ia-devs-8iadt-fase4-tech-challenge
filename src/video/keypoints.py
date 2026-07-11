@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import glob
 import json
+import math
 import os
 
 import numpy as np
@@ -26,23 +27,58 @@ BODY_25 = [
 ]
 
 
-def _select_person(people: list[dict]) -> list[float] | None:
+def _person_metrics(kp: list[float], min_confidence: float):
     """
-    Escolhe a pessoa principal do frame = a de maior confiança total.
+    Métricas de uma pessoa: (área do bounding box, centroide, confiança média),
+    considerando apenas as juntas com confiança >= ``min_confidence``. Retorna
+    ``None`` se houver poucas juntas confiáveis.
+    """
+    arr = np.asarray(kp, dtype=float).reshape(-1, 3)  # (25, 3): x, y, c
+    valid = arr[arr[:, 2] >= min_confidence]
+    if len(valid) < 3:
+        return None
+    x, y = valid[:, 0], valid[:, 1]
+    area = float((x.max() - x.min()) * (y.max() - y.min()))
+    centroid = (float(x.mean()), float(y.mean()))
+    mean_conf = float(valid[:, 2].mean())
+    return area, centroid, mean_conf
 
-    Vídeos clínicos costumam ter um paciente por cena, mas o OpenPose pode
-    detectar ruído/observadores ao fundo. Somamos a confiança das juntas e
-    ficamos com a detecção mais forte.
+
+def _select_person(people: list[dict], min_confidence: float,
+                   prev_centroid: tuple[float, float] | None):
     """
-    best_kp, best_score = None, -1.0
+    Seleciona a pessoa principal do frame de forma robusta e devolve
+    ``(keypoints, centroide)``.
+
+    Vídeos clínicos podem ter observadores ao fundo. A abordagem antiga (maior
+    confiança total) às vezes travava na pessoa errada. Aqui:
+
+    - prioriza a pessoa **maior e mais confiante** (``área × confiança média``) —
+      o paciente em primeiro plano domina; gente menor ao fundo é descartada;
+    - **estabiliza no tempo**: entre candidatos, favorece quem está mais próximo
+      da seleção do frame anterior, evitando "pular" de uma pessoa para outra.
+    """
+    cands = []
     for person in people:
         kp = person.get("pose_keypoints_2d", [])
         if not kp:
             continue
-        score = float(np.sum(kp[2::3]))  # confiança = todo 3º valor
-        if score > best_score:
-            best_kp, best_score = kp, score
-    return best_kp
+        m = _person_metrics(kp, min_confidence)
+        if m is not None:
+            cands.append((kp, *m))  # (kp, área, centroide, conf_média)
+    if not cands:
+        return None, prev_centroid
+
+    def score(cand) -> float:
+        _kp, area, centroid, mean_conf = cand
+        s = area * mean_conf  # paciente = grande e confiante
+        if prev_centroid is not None:
+            d = math.hypot(centroid[0] - prev_centroid[0], centroid[1] - prev_centroid[1])
+            s /= 1.0 + d / (math.sqrt(area) + 1e-6)  # continuidade temporal
+        return s
+
+    best = max(cands, key=score)
+    return best[0], best[2]  # keypoints, centroide
 
 
 def load_keypoints_dir(json_dir: str, min_confidence: float = 0.1) -> pd.DataFrame:
@@ -58,10 +94,11 @@ def load_keypoints_dir(json_dir: str, min_confidence: float = 0.1) -> pd.DataFra
         raise FileNotFoundError(f"Nenhum *_keypoints.json encontrado em {json_dir}")
 
     rows = []
+    prev_centroid: tuple[float, float] | None = None
     for frame_idx, path in enumerate(files):
         with open(path, encoding="utf-8") as fh:
             people = json.load(fh).get("people", [])
-        kp = _select_person(people) if people else None
+        kp, prev_centroid = _select_person(people, min_confidence, prev_centroid)
 
         row: dict[str, float] = {"frame": frame_idx}
         for j, name in enumerate(BODY_25):
