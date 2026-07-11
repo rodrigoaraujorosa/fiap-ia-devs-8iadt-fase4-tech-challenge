@@ -50,24 +50,34 @@ def _contiguous_runs(mask: pd.Series) -> list[tuple[int, int]]:
 
 
 def plot_angles(res: pd.DataFrame, out_path: str, title: str = "") -> str:
-    """Salva o gráfico de ângulos com os frames anômalos marcados. Retorna o path."""
+    """Salva o gráfico de ângulos com os instantes de desvio destacados. Retorna o path."""
     cols = [c for c in _PLOT_ANGLES if c in res.columns]
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(13, 5))
     for col in cols:
-        ax.plot(res["time_s"], res[col], label=col, alpha=0.85, linewidth=1.2)
+        ax.plot(res["time_s"], res[col], label=ANGLE_PT.get(col, col),
+                alpha=0.85, linewidth=1.2)
 
+    # sombreia as janelas de desvio (intervalos contíguos) — facilita localizá-las
+    runs = _contiguous_runs(res["is_anomaly"] == 1)
+    for i, (start, end) in enumerate(runs):
+        ax.axvspan(res.loc[start, "time_s"], res.loc[end, "time_s"],
+                   color="red", alpha=0.10, lw=0,
+                   label="instantes de desvio" if i == 0 else None)
+
+    # marcador no topo para cada instante sinalizado
     anom = res[res["is_anomaly"] == 1]
     if not anom.empty:
         ax.scatter(anom["time_s"], [ax.get_ylim()[1]] * len(anom),
-                   marker="v", color="red", s=25, label="anomalia", zorder=5)
+                   marker="v", color="red", s=16, zorder=5)
 
     ax.set_xlabel("tempo (s)")
     ax.set_ylabel("ângulo (graus)")
     ax.set_title(title or "Ângulos posturais ao longo do tempo")
-    ax.legend(loc="upper right", fontsize=8, ncol=2)
-    fig.tight_layout()
+    # legenda FORA da área de plotagem (à direita), sem sobrepor as linhas
+    ax.legend(loc="upper left", bbox_to_anchor=(1.005, 1.0), fontsize=8,
+              framealpha=0.9)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    fig.savefig(out_path, dpi=120)
+    fig.savefig(out_path, dpi=120, bbox_inches="tight")  # inclui a legenda externa
     plt.close(fig)
     return out_path
 
