@@ -4,8 +4,9 @@ Geração de relatório automático de desvios posturais.
 Produz dois artefatos a partir do DataFrame anotado por :mod:`anomaly`:
   - um **gráfico** (PNG) com os ângulos ao longo do tempo e os frames anômalos
     destacados;
-  - um **relatório em Markdown** resumindo cobertura, estatísticas dos ângulos e
-    os principais eventos de desvio (intervalos contíguos de anomalia).
+  - um **relatório em Markdown** para a equipe médica, na ordem: gráfico → análise
+    interpretativa (gerada automaticamente) → cobertura de detecção → estatística dos
+    ângulos → resumo e principais eventos de desvio.
 """
 from __future__ import annotations
 
@@ -21,6 +22,15 @@ from .posture import angle_columns  # noqa: E402
 
 # Ângulos mais informativos para o gráfico dos exercícios do REHAB24-6 (ex.: agachamento).
 _PLOT_ANGLES = ["trunk_inclination", "r_hip", "l_hip", "r_knee", "l_knee"]
+
+# Nomes em português das articulações/ângulos (para a equipe médica).
+ANGLE_PT = {
+    "r_elbow": "Cotovelo D", "l_elbow": "Cotovelo E",
+    "r_shoulder": "Ombro D", "l_shoulder": "Ombro E",
+    "r_hip": "Quadril D", "l_hip": "Quadril E",
+    "r_knee": "Joelho D", "l_knee": "Joelho E",
+    "trunk_inclination": "Inclinação do tronco",
+}
 
 
 def _contiguous_runs(mask: pd.Series) -> list[tuple[int, int]]:
@@ -62,6 +72,72 @@ def plot_angles(res: pd.DataFrame, out_path: str, title: str = "") -> str:
     return out_path
 
 
+def _build_analysis(res: pd.DataFrame, feat_cols: list[str]) -> list[str]:
+    """
+    Gera a análise interpretativa (texto) a partir dos dados detectados.
+
+    Escrita para a equipe médica: destaca a articulação mais afetada, onde os
+    desvios se concentram no tempo, o pico de severidade e a inclinação do tronco.
+    """
+    n = len(res)
+    anoms = res[res["is_anomaly"] == 1]
+    n_anom = len(anoms)
+    dur = float(res["time_s"].max()) if n else 0.0
+
+    if n_anom == 0:
+        return ["Não foram detectados desvios posturais significativos em relação ao padrão "
+                "predominante do vídeo. A execução manteve-se dentro da faixa esperada para "
+                "os ângulos monitorados."]
+
+    lines = [
+        f"Ao longo dos {dur:.0f}s analisados, o sistema sinalizou {n_anom} de {n} instantes "
+        f"({n_anom / n:.1%}) como **desvio postural** em relação ao padrão predominante do "
+        f"próprio vídeo. Os pontos abaixo resumem os achados para orientar a revisão clínica.",
+        "",
+    ]
+
+    # Articulação mais afetada (moda do ângulo de maior desvio entre os frames anômalos).
+    vc = anoms["worst_angle"].value_counts()
+    top_ang = vc.index[0]
+    lines.append(f"- **Articulação mais afetada:** {ANGLE_PT.get(top_ang, top_ang)} — "
+                 f"predominante em {int(vc.iloc[0])} dos {n_anom} instantes sinalizados "
+                 f"({vc.iloc[0] / n_anom:.0%}).")
+
+    # Concentração temporal: janela de tempo com maior acúmulo de desvios.
+    bin_s = max(5.0, dur / 12) if dur > 0 else 5.0
+    tb = (res["time_s"] // bin_s).astype(int)
+    by_bin = res["is_anomaly"].groupby(tb).sum()
+    top_bin = int(by_bin.idxmax())
+    w0, w1 = top_bin * bin_s, min((top_bin + 1) * bin_s, dur)
+    win_rate = res.loc[tb == top_bin, "is_anomaly"].mean()
+    lines.append(f"- **Concentração temporal:** o maior acúmulo de desvios ocorre entre "
+                 f"{w0:.0f}s e {w1:.0f}s ({win_rate:.0%} dos instantes dessa janela sinalizados).")
+
+    # Pico de severidade.
+    idx = res["anomaly_score"].idxmax()
+    peak_ang = res.loc[idx, "worst_angle"]
+    lines.append(f"- **Pico de severidade:** em t={res.loc[idx, 'time_s']:.0f}s, no(a) "
+                 f"{ANGLE_PT.get(peak_ang, peak_ang)} (z={res.loc[idx, 'anomaly_score']:.1f}).")
+
+    # Inclinação do tronco (indicador de projeção para a frente).
+    if "trunk_inclination" in feat_cols:
+        mt = float(res["trunk_inclination"].max())
+        flag = " — inclinação acentuada, possível projeção do tronco à frente" if mt >= 30 else ""
+        lines.append(f"- **Inclinação máxima do tronco:** {mt:.0f}°{flag}.")
+
+    # Maior amplitude de movimento.
+    amp = res[feat_cols].max() - res[feat_cols].min()
+    amax = amp.idxmax()
+    lines.append(f"- **Maior amplitude de movimento:** {ANGLE_PT.get(amax, amax)} "
+                 f"({amp[amax]:.0f}°).")
+
+    lines.append("")
+    lines.append("Recomenda-se que a equipe revise a execução nos períodos destacados em "
+                 "vermelho no gráfico. **Este relatório é gerado automaticamente e não "
+                 "substitui a avaliação de um profissional de saúde.**")
+    return lines
+
+
 def generate_report(
     res: pd.DataFrame,
     coverage: pd.Series,
@@ -73,6 +149,7 @@ def generate_report(
     """
     Escreve o relatório Markdown em ``out_dir`` e retorna o caminho do arquivo.
 
+    Ordem das seções: Gráfico → Análise → Cobertura → Estatística → Resumo e eventos.
     ``res`` deve conter as colunas produzidas por :func:`anomaly.detect_anomalies`;
     ``coverage`` é a saída de :func:`keypoints.coverage`.
     """
@@ -85,52 +162,62 @@ def generate_report(
     n_anom = int(res["is_anomaly"].sum())
     runs = _contiguous_runs(res["is_anomaly"] == 1)
 
-    lines: list[str] = []
-    lines.append(f"# Relatório automático de desvios posturais — {video_name}\n")
-    lines.append(f"- **Frames analisados:** {n_frames} (~{n_frames / fps:.1f} s a {fps:.0f} fps)")
-    lines.append(f"- **Frames sinalizados como anomalia:** {n_anom} "
-                 f"({n_anom / n_frames:.1%})")
-    lines.append(f"- **Eventos de desvio (intervalos contíguos):** {len(runs)}\n")
+    lines: list[str] = [f"# Relatório automático de desvios posturais — {video_name}\n"]
 
-    lines.append("## Cobertura de detecção das juntas (%)\n")
-    low = coverage[coverage < 60]
-    if not low.empty:
-        lines.append("⚠️ Juntas com baixa detecção (<60% dos frames) — podem "
-                     "prejudicar os ângulos associados:\n")
-        for name, val in low.items():
-            lines.append(f"- {name}: {val}%")
-    else:
-        lines.append("Todas as juntas detectadas em ≥60% dos frames. ✅")
-    lines.append("")
-
-    lines.append("## Estatística dos ângulos (graus)\n")
-    stats = res[feat_cols].describe().loc[["mean", "min", "max"]].round(1).T
-    stats["amplitude"] = (stats["max"] - stats["min"]).round(1)
-    lines.append(stats.to_markdown())
-    lines.append("")
-
-    lines.append("## Principais eventos de desvio\n")
-    if runs:
-        lines.append("| início (s) | fim (s) | duração (s) | ângulo predominante | |z| máx |")
-        lines.append("|---|---|---|---|---|")
-        events = []
-        for start, end in runs:
-            seg = res.loc[start:end]
-            worst = seg["worst_angle"].mode()
-            worst = worst.iloc[0] if not worst.empty else "-"
-            events.append((start, end, seg["anomaly_score"].max()))
-            lines.append(f"| {start / fps:.1f} | {end / fps:.1f} | "
-                         f"{(end - start + 1) / fps:.1f} | {worst} | "
-                         f"{seg['anomaly_score'].max():.1f} |")
-    else:
-        lines.append("Nenhum desvio significativo detectado.")
-    lines.append("")
-
+    # 1. Gráfico (primeiro).
     if fig_path:
         # barras normais para o link funcionar em qualquer renderizador (GitHub etc.)
         rel = os.path.relpath(fig_path, out_dir).replace(os.sep, "/")
         lines.append("## Gráfico\n")
-        lines.append(f"![ângulos]({rel})")
+        lines.append(f"![ângulos posturais]({rel})\n")
+
+    # 2. Análise (logo abaixo do gráfico).
+    lines.append("## Análise\n")
+    lines.extend(_build_analysis(res, feat_cols))
+    lines.append("")
+
+    # 3. Cobertura de detecção das juntas.
+    lines.append("## Cobertura de detecção das juntas (%)\n")
+    low = coverage[coverage < 60]
+    if not low.empty:
+        lines.append("Juntas com baixa detecção (<60% dos frames) — podem prejudicar os "
+                     "ângulos associados:\n")
+        for name, val in low.items():
+            lines.append(f"- {name}: {val}%")
+    else:
+        lines.append("Todas as juntas detectadas em ≥60% dos frames.")
+    lines.append("")
+
+    # 4. Estatística dos ângulos (com nome em português e cabeçalhos traduzidos).
+    lines.append("## Estatística dos ângulos (graus)\n")
+    stats = res[feat_cols].agg(["mean", "min", "max"]).T
+    stats["amplitude"] = stats["max"] - stats["min"]
+    stats = stats.round(1)
+    stats.insert(0, "Articulação", [ANGLE_PT.get(a, a) for a in stats.index])
+    stats.columns = ["Articulação", "Média", "Mín", "Máx", "Amplitude"]
+    stats.index.name = "Variável"
+    lines.append(stats.to_markdown())
+    lines.append("")
+
+    # 5. Resumo e principais eventos de desvio (no final).
+    lines.append("## Resumo e principais eventos de desvio\n")
+    lines.append(f"- **Frames analisados:** {n_frames} (~{n_frames / fps:.1f} s a {fps:.0f} fps)")
+    lines.append(f"- **Frames sinalizados como desvio:** {n_anom} ({n_anom / n_frames:.1%})")
+    lines.append(f"- **Eventos de desvio (intervalos contíguos):** {len(runs)}\n")
+
+    if runs:
+        lines.append("| Início (s) | Fim (s) | Duração (s) | Articulação predominante | Severidade (z máx) |")
+        lines.append("|---|---|---|---|---|")
+        for start, end in runs:
+            seg = res.loc[start:end]
+            worst = seg["worst_angle"].mode()
+            worst = worst.iloc[0] if not worst.empty else "-"
+            lines.append(f"| {start / fps:.1f} | {end / fps:.1f} | "
+                         f"{(end - start + 1) / fps:.1f} | {ANGLE_PT.get(worst, worst)} | "
+                         f"{seg['anomaly_score'].max():.1f} |")
+    else:
+        lines.append("Nenhum desvio significativo detectado.")
+    lines.append("")
 
     out_path = os.path.join(out_dir, f"relatorio_{video_name}.md")
     with open(out_path, "w", encoding="utf-8") as fh:

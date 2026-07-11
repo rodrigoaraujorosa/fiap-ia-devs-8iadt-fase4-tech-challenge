@@ -94,6 +94,33 @@ def test_overlay_renders_video(tmp_path):
     assert n == _N_FRAMES
 
 
+def test_report_structure(tmp_path):
+    """O relatório deve ter Gráfico → Análise no topo, coluna PT e tabela bem formada."""
+    from src.video.anomaly import detect_anomalies
+    from src.video.keypoints import coverage
+    from src.video.posture import compute_angles
+    from src.video.report import generate_report, plot_angles
+
+    jdir = tmp_path / "json"
+    jdir.mkdir()
+    _make_dataset(jdir)
+    kp = load_keypoints_dir(str(jdir))
+    res = detect_anomalies(compute_angles(kp, fps=30.0))
+    fig = str(tmp_path / "fig.png")
+    plot_angles(res, fig, title="teste")
+    path = generate_report(res, coverage(kp), str(tmp_path), "SYN", fps=30.0, fig_path=fig)
+
+    txt = open(path, encoding="utf-8").read()
+    # ordem: gráfico antes da análise
+    assert txt.index("## Gráfico") < txt.index("## Análise") < txt.index("## Estatística")
+    # coluna em português na estatística
+    assert "Articulação" in txt and "Joelho D" in txt
+    # tabela de eventos sem o cabeçalho quebrado |z|
+    assert "Severidade (z máx)" in txt and "|z| máx" not in txt
+    # eventos ficam no final
+    assert txt.index("## Estatística") < txt.index("## Resumo e principais eventos")
+
+
 def test_pipeline_flags_injected_anomalies(tmp_path):
     _make_dataset(tmp_path)
 
