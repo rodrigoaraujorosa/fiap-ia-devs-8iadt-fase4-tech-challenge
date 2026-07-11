@@ -62,6 +62,38 @@ def test_angle_right_angle():
     assert math.isclose(_angle(a, b, c)[0], 90.0, abs_tol=1e-6)
 
 
+def test_overlay_renders_video(tmp_path):
+    """render_overlay deve produzir um vídeo com o mesmo nº de frames dos JSONs."""
+    cv2 = __import__("cv2")
+    from src.video.anomaly import detect_anomalies
+    from src.video.overlay import render_overlay
+    from src.video.posture import compute_angles
+
+    jdir = tmp_path / "json"
+    jdir.mkdir()
+    _make_dataset(jdir)
+
+    # vídeo sintético (frames pretos) com o mesmo nº de frames dos JSONs
+    vid = str(tmp_path / "fake.mp4")
+    w = h = 200
+    writer = cv2.VideoWriter(vid, cv2.VideoWriter_fourcc(*"mp4v"), 30.0, (w, h))
+    for _ in range(_N_FRAMES):
+        writer.write(np.zeros((h, w, 3), dtype=np.uint8))
+    writer.release()
+
+    kp = load_keypoints_dir(str(jdir))
+    res = detect_anomalies(compute_angles(kp, fps=30.0))
+    out = str(tmp_path / "overlay.mp4")
+    render_overlay(vid, str(jdir), out, res=res, fps=30.0)
+
+    import os
+    assert os.path.exists(out) and os.path.getsize(out) > 0
+    cap = cv2.VideoCapture(out)
+    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    assert n == _N_FRAMES
+
+
 def test_pipeline_flags_injected_anomalies(tmp_path):
     _make_dataset(tmp_path)
 

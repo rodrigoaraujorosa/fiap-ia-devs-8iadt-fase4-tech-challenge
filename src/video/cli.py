@@ -23,8 +23,11 @@ from .posture import compute_angles
 from .report import generate_report, plot_angles
 
 
-def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0) -> None:
-    """Executa parser -> ângulos -> detecção -> relatório sobre uma pasta de JSONs."""
+def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0):
+    """
+    Executa parser -> ângulos -> detecção -> relatório sobre uma pasta de JSONs.
+    Retorna o DataFrame ``res`` (para reuso, ex.: overlay).
+    """
     print(f"[1/4] Carregando keypoints de {json_dir} ...")
     kp = load_keypoints_dir(json_dir)
     cov = coverage(kp)
@@ -44,6 +47,7 @@ def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0
     report_path = generate_report(res, cov, out_dir, video_name, fps=fps,
                                   fig_path=fig_path)
     print(f"\nRelatório: {report_path}\nGráfico:   {fig_path}")
+    return res
 
 
 def main() -> None:
@@ -56,6 +60,9 @@ def main() -> None:
     ap.add_argument("--out", default="reports", help="pasta de saída dos relatórios")
     ap.add_argument("--net-resolution", default="320x176",
                     help="resolução da rede do OpenPose (menor = menos VRAM)")
+    ap.add_argument("--overlay", action="store_true",
+                    help="também gera vídeo com esqueleto e desvios sobrepostos "
+                         "(requer --video)")
     args = ap.parse_args()
 
     if args.video:
@@ -67,10 +74,17 @@ def main() -> None:
         run_openpose(args.video, args.openpose_root, json_dir,
                      net_resolution=args.net_resolution)
     else:
+        if args.overlay:
+            ap.error("--overlay requer --video (precisamos do vídeo original)")
         json_dir = args.json_dir
         video_name = os.path.basename(os.path.normpath(json_dir)).replace("_json", "")
 
-    run_pipeline(json_dir, video_name, args.out, fps=args.fps)
+    res = run_pipeline(json_dir, video_name, args.out, fps=args.fps)
+
+    if args.overlay:
+        from .overlay import render_overlay
+        overlay_path = os.path.join(args.out, f"{video_name}_overlay.mp4")
+        render_overlay(args.video, json_dir, overlay_path, res=res, fps=args.fps)
 
 
 if __name__ == "__main__":
