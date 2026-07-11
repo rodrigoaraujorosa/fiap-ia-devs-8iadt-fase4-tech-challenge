@@ -6,6 +6,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10%20ou%20superior-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![OpenPose](https://img.shields.io/badge/OpenPose-BODY__25-00FFFF)
+[![DOI do dataset REHAB24-6](https://zenodo.org/badge/DOI/10.5281/zenodo.13305826.svg)](https://doi.org/10.5281/zenodo.13305826)
 ![Azure](https://img.shields.io/badge/Azure-Cognitive%20Services-0078D4?logo=microsoftazure&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -140,6 +141,26 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 
 ---
 
+## 📚 Créditos e Citação
+
+O badge **DOI** no topo refere-se ao **dataset REHAB24-6** (Entrega 1) — não a um DOI deste
+repositório. O dataset é usado sob licença **CC BY-NC 4.0** (uso acadêmico, não-comercial).
+Ao usar o dataset, cite:
+
+> Černek, A., Sedmidubsky, J., Budikova, P., Jánošová, M., Katzer, L., & Procházka, M. (2024).
+> *REHAB24-6: A multi-modal dataset of physical rehabilitation exercises* (v1) [Data set].
+> Zenodo. https://doi.org/10.5281/zenodo.13305826
+
+Artigo associado:
+
+> Černek, A., Sedmidubsky, J., Budikova, P. (2024). *REHAB24-6: Physical Therapy Dataset for
+> Analyzing Pose Estimation Methods.* 17th International Conference on Similarity Search and
+> Applications (SISAP), Springer.
+
+Os demais datasets e suas licenças estão em [`docs/datasets_README.md`](docs/datasets_README.md).
+
+---
+
 ## 👥 Equipe
 
-PosTech FIAP — IA para DEVs · Turma 8IADT · Grupo do Tech Challenge Fase 4.
+PosTech FIAP — IA para DEVs · Turma 8IADT · Grupo 30 do Tech Challenge Fase 4.
