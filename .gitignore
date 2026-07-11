@@ -59,6 +59,9 @@ reports/figures/*
 *.onnx
 models/
 
+# Exceção: gráficos de relatório são evidências/deliverables (versionados)
+!reports/figures/*.png
+
 # ===== Binários externos (OpenPose, etc.) — baixados localmente =====
 tools/
 
