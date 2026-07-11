@@ -493,7 +493,7 @@ source .venv/Scripts/activate   # Windows (Git Bash)
 pip install -r requirements.txt
 ```
 
-### 10.3 Execução — Entrega 1 (Vídeo)
+### 10.3 Execução — Entrega 1 (Análise de Vídeo)
 
 ```bash
 # Vídeo -> OpenPose -> relatório + vídeo anotado + validação, num comando:
@@ -511,7 +511,7 @@ python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 Sem GPU adequada, usar o notebook `notebooks/openpose_rehab24-6_colab.ipynb` (GPU gratuita do
 Colab) para extrair os JSONs e rodar a análise em seguida.
 
-### 10.4 Execução — Entrega 3 (Anomalias)
+### 10.4 Execução — Entrega 3 (Detecção de Anomalias)
 
 ```bash
 python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019 --patient p000001

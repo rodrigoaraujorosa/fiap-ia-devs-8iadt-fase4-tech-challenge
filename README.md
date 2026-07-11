@@ -86,7 +86,7 @@ cp .env.example .env
 
 ## 🧪 Como executar
 
-### Entrega 1 — Vídeo (OpenPose)
+### Entrega 1 — Análise de Vídeo (OpenPose)
 
 Requer o binário do OpenPose ([`docs/openpose_setup.md`](docs/openpose_setup.md)) e um
 vídeo do REHAB24-6. Um comando roda tudo: OpenPose → análise → relatório → vídeo anotado →

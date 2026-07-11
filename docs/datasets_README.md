@@ -4,12 +4,12 @@ Datasets **públicos de download imediato** (sem credenciamento), por modalidade
 
 | Entrega | Subtarefa | Dataset | Acesso | Tamanho |
 |---|---|---|---|---|
-| 1 — Vídeo | Análise postural (reabilitação) | REHAB24-6 | Aberto (Zenodo) | ~2,7 GB (vídeos) |
-| 3 — Anomalias | Séries temporais de sinais vitais | PhysioNet/CinC Challenge 2019 (Sepsis) | Aberto | ~42 MB |
-| 3 — Anomalias | Padrões de movimentação do paciente | UCI HAR (Human Activity Recognition) | Aberto | ~60 MB |
-| 3 — Anomalias | Evolução de prescrições | Synthea (sintético) | Aberto | variável |
+| 1 — Análise de Vídeo | Análise postural (reabilitação) | REHAB24-6 | Aberto (Zenodo) | ~2,7 GB (vídeos) |
+| 3 — Detecção de Anomalias | Séries temporais de sinais vitais | PhysioNet/CinC Challenge 2019 (Sepsis) | Aberto | ~42 MB |
+| 3 — Detecção de Anomalias | Padrões de movimentação do paciente | UCI HAR (Human Activity Recognition) | Aberto | ~60 MB |
+| 3 — Detecção de Anomalias | Evolução de prescrições | Synthea (sintético) | Aberto | variável |
 
-> Entrega 2 (Áudio): **Coswara** (open-access) — a documentar quando a entrega iniciar.
+> Entrega 2 — Análise de Áudio: **Coswara** (open-access) — a documentar quando a entrega iniciar.
 
 ---
 
