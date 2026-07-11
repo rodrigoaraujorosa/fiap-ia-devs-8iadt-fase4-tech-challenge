@@ -3,7 +3,7 @@
 > **Tech Challenge — Fase 4** · PosTech FIAP · IA para DEVs (turma 8IADT)
 
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10%20ou%20superior-blue?logo=python&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![OpenPose](https://img.shields.io/badge/OpenPose-BODY__25-00FFFF)
 ![Azure](https://img.shields.io/badge/Azure-Cognitive%20Services-0078D4?logo=microsoftazure&logoColor=white)
