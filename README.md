@@ -35,7 +35,10 @@ não são os mesmos pacientes nas 3 fontes).
 fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── src/                      # código-fonte
 │   ├── common/               # config e utilitários compartilhados
-│   ├── video/                # Entrega 1 — análise de vídeo
+│   ├── video/                # Entrega 1 — análise de vídeo (OpenPose)
+│   │   ├── keypoints.py posture.py anomaly.py   # parser, ângulos, desvios
+│   │   ├── report.py overlay.py validate.py     # relatório, vídeo anotado, validação
+│   │   └── run_openpose.py cli.py               # OpenPose + pipeline fim-a-fim
 │   ├── audio/                # Entrega 2 — análise de áudio
 │   └── anomaly/              # Entrega 3 — detecção de anomalias
 │       ├── load_challenge2019.py   # loader + baseline (sinais vitais)
@@ -80,7 +83,28 @@ cp .env.example .env
 
 ---
 
-## 🧪 Como executar (Entrega 3 — já disponível)
+## 🧪 Como executar
+
+### Entrega 1 — Vídeo (OpenPose)
+
+Requer o binário do OpenPose ([`docs/openpose_setup.md`](docs/openpose_setup.md)) e um
+vídeo do REHAB24-6. Um comando roda tudo: OpenPose → análise → relatório → vídeo anotado →
+validação contra o ground-truth.
+
+```bash
+python -m src.video.cli --video data/video/rehab24-6/PM_006-Camera17-30fps.mp4 \
+    --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
+    --segmentation data/video/rehab24-6/Segmentation.csv
+```
+
+- `--frame-step 3` subamostra o vídeo (acelera o OpenPose em GPU fraca)
+- `--overlay` gera o vídeo com o esqueleto e os desvios marcados
+- `--segmentation` valida os desvios contra os rótulos correto/incorreto
+
+Sem GPU adequada, use o notebook [`notebooks/openpose_rehab24-6_colab.ipynb`](notebooks/openpose_rehab24-6_colab.ipynb).
+Detalhes em [`src/video/README.md`](src/video/README.md).
+
+### Entrega 3 — Detecção de Anomalias
 
 ```bash
 # Sinais vitais (PhysioNet Challenge 2019)

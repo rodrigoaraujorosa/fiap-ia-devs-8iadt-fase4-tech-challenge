@@ -38,11 +38,12 @@ python -m src.video.cli --video data/video/rehab24-6/PM_006-Camera17-30fps.mp4 \
     --segmentation data/video/rehab24-6/Segmentation.csv
 
 # Overlay isolado (a partir de JSONs já extraídos + o vídeo)
-python -m src.video.overlay --video data/video/rehab24-6/PM_008.mp4 \
+python -m src.video.overlay --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
     --json-dir reports/json/PM_008 --out reports/PM_008_overlay.mp4
 ```
 
-Saídas em `reports/` (relatório `.md`, vídeo `_overlay.mp4`) e `reports/figures/` (gráfico `.png`).
+Saídas em `reports/`: relatório `.md`, vídeo `_overlay.mp4`, CSV de validação
+`validacao_<vídeo>.csv` e o gráfico em `reports/figures/*.png`.
 
 ## OpenPose
 

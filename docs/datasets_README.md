@@ -1,13 +1,37 @@
-# Kit de datasets — Detecção de Anomalias (Tech Challenge Fase 4)
+# Kit de datasets — Tech Challenge Fase 4
 
-Datasets **públicos de download imediato** (sem credenciamento). Cobrem as 3 subtarefas
-da entrega de Detecção de Anomalias.
+Datasets **públicos de download imediato** (sem credenciamento), por modalidade.
 
-| Subtarefa | Dataset | Acesso | Tamanho |
-|---|---|---|---|
-| Séries temporais de sinais vitais | PhysioNet/CinC Challenge 2019 (Sepsis) | Aberto | ~42 MB |
-| Padrões de movimentação do paciente | UCI HAR (Human Activity Recognition) | Aberto | ~60 MB |
-| Evolução de prescrições | Synthea (sintético) ou variável derivada do Challenge 2019 | Aberto | variável |
+| Entrega | Subtarefa | Dataset | Acesso | Tamanho |
+|---|---|---|---|---|
+| 1 — Vídeo | Análise postural (reabilitação) | REHAB24-6 | Aberto (Zenodo) | ~2,7 GB (vídeos) |
+| 3 — Anomalias | Séries temporais de sinais vitais | PhysioNet/CinC Challenge 2019 (Sepsis) | Aberto | ~42 MB |
+| 3 — Anomalias | Padrões de movimentação do paciente | UCI HAR (Human Activity Recognition) | Aberto | ~60 MB |
+| 3 — Anomalias | Evolução de prescrições | Synthea (sintético) | Aberto | variável |
+
+> Entrega 2 (Áudio): **Coswara** (open-access) — a documentar quando a entrega iniciar.
+
+---
+
+## 0. REHAB24-6 — vídeo de reabilitação (Entrega 1)
+
+**Download (Zenodo, sem login):**
+
+```bash
+# vídeos RGB (2 câmeras, 30 fps) + rótulos de execução correta/incorreta
+curl -L -o data/video/rehab24-6/videos.zip \
+  "https://zenodo.org/records/13305826/files/videos.zip?download=1"
+curl -L -o data/video/rehab24-6/Segmentation.csv \
+  "https://zenodo.org/records/13305826/files/Segmentation.csv?download=1"
+# extrair só o vídeo desejado do zip (ex.: Ex6/PM_008 ou Ex4/PM_006)
+```
+
+Página oficial: https://zenodo.org/records/13305826 (licença CC BY-NC 4.0, uso acadêmico).
+
+**Conteúdo:** 6 exercícios (abdução de braço, arm VW, flexões, abdução de perna, lunge,
+agachamento), 65 vídeos, 1.072 repetições rotuladas como **correta/incorreta** com o
+intervalo de frames em `Segmentation.csv` (ground-truth para validar os desvios). O
+OpenPose extrai os keypoints do RGB; ver `docs/openpose_setup.md` e `src/video/README.md`.
 
 ---
 

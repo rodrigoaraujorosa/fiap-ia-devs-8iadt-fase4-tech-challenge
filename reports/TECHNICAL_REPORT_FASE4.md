@@ -181,10 +181,10 @@ vídeo com escrita dos keypoints em JSON (um arquivo por frame).
 
 **Desempenho e subamostragem.** Na GPU local (NVIDIA MX330, 2 GB), o OpenPose processa a
 ~1,2 s/frame. Processar os 5.191 frames de PM_008 levaria ~1h45. Para viabilizar a execução
-local, o vídeo é **subamostrado para 1 a cada 3 frames** (10 fps efetivos, 1.731 frames),
-reduzindo o tempo para ~35 min sem perda relevante para o movimento lento do agachamento. O
-mapeamento é preservado: o índice `i` do keypoint corresponde ao frame original `3*i`,
-permitindo o cruzamento correto com os rótulos (ver 3.8).
+local, o vídeo é **subamostrado para 1 a cada 3 frames** (opção `--frame-step 3` do CLI;
+10 fps efetivos, 1.731 frames), reduzindo o tempo para ~35 min sem perda relevante para o
+movimento lento do agachamento. O mapeamento é preservado: o índice `i` do keypoint
+corresponde ao frame original `3*i`, permitindo o cruzamento correto com os rótulos (ver 3.8).
 
 ### 3.5 Parser de Keypoints (`keypoints.py`)
 
@@ -232,7 +232,9 @@ e `anomaly_score` (|z| máximo, severidade).
 A validação cruza os frames sinalizados como desvio com os rótulos `correctness` do
 REHAB24-6. Para cada repetição, calcula-se a taxa de frames anômalos; a expectativa é que
 **repetições incorretas concentrem mais desvios que as corretas**. O parâmetro `frame_step`
-ajusta o mapeamento quando o vídeo foi subamostrado (índice `i` ↔ frame original `N*i`).
+ajusta o mapeamento quando o vídeo foi subamostrado (índice `i` ↔ frame original `N*i`). A
+validação é acionada diretamente pelo pipeline com a opção `--segmentation` do CLI, que
+imprime a taxa por classe e salva o detalhe por repetição em `reports/validacao_<vídeo>.csv`.
 
 **Resultados quantitativos (PM_008).** O OpenPose foi executado sobre o vídeo subamostrado
 (1.731 frames, 10 fps efetivos; ~35 min na GPU local). A cobertura de detecção das juntas
@@ -262,10 +264,13 @@ excessiva).
 
 ### 3.9 Relatório e Vídeo Anotado (`report.py`, `overlay.py`)
 
-- **Relatório automático (Markdown):** resumo de frames analisados e anômalos, cobertura de
-  detecção das juntas, estatística dos ângulos e principais eventos de desvio (intervalos
-  contíguos, com ângulo predominante e severidade), além de um gráfico dos ângulos ao longo
-  do tempo com as anomalias marcadas.
+- **Relatório automático (Markdown):** voltado à equipe médica, na ordem **gráfico →
+  análise → cobertura → estatística → resumo e eventos**. A seção *Análise* é gerada
+  automaticamente a partir dos dados (articulação mais afetada, concentração temporal dos
+  desvios, pico de severidade, inclinação máxima do tronco) em linguagem clínica. A
+  estatística dos ângulos traz uma coluna com o nome da articulação em português (Joelho D,
+  Ombro E, etc.); os eventos listam intervalos contíguos com articulação predominante e
+  severidade. Inclui a ressalva de que não substitui avaliação profissional.
 - **Vídeo anotado (`overlay.py`):** desenha o esqueleto BODY_25 sobre o vídeo (OpenCV) e
   **destaca visualmente os frames de desvio** — borda vermelha, o osso do ângulo que desviou
   em vermelho, e o rótulo `DESVIO: <ângulo> (|z|=...)`. Material direto para o vídeo-demo.
@@ -491,11 +496,15 @@ pip install -r requirements.txt
 ### 10.3 Execução — Entrega 1 (Vídeo)
 
 ```bash
-# A partir de um vídeo (roda o OpenPose e gera relatório + vídeo anotado)
+# Vídeo -> OpenPose -> relatório + vídeo anotado + validação, num comando:
+#   --frame-step 3  subamostra (GPU fraca)
+#   --overlay       gera o vídeo anotado
+#   --segmentation  valida contra os rótulos correto/incorreto
 python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
-    --openpose-root tools/openpose --overlay
+    --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
+    --segmentation data/video/rehab24-6/Segmentation.csv
 
-# A partir de JSONs já extraídos (ex.: gerados no Colab)
+# A partir de JSONs já extraídos (ex.: gerados no Colab, sem subamostragem)
 python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 ```
 
