@@ -75,6 +75,9 @@ models/
 Thumbs.db
 desktop.ini
 
+# ===== Instruções locais do Claude Code (não versionar) =====
+CLAUDE.md
+
 # ===== Ferramentas / cache =====
 .pytest_cache/
 .mypy_cache/
