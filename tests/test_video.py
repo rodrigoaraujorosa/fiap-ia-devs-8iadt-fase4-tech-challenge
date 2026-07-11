@@ -121,6 +121,40 @@ def test_report_structure(tmp_path):
     assert txt.index("## Estatística") < txt.index("## Resumo e principais eventos")
 
 
+def test_validate_separates_correct_incorrect():
+    """validate() deve acusar mais anomalia nas repetições incorretas."""
+    import pandas as pd
+
+    from src.video.validate import validate
+
+    # 20 frames: rep 1 (0-9, correta) sem anomalia; rep 2 (10-19, incorreta) toda anômala
+    res = pd.DataFrame({"is_anomaly": [0] * 10 + [1] * 10}, index=range(20))
+    seg = pd.DataFrame([
+        {"video_id": "X", "repetition_number": 1, "exercise_id": 6,
+         "first_frame": 0, "last_frame": 9, "correctness": 1},
+        {"video_id": "X", "repetition_number": 2, "exercise_id": 6,
+         "first_frame": 10, "last_frame": 19, "correctness": 0},
+    ])
+    per_rep, by_class = validate(res, seg, frame_step=1)
+    assert len(per_rep) == 2
+    assert by_class[0] > by_class[1]  # incorreta acumula mais desvios
+
+
+def test_validate_frame_step_mapping():
+    """Com frame_step=3, o índice i do keypoint mapeia para o frame original 3*i."""
+    import pandas as pd
+
+    from src.video.validate import label_frames
+
+    res = pd.DataFrame({"is_anomaly": [1] * 10}, index=range(10))  # índices 0..9 -> frames 0,3,..,27
+    seg = pd.DataFrame([{"video_id": "X", "repetition_number": 1, "exercise_id": 6,
+                         "first_frame": 12, "last_frame": 21, "correctness": 0}])
+    labeled = label_frames(res, seg, frame_step=3)
+    # frames originais 12..21 -> índices 4,5,6,7 (12,15,18,21)
+    inside = labeled.dropna(subset=["correctness"])
+    assert list(inside.index) == [4, 5, 6, 7]
+
+
 def test_pipeline_flags_injected_anomalies(tmp_path):
     _make_dataset(tmp_path)
 

@@ -96,8 +96,15 @@ def main() -> None:
                     help="também gera vídeo com esqueleto e desvios sobrepostos "
                          "(requer --video)")
     ap.add_argument("--frame-step", type=int, default=1,
-                    help="processa 1 a cada N frames (subamostragem p/ GPU fraca; "
-                         "requer --video). Ex.: 3 reduz o tempo do OpenPose em ~3x")
+                    help="processa 1 a cada N frames (subamostragem p/ GPU fraca "
+                         "com --video). Também mapeia os frames na validação. "
+                         "Ex.: 3 reduz o tempo do OpenPose em ~3x")
+    ap.add_argument("--segmentation",
+                    help="CSV de rótulos do REHAB24-6; ativa a validação contra o "
+                         "ground-truth (correto/incorreto por repetição)")
+    ap.add_argument("--video-id",
+                    help="id do vídeo no Segmentation.csv (padrão: derivado do nome, "
+                         "ex.: PM_006-Camera17-30fps -> PM_006)")
     args = ap.parse_args()
 
     if args.video:
@@ -118,10 +125,9 @@ def main() -> None:
     else:
         if args.overlay:
             ap.error("--overlay requer --video (precisamos do vídeo original)")
-        if args.frame_step > 1:
-            ap.error("--frame-step só se aplica com --video")
         json_dir = args.json_dir
         video_name = os.path.basename(os.path.normpath(json_dir)).replace("_json", "")
+        # em --json-dir os JSONs já existem; frame_step serve só p/ mapear a validação
         video_path, eff_fps = None, args.fps
 
     res = run_pipeline(json_dir, video_name, args.out, fps=eff_fps)
@@ -130,6 +136,32 @@ def main() -> None:
         from .overlay import render_overlay
         overlay_path = os.path.join(args.out, f"{video_name}_overlay.mp4")
         render_overlay(video_path, json_dir, overlay_path, res=res, fps=eff_fps)
+
+    if args.segmentation:
+        _run_validation(res, args.segmentation, video_name, args.video_id,
+                        args.frame_step, args.out)
+
+
+def _run_validation(res, seg_csv: str, video_name: str, video_id: str | None,
+                    frame_step: int, out_dir: str) -> None:
+    """Valida os desvios detectados contra os rótulos correto/incorreto do REHAB24-6."""
+    from .validate import load_segmentation, validate
+
+    vid = video_id or video_name.split("-Camera")[0]
+    print(f"\n[validação] ground-truth: video_id={vid}, frame_step={frame_step}")
+    seg = load_segmentation(seg_csv, vid)
+    per_rep, by_class = validate(res, seg, frame_step=frame_step)
+
+    out_csv = os.path.join(out_dir, f"validacao_{video_name}.csv")
+    per_rep.to_csv(out_csv, index=False)
+    print("      taxa média de frames com desvio por classe:")
+    for cls, label in ((1, "corretas  "), (0, "incorretas")):
+        if cls in by_class.index:
+            print(f"        {label}: {by_class[cls]:.3f}")
+    if {0, 1} <= set(by_class.index):
+        sep = "OK (incorretas > corretas)" if by_class[0] > by_class[1] else "sem separação"
+        print(f"      separação: {sep}")
+    print(f"      detalhe por repetição salvo em {out_csv}")
 
 
 if __name__ == "__main__":
