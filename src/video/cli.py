@@ -16,18 +16,22 @@ from __future__ import annotations
 
 import argparse
 import os
+import time
 
 from .anomaly import detect_anomalies
 from .keypoints import coverage, load_keypoints_dir
 from .posture import compute_angles
-from .report import generate_report, plot_angles
+from .report import fmt_dur, generate_report, plot_angles
 
 
-def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0):
+def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0,
+                 extract_seconds: float | None = None):
     """
     Executa parser -> ângulos -> detecção -> relatório sobre uma pasta de JSONs.
-    Retorna o DataFrame ``res`` (para reuso, ex.: overlay).
+    Retorna o DataFrame ``res`` (para reuso, ex.: overlay). ``extract_seconds``
+    (tempo do OpenPose) é opcional e entra no tempo de processamento do relatório.
     """
+    t0 = time.perf_counter()
     print(f"[1/4] Carregando keypoints de {json_dir} ...")
     kp = load_keypoints_dir(json_dir)
     cov = coverage(kp)
@@ -44,9 +48,21 @@ def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0
     print("[4/4] Gerando relatório ...")
     fig_path = os.path.join(out_dir, "figures", f"angulos_{video_name}.png")
     plot_angles(res, fig_path, title=f"Ângulos posturais — {video_name}")
+    analysis_seconds = time.perf_counter() - t0
+
+    timings: dict[str, float] = {}
+    if extract_seconds is not None:
+        timings["OpenPose (extração)"] = extract_seconds
+    timings["Análise"] = analysis_seconds
+    if extract_seconds is not None:
+        timings["Total"] = extract_seconds + analysis_seconds
+
     report_path = generate_report(res, cov, out_dir, video_name, fps=fps,
-                                  fig_path=fig_path)
+                                  fig_path=fig_path, timings=timings)
     print(f"\nRelatório: {report_path}\nGráfico:   {fig_path}")
+    print("Tempo:")
+    for etapa, seg in timings.items():
+        print(f"  {etapa}: {fmt_dur(seg)}")
     return res
 
 
@@ -107,6 +123,8 @@ def main() -> None:
                          "ex.: PM_006-Camera17-30fps -> PM_006)")
     args = ap.parse_args()
 
+    t_main = time.perf_counter()
+    extract_seconds = None
     if args.video:
         if not args.openpose_root:
             ap.error("--openpose-root é obrigatório quando se usa --video")
@@ -114,6 +132,7 @@ def main() -> None:
         video_name = os.path.splitext(os.path.basename(args.video))[0]
         video_path = args.video
         eff_fps = args.fps
+        t_extract = time.perf_counter()
         if args.frame_step > 1:
             print(f"[0/4] Subamostrando 1 a cada {args.frame_step} frames ...")
             video_path = _downsample_video(args.video, os.path.join(args.out, "video"),
@@ -122,6 +141,7 @@ def main() -> None:
         json_dir = os.path.join(args.out, "json", video_name)
         run_openpose(video_path, args.openpose_root, json_dir,
                      net_resolution=args.net_resolution)
+        extract_seconds = time.perf_counter() - t_extract
     else:
         if args.overlay:
             ap.error("--overlay requer --video (precisamos do vídeo original)")
@@ -130,7 +150,8 @@ def main() -> None:
         # em --json-dir os JSONs já existem; frame_step serve só p/ mapear a validação
         video_path, eff_fps = None, args.fps
 
-    res = run_pipeline(json_dir, video_name, args.out, fps=eff_fps)
+    res = run_pipeline(json_dir, video_name, args.out, fps=eff_fps,
+                       extract_seconds=extract_seconds)
 
     if args.overlay:
         from .overlay import render_overlay
@@ -140,6 +161,8 @@ def main() -> None:
     if args.segmentation:
         _run_validation(res, args.segmentation, video_name, args.video_id,
                         args.frame_step, args.out)
+
+    print(f"\nTempo total (fim-a-fim): {fmt_dur(time.perf_counter() - t_main)}")
 
 
 def _run_validation(res, seg_csv: str, video_name: str, video_id: str | None,

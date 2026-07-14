@@ -108,9 +108,11 @@ def test_report_structure(tmp_path):
     res = detect_anomalies(compute_angles(kp, fps=30.0))
     fig = str(tmp_path / "fig.png")
     plot_angles(res, fig, title="teste")
-    path = generate_report(res, coverage(kp), str(tmp_path), "SYN", fps=30.0, fig_path=fig)
+    path = generate_report(res, coverage(kp), str(tmp_path), "SYN", fps=30.0, fig_path=fig,
+                           timings={"Análise": 1.5})
 
     txt = open(path, encoding="utf-8").read()
+    assert "Tempo de processamento" in txt
     # ordem: gráfico antes da análise
     assert txt.index("## Gráfico") < txt.index("## Análise") < txt.index("## Estatística")
     # coluna em português na estatística

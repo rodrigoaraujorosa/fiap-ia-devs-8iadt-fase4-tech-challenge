@@ -33,6 +33,13 @@ ANGLE_PT = {
 }
 
 
+def fmt_dur(seconds: float) -> str:
+    """Formata uma duração em segundos de forma legível (mostra min se >= 60s)."""
+    if seconds >= 60:
+        return f"{seconds:.0f} s (~{seconds / 60:.1f} min)"
+    return f"{seconds:.1f} s"
+
+
 def _contiguous_runs(mask: pd.Series) -> list[tuple[int, int]]:
     """Converte uma máscara booleana por frame em intervalos (início, fim)."""
     runs: list[tuple[int, int]] = []
@@ -163,13 +170,15 @@ def generate_report(
     video_name: str,
     fps: float = 30.0,
     fig_path: str | None = None,
+    timings: dict[str, float] | None = None,
 ) -> str:
     """
     Escreve o relatório Markdown em ``out_dir`` e retorna o caminho do arquivo.
 
     Ordem das seções: Gráfico → Análise → Cobertura → Estatística → Resumo e eventos.
     ``res`` deve conter as colunas produzidas por :func:`anomaly.detect_anomalies`;
-    ``coverage`` é a saída de :func:`keypoints.coverage`.
+    ``coverage`` é a saída de :func:`keypoints.coverage`. ``timings`` (opcional) é um
+    dict {etapa: segundos} exibido no resumo como tempo de processamento.
     """
     os.makedirs(out_dir, exist_ok=True)
     feat_cols = [c for c in angle_columns(res)
@@ -221,7 +230,11 @@ def generate_report(
     lines.append("## Resumo e principais eventos de desvio\n")
     lines.append(f"- **Frames analisados:** {n_frames} (~{n_frames / fps:.1f} s a {fps:.0f} fps)")
     lines.append(f"- **Frames sinalizados como desvio:** {n_anom} ({n_anom / n_frames:.1%})")
-    lines.append(f"- **Eventos de desvio (intervalos contíguos):** {len(runs)}\n")
+    lines.append(f"- **Eventos de desvio (intervalos contíguos):** {len(runs)}")
+    if timings:
+        partes = " · ".join(f"{etapa} {fmt_dur(seg)}" for etapa, seg in timings.items())
+        lines.append(f"- **Tempo de processamento:** {partes}")
+    lines.append("")
 
     if runs:
         lines.append("| Início (s) | Fim (s) | Duração (s) | Articulação predominante | Severidade (z máx) |")
