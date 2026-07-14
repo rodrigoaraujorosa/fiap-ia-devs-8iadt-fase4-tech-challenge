@@ -182,7 +182,8 @@ vídeo com escrita dos keypoints em JSON (um arquivo por frame).
 **Desempenho e subamostragem.** Na GPU local (NVIDIA MX330, 2 GB), o OpenPose processa a
 ~1,2 s/frame. Processar os 5.191 frames de PM_008 levaria ~1h45. Para viabilizar a execução
 local, o vídeo é **subamostrado para 1 a cada 3 frames** (opção `--frame-step 3` do CLI;
-10 fps efetivos, 1.731 frames), reduzindo o tempo para ~35 min sem perda relevante para o
+10 fps efetivos, 1.731 frames), reduzindo o tempo do OpenPose para ~35–45 min (varia com a
+GPU; o pipeline reporta o tempo medido no output e no relatório) sem perda relevante para o
 movimento lento do agachamento. O mapeamento é preservado: o índice `i` do keypoint
 corresponde ao frame original `3*i`, permitindo o cruzamento correto com os rótulos (ver 3.8).
 
@@ -191,8 +192,12 @@ corresponde ao frame original `3*i`, permitindo o cruzamento correto com os rót
 O parser carrega os JSON do OpenPose em um `DataFrame` (uma linha por frame, colunas
 `<Junta>_x`, `<Junta>_y`, `<Junta>_c`), com dois tratamentos importantes:
 
-- **Seleção da pessoa principal:** quando o OpenPose detecta múltiplas pessoas (ruído/observadores
-  ao fundo), seleciona-se a detecção de maior confiança total.
+- **Seleção robusta da pessoa principal:** com múltiplas pessoas na cena (observadores ao
+  fundo), escolhe-se a **maior e mais confiante** (área do bounding box × confiança média) —
+  o paciente em primeiro plano domina e gente menor ao fundo é ignorada — com **estabilização
+  temporal**, favorecendo o candidato mais próximo da seleção do frame anterior para não
+  alternar entre pessoas. (A abordagem inicial, "maior confiança total por frame", podia
+  travar na pessoa errada e corromper os ângulos.)
 - **Descarte de juntas de baixa confiança:** juntas com confiança abaixo de `0.1` (ou não
   detectadas) têm coordenadas marcadas como `NaN`, evitando que ângulos sejam calculados
   sobre pontos espúrios em (0, 0).
@@ -237,10 +242,10 @@ validação é acionada diretamente pelo pipeline com a opção `--segmentation`
 imprime a taxa por classe e salva o detalhe por repetição em `reports/validacao_<vídeo>.csv`.
 
 **Resultados quantitativos (PM_008).** O OpenPose foi executado sobre o vídeo subamostrado
-(1.731 frames, 10 fps efetivos; ~35 min na GPU local). A cobertura de detecção das juntas
-principais (quadril, joelhos) foi de 100%. O detector sinalizou 576 dos 1.731 frames (33,3%)
-como desvio. Cruzando com os rótulos `correctness` das 27 repetições (21 corretas, 6
-incorretas):
+(1.731 frames, 10 fps efetivos; extração ~43 min na GPU local, análise ~7 s). A cobertura de
+detecção das juntas principais (quadril, joelhos) foi de 100%. O detector sinalizou 576 dos
+1.731 frames (33,3%) como desvio. Cruzando com os rótulos `correctness` das 27 repetições
+(21 corretas, 6 incorretas):
 
 | Classe da repetição | Taxa média de frames anômalos |
 |:--|:--:|
@@ -254,6 +259,10 @@ severidade (|z| até 25,7) situam-se em t≈155–171 s, correspondendo exatamen
 predominante. A inclinação do tronco atinge 56° nessas repetições, indicando o padrão
 clássico de má execução do agachamento (tronco projetado para a frente com flexão de joelho
 excessiva).
+
+Estes valores foram **reconfirmados após a adoção da seleção robusta de pessoa** (seção 3.5):
+como o PM_008 tem um único paciente em cena, os resultados permanecem idênticos — a nova
+seleção só muda o comportamento em vídeos com observadores ao fundo.
 
 > **Observação de método.** A taxa de anomalia é alta mesmo nas repetições corretas (0,430)
 > porque o z-score robusto sinaliza os extremos do agachamento (fase de descida) como desvio
