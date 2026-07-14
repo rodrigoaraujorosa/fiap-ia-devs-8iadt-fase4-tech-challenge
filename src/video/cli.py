@@ -55,7 +55,7 @@ def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0
         timings["OpenPose (extração)"] = extract_seconds
     timings["Análise"] = analysis_seconds
     if extract_seconds is not None:
-        timings["Total"] = extract_seconds + analysis_seconds
+        timings["Total (extração + análise)"] = extract_seconds + analysis_seconds
 
     report_path = generate_report(res, cov, out_dir, video_name, fps=fps,
                                   fig_path=fig_path, timings=timings)
@@ -153,16 +153,24 @@ def main() -> None:
     res = run_pipeline(json_dir, video_name, args.out, fps=eff_fps,
                        extract_seconds=extract_seconds)
 
+    extra_seconds = 0.0
     if args.overlay:
         from .overlay import render_overlay
         overlay_path = os.path.join(args.out, f"{video_name}_overlay.mp4")
+        t = time.perf_counter()
         render_overlay(video_path, json_dir, overlay_path, res=res, fps=eff_fps)
+        extra_seconds += time.perf_counter() - t
 
     if args.segmentation:
+        t = time.perf_counter()
         _run_validation(res, args.segmentation, video_name, args.video_id,
                         args.frame_step, args.out)
+        extra_seconds += time.perf_counter() - t
 
     print(f"\nTempo total (fim-a-fim): {fmt_dur(time.perf_counter() - t_main)}")
+    if extra_seconds > 1:
+        print(f"  (o 'Total' do relatório cobre extração + análise; "
+              f"overlay + validação somam +{fmt_dur(extra_seconds)})")
 
 
 def _run_validation(res, seg_csv: str, video_name: str, video_id: str | None,
