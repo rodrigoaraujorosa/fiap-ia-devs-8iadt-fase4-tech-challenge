@@ -32,6 +32,18 @@ def load_segmentation(csv_path: str, video_id: str | None = None) -> pd.DataFram
     return df
 
 
+def exercise_label(seg: pd.DataFrame) -> str | None:
+    """
+    Rótulo do(s) exercício(s) presente(s) na segmentação (ex.: "Agachamento (Ex6)"),
+    a partir da coluna ``exercise_id``. É um **rótulo do dataset**, não uma detecção
+    automática. Retorna ``None`` se não houver exercício.
+    """
+    ids = sorted(int(i) for i in seg["exercise_id"].dropna().unique())
+    if not ids:
+        return None
+    return " / ".join(f"{EXERCISES.get(i, 'desconhecido')} (Ex{i})" for i in ids)
+
+
 def label_frames(res: pd.DataFrame, seg: pd.DataFrame, frame_step: int = 1) -> pd.DataFrame:
     """
     Anota cada frame de ``res`` com ``repetition``, ``exercise_id`` e ``correctness``,

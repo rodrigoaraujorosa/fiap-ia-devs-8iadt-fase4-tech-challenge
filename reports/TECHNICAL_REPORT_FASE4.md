@@ -274,7 +274,10 @@ seleção só muda o comportamento em vídeos com observadores ao fundo.
 ### 3.9 Relatório e Vídeo Anotado (`report.py`, `overlay.py`)
 
 - **Relatório automático (Markdown):** voltado à equipe médica, na ordem **gráfico →
-  análise → cobertura → estatística → resumo e eventos**. A seção *Análise* é gerada
+  análise → cobertura → estatística → resumo e eventos**. Quando a validação é usada
+  (`--segmentation`), o cabeçalho traz também o **exercício** (ex.: "Agachamento (Ex6)"),
+  explicitamente marcado como **rótulo do dataset — não detecção automática** (o modelo
+  detecta desvios, não classifica o exercício). A seção *Análise* é gerada
   automaticamente a partir dos dados (articulação mais afetada, concentração temporal dos
   desvios, pico de severidade, inclinação máxima do tronco) em linguagem clínica. A
   estatística dos ângulos traz uma coluna com o nome da articulação em português (Joelho D,

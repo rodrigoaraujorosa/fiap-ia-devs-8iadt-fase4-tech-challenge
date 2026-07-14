@@ -25,11 +25,12 @@ from .report import fmt_dur, generate_report, plot_angles
 
 
 def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0,
-                 extract_seconds: float | None = None):
+                 extract_seconds: float | None = None, exercise: str | None = None):
     """
     Executa parser -> ângulos -> detecção -> relatório sobre uma pasta de JSONs.
     Retorna o DataFrame ``res`` (para reuso, ex.: overlay). ``extract_seconds``
-    (tempo do OpenPose) é opcional e entra no tempo de processamento do relatório.
+    (tempo do OpenPose) e ``exercise`` (rótulo do exercício, do Segmentation.csv)
+    são opcionais e aparecem no relatório.
     """
     t0 = time.perf_counter()
     print(f"[1/4] Carregando keypoints de {json_dir} ...")
@@ -58,7 +59,7 @@ def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0
         timings["Total (extração + análise)"] = extract_seconds + analysis_seconds
 
     report_path = generate_report(res, cov, out_dir, video_name, fps=fps,
-                                  fig_path=fig_path, timings=timings)
+                                  fig_path=fig_path, timings=timings, exercise=exercise)
     print(f"\nRelatório: {report_path}\nGráfico:   {fig_path}")
     print("Tempo:")
     for etapa, seg in timings.items():
@@ -150,8 +151,18 @@ def main() -> None:
         # em --json-dir os JSONs já existem; frame_step serve só p/ mapear a validação
         video_path, eff_fps = None, args.fps
 
+    # exercício (rótulo do dataset) para o relatório, quando houver segmentação
+    exercise = None
+    if args.segmentation:
+        from .validate import exercise_label, load_segmentation
+        vid = args.video_id or video_name.split("-Camera")[0]
+        try:
+            exercise = exercise_label(load_segmentation(args.segmentation, vid))
+        except (ValueError, KeyError, FileNotFoundError):
+            exercise = None
+
     res = run_pipeline(json_dir, video_name, args.out, fps=eff_fps,
-                       extract_seconds=extract_seconds)
+                       extract_seconds=extract_seconds, exercise=exercise)
 
     extra_seconds = 0.0
     if args.overlay:

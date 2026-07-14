@@ -171,6 +171,7 @@ def generate_report(
     fps: float = 30.0,
     fig_path: str | None = None,
     timings: dict[str, float] | None = None,
+    exercise: str | None = None,
 ) -> str:
     """
     Escreve o relatório Markdown em ``out_dir`` e retorna o caminho do arquivo.
@@ -190,6 +191,9 @@ def generate_report(
     runs = _contiguous_runs(res["is_anomaly"] == 1)
 
     lines: list[str] = [f"# Relatório automático de desvios posturais — {video_name}\n"]
+    if exercise:
+        lines.append(f"**Exercício:** {exercise} — *rótulo do dataset, não detectado "
+                     f"automaticamente*\n")
 
     # 1. Gráfico (primeiro).
     if fig_path:

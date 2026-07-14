@@ -109,10 +109,11 @@ def test_report_structure(tmp_path):
     fig = str(tmp_path / "fig.png")
     plot_angles(res, fig, title="teste")
     path = generate_report(res, coverage(kp), str(tmp_path), "SYN", fps=30.0, fig_path=fig,
-                           timings={"Análise": 1.5})
+                           timings={"Análise": 1.5}, exercise="Agachamento (Ex6)")
 
     txt = open(path, encoding="utf-8").read()
     assert "Tempo de processamento" in txt
+    assert "**Exercício:** Agachamento (Ex6)" in txt
     # ordem: gráfico antes da análise
     assert txt.index("## Gráfico") < txt.index("## Análise") < txt.index("## Estatística")
     # coluna em português na estatística
