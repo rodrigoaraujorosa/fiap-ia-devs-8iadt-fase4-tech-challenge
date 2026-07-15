@@ -56,7 +56,7 @@ Desenvolver um sistema que:
 | Este Relatório | `reports/TECHNICAL_REPORT_FASE4.md` |
 | Repositório | (a publicar) `github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge` |
 | Vídeo (até 15 min) | (a publicar — YouTube/Vimeo) |
-| Notebook — OpenPose no Colab | `notebooks/openpose_rehab24-6_colab.ipynb` |
+| App de demonstração (Gradio) | `python -m src.video.app` |
 
 ### 1.3 Visão Geral das Três Entregas
 
@@ -120,7 +120,7 @@ relatório automático e um vídeo anotado.
 
 A decisão de arquitetura central: o **OpenPose (binário externo) apenas extrai os keypoints
 em JSON; todo o restante do pipeline é Python puro processando esses JSON**. Isso torna o
-código independente do ambiente — roda igual na máquina local ou no Google Colab — e isola
+código independente do ambiente (portátil, roda em qualquer máquina) — e isola
 a dependência mais pesada (compilação C++/CUDA) em um artefato pré-compilado.
 
 ```
@@ -175,7 +175,7 @@ vídeo com escrita dos keypoints em JSON (um arquivo por frame).
 | Parâmetro | Valor | Observação |
 |:--|:--|:--|
 | Modelo | BODY_25 | 25 juntas 2D com confiança |
-| `--net_resolution` | `320x176` (local) / `-1x256` (Colab) | menor = menos VRAM |
+| `--net_resolution` | `320x176` (padrão local) | menor = menos VRAM |
 | `--render_pose` | 0 | renderização feita pelo nosso overlay |
 | Saída | 1 JSON por frame | `pose_keypoints_2d = [x0,y0,c0, ...]` |
 
@@ -401,7 +401,7 @@ permanece com detecção local (IsolationForest), decisão documentada na banca.
 
 Em vez de usar a API Python do OpenPose (que exige compilação em C++/CUDA), o binário é
 invocado por linha de comando e grava keypoints em JSON. Todo o restante é Python puro. Isso
-isola a dependência pesada, torna o pipeline portátil (local ou Colab) e simplifica os
+isola a dependência pesada, torna o pipeline portátil e simplifica os
 testes (keypoints sintéticos).
 
 ### 7.2 Troca de Dataset: KIMORE → REHAB24-6
@@ -442,15 +442,15 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── report.py           # relatório Markdown + gráfico
 │   │   ├── overlay.py          # vídeo anotado (esqueleto + desvios)
 │   │   ├── validate.py         # validação contra os rótulos do REHAB24-6
-│   │   ├── run_openpose.py     # invocação do binário OpenPose
-│   │   └── cli.py              # pipeline fim-a-fim
+│   │   ├── run_openpose.py     # invocação do binário OpenPose (com progresso)
+│   │   ├── cli.py              # pipeline fim-a-fim (barra de progresso no terminal)
+│   │   └── app.py              # app web (Gradio) para o vídeo-demo
 │   ├── audio/                  # Entrega 2 — análise de áudio (Azure)  [Em desenvolvimento]
 │   └── anomaly/                # Entrega 3 — detecção de anomalias
 │       ├── load_challenge2019.py   # loader + baseline (sinais vitais)
 │       └── load_uci_har.py         # loader + baseline (movimentação)
 ├── data/                       # datasets baixados localmente (não versionado)
 ├── docs/                       # enunciado + guias (datasets, setup do OpenPose)
-├── notebooks/                  # openpose_rehab24-6_colab.ipynb
 ├── reports/                    # relatório técnico e figuras
 ├── tests/                      # testes automatizados
 ├── requirements.txt
@@ -469,7 +469,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | Python 3.10+ | Linguagem principal |
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
-| Google Colab (GPU T4) | Execução do OpenPose em lote (alternativa) |
+| Gradio | App web local de demonstração (Entrega 1) |
 | Azure Cognitive Services | Speech-to-Text e Text Analytics (Entrega 2) |
 
 ### 9.2 Bibliotecas Python
@@ -516,12 +516,13 @@ python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
     --segmentation data/video/rehab24-6/Segmentation.csv
 
-# A partir de JSONs já extraídos (ex.: gerados no Colab, sem subamostragem)
+# A partir de JSONs já extraídos
 python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 ```
 
-Sem GPU adequada, usar o notebook `notebooks/openpose_rehab24-6_colab.ipynb` (GPU gratuita do
-Colab) para extrair os JSONs e rodar a análise em seguida.
+Para a demonstração há também uma **app web local** (Gradio): `python -m src.video.app`
+(abre em `http://localhost:7860`), que mostra o progresso do processamento e, ao final, o
+gráfico, o relatório, a validação e o vídeo com o esqueleto sobreposto.
 
 ### 10.4 Execução — Entrega 3 (Detecção de Anomalias)
 
@@ -544,7 +545,7 @@ pytest -q
 
 | Limitação | Impacto | Mitigação Possível |
 |:--|:--|:--|
-| GPU local fraca (MX330, 2 GB) | OpenPose lento (~1,2 s/frame) | Subamostragem; execução no Colab (T4) |
+| GPU local fraca (MX330, 2 GB) | OpenPose lento (~1,2 s/frame) | Subamostragem (`--frame-step`) |
 | Datasets de modalidades distintas | Não há paciente comum entre vídeo, áudio e vitais | Prática acadêmica padrão; documentado |
 | Azure Anomaly Detector aposentado | Sem serviço gerenciado para séries temporais | Detecção local (IsolationForest) |
 | Entrega 2 (áudio) em desenvolvimento | Modalidade ainda não integrada | Concluir pipeline Azure + Coswara |

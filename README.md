@@ -48,7 +48,6 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── docs/                     # enunciado do desafio + guia de datasets
 │   ├── 8IADT - Fase 4 - Tech challenge.pdf
 │   └── datasets_README.md
-├── notebooks/                # exploração e prototipagem
 ├── reports/                  # relatório técnico e figuras geradas
 │   └── figures/
 ├── tests/                    # testes automatizados
@@ -102,8 +101,9 @@ python -m src.video.cli --video data/video/rehab24-6/PM_006-Camera17-30fps.mp4 \
 - `--overlay` gera o vídeo com o esqueleto e os desvios marcados
 - `--segmentation` valida os desvios contra os rótulos correto/incorreto
 
-Sem GPU adequada, use o notebook [`notebooks/openpose_rehab24-6_colab.ipynb`](notebooks/openpose_rehab24-6_colab.ipynb).
-Detalhes em [`src/video/README.md`](src/video/README.md).
+Há também uma **app web local** para demonstração (`python -m src.video.app`), que mostra o
+progresso, o gráfico, o relatório e o vídeo com o esqueleto sobreposto. Detalhes em
+[`src/video/README.md`](src/video/README.md).
 
 ### Entrega 3 — Detecção de Anomalias
 

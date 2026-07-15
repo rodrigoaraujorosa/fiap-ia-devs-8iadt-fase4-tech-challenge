@@ -46,11 +46,11 @@ Se gerar JSONs em `out_json\`, está funcionando. ✅ (Testado nesta máquina: G
 A resolução padrão (`656x368`) estoura a memória de GPUs com ~2 GB (ex.: MX330). Reduza
 com `--net_resolution 320x176` — o nosso `run_openpose.py` já usa esse valor por padrão e
 foi **confirmado funcionando** na MX330. Se ainda faltar memória ou o CUDA reclamar, use o
-build **CPU** (lento) ou o **Colab** (`notebooks/openpose_rehab24-6_colab.ipynb`).
+build **CPU** (lento).
 
 > ⏱️ **Desempenho:** ~1,2 s/frame na MX330. Um vídeo do REHAB24-6 (ex.: `PM_008`, ~5200
-> frames a 30 fps) levaria ~1h45 — por isso subamostramos (1 a cada 3 frames) para ~35 min.
-> Para processar vários vídeos, o **Colab** (GPU T4) compensa muito.
+> frames a 30 fps) levaria ~1h45 — por isso subamostramos (1 a cada 3 frames, `--frame-step 3`)
+> para ~35–45 min.
 
 ## 5. Rodar pelo nosso pipeline
 

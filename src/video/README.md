@@ -7,7 +7,7 @@ rótulos de execução correta/incorreta), estima a pose com **OpenPose** e dete
 ## Arquitetura
 
 O OpenPose (binário externo) só extrai os keypoints; **todo o resto é Python puro**
-processando os JSON — então roda igual na máquina local ou no Google Colab.
+processando os JSON — o que torna o pipeline portátil e fácil de testar.
 
 ```
 vídeo .mp4 ──[OpenPose]──► JSON por frame ──► [nosso pipeline] ──► relatório + gráfico
@@ -28,7 +28,7 @@ vídeo .mp4 ──[OpenPose]──► JSON por frame ──► [nosso pipeline] 
 ## Uso
 
 ```bash
-# A partir de JSONs já extraídos (ex.: gerados no Colab)
+# A partir de JSONs já extraídos
 python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
 
 # A partir de um vídeo (roda o OpenPose antes — precisa do binário local)
@@ -64,8 +64,7 @@ JSONs"* para pular o OpenPose quando já houver keypoints extraídos (demo insta
 ## OpenPose
 
 - Setup do binário: [`docs/openpose_setup.md`](../../docs/openpose_setup.md).
-- Sem GPU boa? Use o notebook [`notebooks/openpose_rehab24-6_colab.ipynb`](../../notebooks/openpose_rehab24-6_colab.ipynb)
-  (GPU gratuita do Colab só para extrair os JSONs; a análise roda depois na sua máquina).
+- Em GPU fraca, use `--frame-step` para subamostrar e acelerar a extração.
 
 ## Testes
 
