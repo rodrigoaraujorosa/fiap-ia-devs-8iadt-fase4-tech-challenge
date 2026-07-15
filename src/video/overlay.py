@@ -73,6 +73,47 @@ def _draw_skeleton(frame, row, highlight: set[str] | None = None) -> None:
         cv2.circle(frame, p, 4, color, -1, cv2.LINE_AA)
 
 
+def _transcode_h264(src: str, dst: str) -> None:
+    """
+    Transcodifica ``src`` (mp4v do OpenCV) para **H.264** em ``dst`` — assim o vídeo
+    toca no navegador (Gradio) e em players web. Usa o ffmpeg embutido do
+    ``imageio-ffmpeg`` (ou o do sistema). Sem ffmpeg, mantém o mp4v original
+    (ainda toca em players como o VLC).
+    """
+    ffmpeg = None
+    try:
+        import imageio_ffmpeg
+
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:  # noqa: BLE001
+        import shutil
+
+        ffmpeg = shutil.which("ffmpeg")
+
+    if not ffmpeg:
+        if src != dst:
+            os.replace(src, dst)
+        print("  (aviso: ffmpeg indisponível — overlay em mp4v; pode não tocar no navegador)")
+        return
+
+    import subprocess
+
+    cmd = [
+        ffmpeg, "-y", "-loglevel", "error", "-i", src,
+        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",  # dimensões pares (exigência do yuv420p)
+        "-movflags", "+faststart", dst,
+    ]
+    try:
+        subprocess.run(cmd, check=True)
+        if src != dst and os.path.exists(src):
+            os.remove(src)
+    except (subprocess.CalledProcessError, OSError) as exc:  # fallback: mantém o mp4v
+        print(f"  (aviso: transcodificação H.264 falhou: {exc}; mantendo mp4v)")
+        if src != dst and os.path.exists(src):
+            os.replace(src, dst)
+
+
 def render_overlay(
     video_path: str,
     json_dir: str,
@@ -99,7 +140,8 @@ def render_overlay(
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or len(kp)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"),
+    raw_path = out_path + ".raw.mp4"  # mp4v; depois transcodamos para H.264 (web)
+    writer = cv2.VideoWriter(raw_path, cv2.VideoWriter_fourcc(*"mp4v"),
                              src_fps, (w, h))
 
     idx, n_anom = 0, 0
@@ -134,6 +176,7 @@ def render_overlay(
 
     cap.release()
     writer.release()
+    _transcode_h264(raw_path, out_path)
     print(f"Overlay salvo em {out_path} ({idx} frames, {n_anom} marcados como desvio)")
     return out_path
 

@@ -17,7 +17,8 @@ python-dotenv>=1.0
 # O OpenPose é um binário EXTERNO (não instala via pip) — ver docs/openpose_setup.md.
 # Nosso código só processa os keypoints JSON que ele gera; as libs abaixo bastam.
 # (numpy/pandas/matplotlib já estão na seção base.)
-opencv-python>=4.9        # metadados do vídeo (fps) e overlays opcionais
+opencv-python>=4.9        # metadados do vídeo (fps) e desenho do overlay
+imageio-ffmpeg>=0.4      # ffmpeg embutido: transcodifica o overlay p/ H.264 (tocável no navegador)
 tabulate>=0.9            # tabelas Markdown no relatório (DataFrame.to_markdown)
 
 # ----- Entrega 2: Análise de Áudio (Azure Cognitive Services) -----
