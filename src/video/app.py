@@ -110,13 +110,17 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
     report_md = re.sub(r"## Gráfico\n\n!\[[^\]]*\]\([^)]*\)\n\n", "", report_md)
 
     # 5. Overlay (renderiza + transcodifica p/ H.264). Ao chegar a 100%, o ffmpeg
-    # ainda converte o vídeo — por isso a mensagem muda para "Convertendo...".
+    # ainda converte o vídeo — mostramos "Convertendo..." em modo indeterminado
+    # (tupla com total=None), ou seja, sem "100.0%" no fim da frase.
+    def _ov_progress(d: int, t: int) -> None:
+        if d >= t:
+            progress((1, None), desc="Convertendo o vídeo para H.264...")
+        else:
+            progress(d / t, desc=f"Overlay {d}/{t} frames")
+
     overlay_path = os.path.join(OUT_DIR, f"{video_name}_overlay.mp4")
     render_overlay(op_video, json_dir, overlay_path, res=res, fps=eff_fps,
-                   progress_cb=lambda d, t: progress(
-                       d / t,
-                       desc="Convertendo o vídeo para H.264..." if d >= t
-                       else f"Overlay {d}/{t} frames"))
+                   progress_cb=_ov_progress)
 
     return fig, validation_md, report_md, overlay_path
 
