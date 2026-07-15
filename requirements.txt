@@ -29,6 +29,9 @@ soundfile>=0.12
 # ----- Entrega 3: Detecção de Anomalias -----
 # usa numpy/pandas/scikit-learn já listados acima
 
+# ----- Interface de demonstração (Entrega 1) -----
+gradio>=4.0              # app web local p/ o vídeo-demo (src/video/app.py)
+
 # ----- Notebooks / exploração -----
 jupyter>=1.0
 ipykernel>=6.29

@@ -152,6 +152,44 @@ def test_select_person_prefers_large_foreground(tmp_path):
     assert abs(kp.loc[0, "Neck_y"] - 80) < 5
 
 
+def test_count_json_and_overlay_progress(tmp_path):
+    """count_json conta os keypoints; render_overlay reporta progresso até 100%."""
+    import cv2
+
+    from src.video.anomaly import detect_anomalies
+    from src.video.overlay import render_overlay
+    from src.video.posture import compute_angles
+    from src.video.run_openpose import count_json
+
+    jdir = tmp_path / "json"
+    jdir.mkdir()
+    _make_dataset(jdir)
+    assert count_json(str(jdir)) == _N_FRAMES
+
+    vid = str(tmp_path / "v.mp4")
+    writer = cv2.VideoWriter(vid, cv2.VideoWriter_fourcc(*"mp4v"), 30.0, (200, 200))
+    for _ in range(_N_FRAMES):
+        writer.write(np.zeros((200, 200, 3), dtype=np.uint8))
+    writer.release()
+
+    kp = load_keypoints_dir(str(jdir))
+    res = detect_anomalies(compute_angles(kp, fps=30.0))
+    calls: list[tuple[int, int]] = []
+    render_overlay(vid, str(jdir), str(tmp_path / "o.mp4"), res=res, fps=30.0,
+                   progress_cb=lambda d, t: calls.append((d, t)))
+    assert calls, "progress_cb não foi chamado"
+    assert calls[-1][0] == calls[-1][1]         # terminou em 100%
+    assert all(0 < d <= t for d, t in calls)    # monotônico e dentro do total
+
+
+def test_gradio_app_builds():
+    """A app Gradio deve ser construída sem erros (pulado se gradio ausente)."""
+    import pytest
+    pytest.importorskip("gradio")
+    from src.video.app import build_demo
+    assert build_demo() is not None
+
+
 def test_validate_separates_correct_incorrect():
     """validate() deve acusar mais anomalia nas repetições incorretas."""
     import pandas as pd

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "video-app",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "src.video.app"],
+      "port": 7860
+    }
+  ]
+}

@@ -24,6 +24,23 @@ from .posture import compute_angles
 from .report import fmt_dur, generate_report, plot_angles
 
 
+def _tqdm_progress(desc: str):
+    """Callback (feito, total) -> barra tqdm criada preguiçosamente no 1º update."""
+    state: dict = {"bar": None}
+
+    def cb(done: int, total: int) -> None:
+        if state["bar"] is None:
+            from tqdm import tqdm
+            state["bar"] = tqdm(total=total, desc=desc, unit="frame")
+        bar = state["bar"]
+        bar.n = min(done, total)
+        bar.refresh()
+        if done >= total:
+            bar.close()
+
+    return cb
+
+
 def run_pipeline(json_dir: str, video_name: str, out_dir: str, fps: float = 30.0,
                  extract_seconds: float | None = None, exercise: str | None = None):
     """
@@ -141,7 +158,8 @@ def main() -> None:
             eff_fps = args.fps / args.frame_step
         json_dir = os.path.join(args.out, "json", video_name)
         run_openpose(video_path, args.openpose_root, json_dir,
-                     net_resolution=args.net_resolution)
+                     net_resolution=args.net_resolution,
+                     progress_cb=_tqdm_progress("OpenPose"))
         extract_seconds = time.perf_counter() - t_extract
     else:
         if args.overlay:
@@ -169,7 +187,8 @@ def main() -> None:
         from .overlay import render_overlay
         overlay_path = os.path.join(args.out, f"{video_name}_overlay.mp4")
         t = time.perf_counter()
-        render_overlay(video_path, json_dir, overlay_path, res=res, fps=eff_fps)
+        render_overlay(video_path, json_dir, overlay_path, res=res, fps=eff_fps,
+                       progress_cb=_tqdm_progress("Overlay"))
         extra_seconds += time.perf_counter() - t
 
     if args.segmentation:

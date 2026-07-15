@@ -79,10 +79,12 @@ def render_overlay(
     out_path: str,
     res: pd.DataFrame | None = None,
     fps: float | None = None,
+    progress_cb=None,
 ) -> str:
     """
     Escreve um vídeo com o esqueleto sobreposto. Se ``res`` (saída de
     ``anomaly.detect_anomalies``) for passado, marca os frames de desvio.
+    Se ``progress_cb`` for passado, é chamado com ``(feito, total)`` a cada frame.
     Retorna o caminho do vídeo gerado.
     """
     import cv2
@@ -95,6 +97,7 @@ def render_overlay(
     src_fps = fps or cap.get(cv2.CAP_PROP_FPS) or 30.0
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or len(kp)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"),
                              src_fps, (w, h))
@@ -104,6 +107,8 @@ def render_overlay(
         ok, frame = cap.read()
         if not ok:
             break
+        if progress_cb and total:
+            progress_cb(idx + 1, total)
         if idx in kp.index:
             row = kp.loc[idx]
             highlight = None

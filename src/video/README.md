@@ -22,7 +22,8 @@ vídeo .mp4 ──[OpenPose]──► JSON por frame ──► [nosso pipeline] 
 | `report.py` | relatório Markdown + gráfico dos ângulos com anomalias marcadas |
 | `overlay.py` | vídeo com o esqueleto sobreposto e os frames de desvio destacados (para o vídeo-demo) |
 | `validate.py` | cruza as anomalias com os rótulos `correctness` do REHAB24-6 (via `--segmentation` no CLI) |
-| `cli.py` | pipeline fim-a-fim |
+| `cli.py` | pipeline fim-a-fim (com barra de progresso no terminal via `tqdm`) |
+| `app.py` | app web (Gradio) para o vídeo-demo: progresso, gráfico, relatório e overlay numa tela |
 
 ## Uso
 
@@ -44,6 +45,21 @@ python -m src.video.overlay --video data/video/rehab24-6/PM_008-Camera17-30fps.m
 
 Saídas em `reports/`: relatório `.md`, vídeo `_overlay.mp4`, CSV de validação
 `validacao_<vídeo>.csv` e o gráfico em `reports/figures/*.png`.
+
+O terminal mostra uma **barra de progresso** do OpenPose (frames prontos/total, contando
+os JSONs escritos) e do overlay.
+
+### Interface web (demo)
+
+Para o vídeo-demo, uma app local (Gradio) mostra o progresso e, ao final, o gráfico, o
+relatório, a validação e o vídeo overlay tocando — tudo numa tela:
+
+```bash
+python -m src.video.app     # abre em http://localhost:7860
+```
+
+Escolha o vídeo, ajuste o `frame-step` e clique em **Processar**. Marque *"Reaproveitar
+JSONs"* para pular o OpenPose quando já houver keypoints extraídos (demo instantâneo).
 
 ## OpenPose
 
