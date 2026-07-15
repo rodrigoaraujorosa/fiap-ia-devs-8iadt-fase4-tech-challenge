@@ -39,10 +39,7 @@ def _list_videos() -> list[str]:
 
 def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
             progress=gr.Progress()):
-    """
-    Roda o pipeline. É um *generator*: emite primeiro (gráfico, validação, relatório)
-    e, em seguida, o vídeo overlay — para a UI não ficar parada até o fim.
-    """
+    """Roda o pipeline e devolve (gráfico, validação, relatório, vídeo overlay)."""
     if not video_file:
         raise gr.Error("Selecione um vídeo.")
     frame_step = int(frame_step)
@@ -112,9 +109,6 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
     # remove a seção "## Gráfico" do texto (o gráfico já é mostrado à parte)
     report_md = re.sub(r"## Gráfico\n\n!\[[^\]]*\]\([^)]*\)\n\n", "", report_md)
 
-    # já mostra o gráfico e o relatório (o vídeo overlay vem em seguida)
-    yield fig, validation_md, report_md, None
-
     # 5. Overlay (renderiza + transcodifica p/ H.264). Ao chegar a 100%, o ffmpeg
     # ainda converte o vídeo — por isso a mensagem muda para "Convertendo...".
     overlay_path = os.path.join(OUT_DIR, f"{video_name}_overlay.mp4")
@@ -124,7 +118,7 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
                        desc="Convertendo o vídeo para H.264..." if d >= t
                        else f"Overlay {d}/{t} frames"))
 
-    yield fig, validation_md, report_md, overlay_path
+    return fig, validation_md, report_md, overlay_path
 
 
 def build_demo() -> gr.Blocks:
