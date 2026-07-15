@@ -14,6 +14,7 @@ from __future__ import annotations
 import glob
 import os
 import re
+import time
 
 import gradio as gr
 
@@ -47,7 +48,9 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
     json_dir = os.path.join(OUT_DIR, "json", video_name)
     eff_fps = 30.0 / frame_step if frame_step > 1 else 30.0
 
-    # vídeo que casa com os JSONs (subamostrado, se for o caso)
+    # vídeo que casa com os JSONs (subamostrado, se for o caso) + extração (OpenPose)
+    t_extract = time.perf_counter()
+    did_extract = False
     op_video = video_path
     if frame_step > 1:
         ds_path = os.path.join(OUT_DIR, "video", f"{video_name}-ds{frame_step}.mp4")
@@ -56,6 +59,7 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
         else:
             progress(0.0, desc="Subamostrando frames...")
             op_video = _downsample_video(video_path, os.path.join(OUT_DIR, "video"), frame_step)
+            did_extract = True
 
     # 1. OpenPose (ou reaproveita JSONs já extraídos)
     if reuse_json and count_json(json_dir) > 0:
@@ -63,8 +67,11 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
     else:
         run_openpose(op_video, OPENPOSE_ROOT, json_dir, net_resolution="320x176",
                      progress_cb=lambda d, t: progress(d / t, desc=f"OpenPose {d}/{t} frames"))
+        did_extract = True
+    extract_seconds = (time.perf_counter() - t_extract) if did_extract else None
 
     # 2. Análise
+    t_analysis = time.perf_counter()
     progress(0.0, desc="Calculando ângulos e desvios...")
     kp = load_keypoints_dir(json_dir)
     cov = coverage(kp)
@@ -86,11 +93,18 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
         except Exception as e:  # noqa: BLE001 — demo: mostra o erro em vez de quebrar
             validation_md = f"_(validação indisponível: {e})_"
 
-    # 4. Gráfico + relatório
+    # 4. Gráfico + relatório (com tempo de processamento)
     fig = os.path.join(OUT_DIR, "figures", f"angulos_{video_name}.png")
     plot_angles(res, fig, title=f"Ângulos posturais — {video_name}")
+    analysis_seconds = time.perf_counter() - t_analysis
+    timings: dict[str, float] = {}
+    if extract_seconds is not None:
+        timings["OpenPose (extração)"] = extract_seconds
+    timings["Análise"] = analysis_seconds
+    if extract_seconds is not None:
+        timings["Total (extração + análise)"] = extract_seconds + analysis_seconds
     report_path = generate_report(res, cov, OUT_DIR, video_name, fps=eff_fps,
-                                  fig_path=fig, exercise=exercise)
+                                  fig_path=fig, exercise=exercise, timings=timings)
     report_md = open(report_path, encoding="utf-8").read()
     # remove a seção "## Gráfico" do texto (o gráfico já é mostrado à parte)
     report_md = re.sub(r"## Gráfico\n\n!\[[^\]]*\]\([^)]*\)\n\n", "", report_md)
