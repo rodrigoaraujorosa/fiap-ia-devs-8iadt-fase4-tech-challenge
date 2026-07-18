@@ -25,7 +25,8 @@ tabulate>=0.9            # tabelas Markdown no relatório (DataFrame.to_markdown
 # Provedor de nuvem: AWS (Amazon Transcribe + Comprehend Medical).
 # A Azure foi descartada por indisponibilidade de cota — ver o relatório técnico.
 boto3>=1.34                            # Transcribe (transcrição) + Comprehend Medical (entidades)
-librosa>=0.10                          # biomarcadores acústicos
+praat-parselmouth>=0.4                 # jitter/shimmer/HNR — implementação de referência (Praat)
+librosa>=0.10                          # MFCC e leitura de áudio
 soundfile>=0.12
 
 # ----- Entrega 3: Detecção de Anomalias -----
