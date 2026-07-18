@@ -41,7 +41,7 @@ Todas as juntas detectadas em ≥60% dos frames.
 - **Frames analisados:** 1731 (~173.1 s a 10 fps)
 - **Frames sinalizados como desvio:** 576 (33.3%)
 - **Eventos de desvio (intervalos contíguos):** 33
-- **Tempo de processamento:** OpenPose (extração) 2458 s (~41.0 min) · Análise 17.2 s · Total (extração + análise) 2476 s (~41.3 min)
+- **Tempo de processamento:** OpenPose (extração) 45:20.089 · Análise 00:15.541 · Total (extração + análise) 45:35.630
 
 | Início (s) | Fim (s) | Duração (s) | Articulação predominante | Severidade (z máx) |
 |---|---|---|---|---|
