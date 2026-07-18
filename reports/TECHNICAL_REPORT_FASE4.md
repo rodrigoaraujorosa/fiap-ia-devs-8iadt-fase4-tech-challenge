@@ -154,18 +154,23 @@ validar quantitativamente os desvios detectados.
 `repetition_number`, `exercise_id`, intervalo de frames (`first_frame`, `last_frame`),
 orientação da câmera e `correctness` (0/1), entre outros campos.
 
-### 3.3 Vídeo de Demonstração: PM_008
+### 3.3 Vídeos de Demonstração e Validação
 
-Para demonstração e validação foi selecionado o vídeo **PM_008** (exercício 6 — agachamento),
-por conter, num mesmo vídeo, execuções corretas e incorretas.
+Foram usados dois vídeos do REHAB24-6, ambos contendo execuções corretas e incorretas no
+mesmo vídeo. **PM_008** é o caso de validação quantitativa principal (mais longo, mais
+repetições); **PM_034** é o caso usado na demonstração ao vivo, por ser curto e não ter
+observadores em cena (`extra_person_in_cam17 = 0` no `Segmentation.csv`), o que evita
+qualquer ambiguidade visual na seleção da pessoa principal.
 
-| Atributo | Valor |
-|:--|:--|
-| Resolução / taxa | 1920x1080, 30 fps |
-| Duração | ~2 min 53 s (5.191 frames) |
-| Câmera | Camera17 (horizontal) |
-| Repetições | 27 agachamentos |
-| Correção | 21 corretas, 6 incorretas (repetições 17, 23–27) |
+| Atributo | PM_008 (validação) | PM_034 (demonstração) |
+|:--|:--|:--|
+| Exercício | Ex6 — agachamento | Ex4 — abdução de perna (esquerda) |
+| Resolução / taxa | 1920x1080, 30 fps | 1920x1080, 30 fps |
+| Duração | ~2 min 53 s (5.191 frames) | ~37 s (1.108 frames) |
+| Câmera | Camera17 (horizontal) | Camera17 (frontal) |
+| Repetições | 27 | 10 |
+| Correção | 21 corretas, 6 incorretas (rep. 17, 23–27) | 5 corretas, 5 incorretas (rep. 6–10) |
+| Observadores em cena | não | não |
 
 ### 3.4 Extração de Pose (OpenPose BODY_25)
 
@@ -263,6 +268,29 @@ excessiva).
 Estes valores foram **reconfirmados após a adoção da seleção robusta de pessoa** (seção 3.5):
 como o PM_008 tem um único paciente em cena, os resultados permanecem idênticos — a nova
 seleção só muda o comportamento em vídeos com observadores ao fundo.
+
+**Resultados quantitativos (PM_034).** O mesmo pipeline, sem qualquer ajuste de parâmetros,
+foi aplicado a um exercício diferente (abdução de perna) e a um enquadramento frontal.
+Sobre os 370 frames subamostrados (10 fps efetivos), o detector sinalizou 122 (33,0%) como
+desvio, com cobertura de 100% em todas as juntas. Cruzando com os rótulos das 10 repetições:
+
+| Classe da repetição | Taxa média de frames anômalos |
+|:--|:--:|
+| Correta (5 repetições) | 0,034 |
+| Incorreta (5 repetições) | 0,358 |
+
+A separação aqui é **muito mais nítida que no PM_008** — cerca de 10x entre as classes,
+contra ~1,4x no agachamento. A explicação está na natureza do movimento: a abdução de perna
+tem uma postura de referência estável (paciente em pé, de frente), então a mediana do vídeo
+representa bem a execução correta e só a execução incorreta se afasta dela. Já o agachamento
+é um movimento de grande amplitude, em que mesmo a execução correta percorre posturas
+distantes da mediana — inflando a taxa das repetições corretas (ver a observação de método
+acima). O resultado sugere que o método é mais discriminante em exercícios de amplitude
+moderada em torno de uma postura estável, e que exercícios cíclicos amplos se beneficiariam
+de uma referência por fase do movimento em vez de uma mediana global.
+
+A articulação predominante foi o **ombro D** (48% dos instantes sinalizados), coerente com
+o uso dos braços para compensar o equilíbrio durante a abdução.
 
 > **Observação de método.** A taxa de anomalia é alta mesmo nas repetições corretas (0,430)
 > porque o z-score robusto sinaliza os extremos do agachamento (fase de descida) como desvio
@@ -512,17 +540,22 @@ pip install -r requirements.txt
 #   --frame-step 3  subamostra (GPU fraca)
 #   --overlay       gera o vídeo anotado
 #   --segmentation  valida contra os rótulos correto/incorreto
-python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
+python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
     --segmentation data/video/rehab24-6/Segmentation.csv
 
 # A partir de JSONs já extraídos
-python -m src.video.cli --json-dir reports/json/PM_008 --fps 30
+python -m src.video.cli --json-dir reports/json/PM_034 --fps 30
 ```
 
 Para a demonstração há também uma **app web local** (Gradio): `python -m src.video.app`
 (abre em `http://localhost:7860`), que mostra o progresso do processamento e, ao final, o
 gráfico, o relatório, a validação e o vídeo com o esqueleto sobreposto.
+
+A interface é escrita para o **público clínico**, não para o desenvolvedor: as etapas
+aparecem por extenso ("Aplicando o Modelo OpenPose", "Overlay (esqueleto sobre o vídeo)"),
+cada quadro de saída tem uma legenda explicando o que vai surgir nele, e os tempos de
+processamento são exibidos no formato `mm:ss.mi`.
 
 ### 10.4 Execução — Entrega 3 (Detecção de Anomalias)
 

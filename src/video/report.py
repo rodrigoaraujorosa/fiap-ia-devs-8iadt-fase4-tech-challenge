@@ -34,10 +34,9 @@ ANGLE_PT = {
 
 
 def fmt_dur(seconds: float) -> str:
-    """Formata uma duração em segundos de forma legível (mostra min se >= 60s)."""
-    if seconds >= 60:
-        return f"{seconds:.0f} s (~{seconds / 60:.1f} min)"
-    return f"{seconds:.1f} s"
+    """Formata uma duração no padrão mm:ss.mi (minutos, segundos e milissegundos)."""
+    minutos, resto = divmod(max(seconds, 0.0), 60)
+    return f"{int(minutos):02d}:{resto:06.3f}"
 
 
 def _contiguous_runs(mask: pd.Series) -> list[tuple[int, int]]:

@@ -66,7 +66,8 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
         progress(1.0, desc=f"Reaproveitando {count_json(json_dir)} JSONs")
     else:
         run_openpose(op_video, OPENPOSE_ROOT, json_dir, net_resolution="320x176",
-                     progress_cb=lambda d, t: progress(d / t, desc=f"OpenPose {d}/{t} frames"))
+                     progress_cb=lambda d, t: progress(
+                         d / t, desc=f"Aplicando o Modelo OpenPose — {d}/{t} frames"))
         did_extract = True
     extract_seconds = (time.perf_counter() - t_extract) if did_extract else None
 
@@ -116,14 +117,14 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
                    progress_cb=lambda d, t: progress(
                        d / t,
                        desc="Convertendo o vídeo para H.264..." if d >= t
-                       else f"Overlay {d}/{t} frames"))
+                       else f"Overlay (esqueleto sobre o vídeo) — {d}/{t} frames"))
 
     return fig, validation_md, report_md, overlay_path
 
 
 def build_demo() -> gr.Blocks:
     with gr.Blocks(title="Monitoramento Postural — Entrega 1") as demo:
-        gr.Markdown("# 🎥 Análise Postural de Vídeo (OpenPose) — demo local\n"
+        gr.Markdown("# 🎥 Análise Postural em Vídeo (Usando o Modelo OpenPose) — demo local\n"
                     "Selecione um vídeo do REHAB24-6, processe e veja o esqueleto, os "
                     "desvios e o relatório.")
         with gr.Row():
@@ -135,12 +136,22 @@ def build_demo() -> gr.Blocks:
             reuse = gr.Checkbox(value=True, label="Reaproveitar JSONs já extraídos")
         run_btn = gr.Button("▶ Processar", variant="primary")
         with gr.Row():
-            graph = gr.Image(label="Ângulos posturais", type="filepath")
-            overlay = gr.Video(label="Overlay (esqueleto + desvios)")
+            with gr.Column():
+                gr.Markdown("**Ângulos Posturais** — ao final, aparece aqui o "
+                            "gráfico dos ângulos ao longo do tempo, com os desvios em vermelho.")
+                graph = gr.Image(label="Ângulos posturais", type="filepath")
+            with gr.Column():
+                gr.Markdown("**Vídeo com Overlay (esqueleto + desvios)** — ao final, "
+                            "aparece aqui o vídeo com o esqueleto sobreposto ao paciente.")
+                overlay = gr.Video(label="Overlay (esqueleto + desvios)")
         validation = gr.Markdown()
         report = gr.Markdown()
+        # show_progress_on: sem isso o Gradio desenha uma barra em CADA output —
+        # inclusive nos Markdown (validação e relatório), que não têm altura fixa e
+        # deixam as barras flutuando sobre o texto. Só os dois quadros visuais mostram.
         run_btn.click(process, [video_dd, frame_step, use_seg, reuse],
-                      [graph, validation, report, overlay])
+                      [graph, validation, report, overlay],
+                      show_progress_on=[graph, overlay])
     return demo
 
 

@@ -31,7 +31,8 @@ soundfile>=0.12
 # usa numpy/pandas/scikit-learn já listados acima
 
 # ----- Interface de demonstração (Entrega 1) -----
-gradio>=4.0              # app web local p/ o vídeo-demo (src/video/app.py)
+gradio>=5.0              # app web local p/ o vídeo-demo (src/video/app.py);
+                         # >=5.0 por causa do show_progress_on em app.py
 
 # ----- Notebooks / exploração -----
 jupyter>=1.0

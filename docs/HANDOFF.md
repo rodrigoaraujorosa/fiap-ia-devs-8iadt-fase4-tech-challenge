@@ -1,13 +1,13 @@
 # Handoff — Tech Challenge Fase 4 (Monitoramento Hospitalar Multimodal)
 
 > Documento para continuar o trabalho em uma nova sessão sem perder contexto.
-> Última atualização: 2026-07-14.
+> Última atualização: 2026-07-18.
 
 ## Onde estamos
 
 | Entrega | Estado |
 |---|---|
-| 1 — Análise de Vídeo (OpenPose) | **Completa e validada** + app Gradio de demo + barra de progresso |
+| 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 2 vídeos (PM_008 e PM_034) + app Gradio com linguagem para equipe médica |
 | 2 — Análise de Áudio (Azure) | **Não iniciada** (próxima grande peça) |
 | 3 — Detecção de Anomalias | **Baseline pronto** (loaders Challenge 2019 + UCI HAR); falta rodar/documentar |
 
@@ -45,13 +45,13 @@
 | `overlay.py` | vídeo anotado; transcodado p/ **H.264** (imageio-ffmpeg) p/ tocar no navegador |
 | `validate.py` | cruza com `Segmentation.csv` (correto/incorreto) + `exercise_label` |
 | `cli.py` | pipeline fim-a-fim + barra `tqdm` |
-| `app.py` | app Gradio (`python -m src.video.app`, porta 7860) |
+| `app.py` | app Gradio (`python -m src.video.app`, porta 7860); linguagem para equipe médica; `show_progress_on=[graph, overlay]` evita barras flutuando sobre os Markdown (**exige gradio >= 5.0**) |
 
 ## Comandos
 
 ```bash
 # CLI completo (extrai + analisa + overlay + valida), com progresso
-python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
+python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
     --segmentation data/video/rehab24-6/Segmentation.csv
 
@@ -65,11 +65,16 @@ pytest
 ## Dados (`data/video/rehab24-6/`, gitignored)
 
 - `videos.zip` (2,7 GB), `Segmentation.csv` (rótulos), + vídeos extraídos:
-  - **PM_008** — Ex6 **agachamento**, ~3 min (5.191 frames). Limpo (1 paciente). Validado:
-    33,3% de frames com desvio; taxa média **correto 0,430 vs incorreto 0,614** (incorretos
-    concentram mais desvios — separação OK).
-  - **PM_006** — Ex4 **abdução de perna**, ~31 s. **Tem uma pessoa ao fundo** (fica estranho
-    no vídeo). Usuário vai procurar um vídeo **curto e sem gente ao fundo** para substituir.
+  - **PM_034** — Ex4 **abdução de perna**, ~37 s (1.108 frames), 10 repetições (5 corretas,
+    5 incorretas), **sem pessoas ao fundo**. **É o vídeo da demonstração.** Validado:
+    33,0% de frames com desvio; taxa média **correto 0,034 vs incorreto 0,358** —
+    separação ~10x, bem mais nítida que a do PM_008.
+  - **PM_008** — Ex6 **agachamento**, ~3 min (5.191 frames), 27 repetições. Limpo
+    (1 paciente). Caso de **validação quantitativa** mais extenso: 33,3% de frames com
+    desvio; taxa média **correto 0,430 vs incorreto 0,614** (separação ~1,4x — o agachamento
+    é de grande amplitude, então até a execução correta se afasta da mediana do vídeo).
+  - **PM_006** — Ex4, ~31 s. **Tem uma pessoa ao fundo** — substituído pelo PM_034 na demo;
+    mantido só como caso histórico (o relatório dele está versionado).
 
 ## Workflow do usuário (importante)
 
@@ -90,7 +95,7 @@ pytest
 
 ## Próximos passos
 
-1. Usuário busca um vídeo curto **sem pessoa ao fundo** (melhor que o PM_006) para o demo.
+1. ~~Vídeo curto sem pessoa ao fundo para o demo~~ — **resolvido: PM_034.** Entrega 1 fechada.
 2. **Entrega 2 (Áudio/Azure):** baixar **Coswara**; pipeline Azure Speech-to-Text + Text
    Analytics (Health) + biomarcadores acústicos (librosa). Credenciais Azure via `.env`
    (modelo em `.env.example`). Estruturar `src/audio/`.

@@ -23,7 +23,7 @@ curl -L -o data/video/rehab24-6/videos.zip \
   "https://zenodo.org/records/13305826/files/videos.zip?download=1"
 curl -L -o data/video/rehab24-6/Segmentation.csv \
   "https://zenodo.org/records/13305826/files/Segmentation.csv?download=1"
-# extrair só o vídeo desejado do zip (ex.: Ex6/PM_008 ou Ex4/PM_006)
+# extrair só o vídeo desejado do zip (ex.: Ex6/PM_008 ou Ex4/PM_034)
 ```
 
 Página oficial: https://zenodo.org/records/13305826 (licença CC BY-NC 4.0, uso acadêmico).

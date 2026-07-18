@@ -92,7 +92,7 @@ vídeo do REHAB24-6. Um comando roda tudo: OpenPose → análise → relatório 
 validação contra o ground-truth.
 
 ```bash
-python -m src.video.cli --video data/video/rehab24-6/PM_006-Camera17-30fps.mp4 \
+python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
     --segmentation data/video/rehab24-6/Segmentation.csv
 ```
