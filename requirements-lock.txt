@@ -1,30 +1,28 @@
 # ============================================================
 # Ambiente exato que produziu os resultados do relatório técnico.
 #
+# Gerado A PARTIR DO .venv do projeto (não do Python do sistema).
+# Python 3.12.6, Windows 11, 2026-07-18.
+#
 # O requirements.txt continua com pisos flexíveis, para instalar em
 # qualquer máquina. Este arquivo existe para AUDITORIA: registra as
 # versões sob as quais os números do relatório foram medidos.
 #
-# Por que importa: random_state=42 fixa a semente, não o algoritmo. Se uma
-# versão futura do scikit-learn mudar a implementação do IsolationForest,
-# os valores publicados podem não se reproduzir. Neste caso, instale com:
 #     pip install -r requirements-lock.txt
-#
-# Gerado em 2026-07-18, Python 3.12.6, Windows 11.
 # ============================================================
 
 numpy==2.4.6
-pandas==2.3.3
-scikit-learn==1.7.2
-scipy==1.16.3
-matplotlib==3.10.7
+pandas==3.0.3
+scikit-learn==1.9.0
+scipy==1.18.0
+matplotlib==3.11.0
 opencv-python==5.0.0.93
 imageio-ffmpeg==0.6.0
 tabulate==0.10.0
-gradio==6.3.0
-tqdm==4.67.1
-boto3==1.43.51
+gradio==6.20.0
+tqdm==4.68.4
+# boto3: não instalado neste ambiente
 librosa==0.11.0
 soundfile==0.14.0
-pytest==9.0.0
-python-dotenv==1.1.1
+pytest==9.1.1
+python-dotenv==1.2.2

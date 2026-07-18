@@ -740,10 +740,22 @@ as quais os números deste relatório foram medidos. Para auditar os resultados:
 pip install -r requirements-lock.txt
 ```
 
-Um teste adicional confirmou a estabilidade entre versões: após uma atualização do numpy
-(1.x → 2.4.6) motivada por outra dependência, o pipeline foi recalculado a partir dos
-mesmos keypoints e produziu resultados **idênticos bit a bit** nos três vídeos (96, 576 e
-122 frames sinalizados), com o CSV de validação por repetição inalterado.
+**Teste de estabilidade entre versões.** O pipeline foi recalculado a partir dos mesmos
+keypoints em dois ambientes independentes, com versões distintas das bibliotecas
+numéricas:
+
+| Biblioteca | Ambiente A | Ambiente B |
+|:--|:--:|:--:|
+| scikit-learn | 1.7.2 | 1.9.0 |
+| pandas | 2.3.3 | 3.0.3 |
+| scipy | 1.16.3 | 1.18.0 |
+| numpy | 2.4.6 | 2.4.6 |
+
+Os dois produziram resultados **idênticos bit a bit** nos três vídeos — 96, 576 e 122
+frames sinalizados — com os CSVs de validação por repetição inalterados. O resultado é
+relevante porque as versões divergem justamente no `scikit-learn`, de onde vem o
+`IsolationForest`: na prática, a detecção se mostrou estável a uma mudança de versão menor
+dessa biblioteca, e não apenas à fixação da semente.
 
 ### 10.3 Execução — Entrega 1 (Análise de Vídeo)
 
