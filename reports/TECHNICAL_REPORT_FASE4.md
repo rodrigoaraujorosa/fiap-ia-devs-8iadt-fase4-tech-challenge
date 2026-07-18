@@ -54,7 +54,7 @@ Desenvolver um sistema que:
 | Entregável | Link |
 |:---|:---|
 | Este Relatório | `reports/TECHNICAL_REPORT_FASE4.md` |
-| Repositório | (a publicar) `github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge` |
+| Repositório | https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge |
 | Vídeo (até 15 min) | (a publicar — YouTube/Vimeo) |
 | App de demonstração (Gradio) | `python -m src.video.app` |
 

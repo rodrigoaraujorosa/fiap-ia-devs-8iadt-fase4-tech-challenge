@@ -36,6 +36,9 @@ ENV/
 secrets.json
 azure_credentials.json
 
+# ===== Configuração local de ferramentas =====
+.claude/
+
 # ===== Dados (datasets são baixados localmente, não versionados) =====
 data/**
 !data/**/
