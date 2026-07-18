@@ -8,7 +8,7 @@
 | Entrega | Estado |
 |---|---|
 | 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 3 experimentos (PM_008, PM_034, PM_006) + app Gradio com linguagem para equipe médica + screenshots no relatório |
-| 2 — Análise de Áudio (Azure) | **Não iniciada** (próxima grande peça) |
+| 2 — Análise de Áudio (**AWS**) | **Em andamento** na branch `feature/entrega-2-audio`. Dois datasets baixados e com loader validado; falta Transcribe, Comprehend Medical e biomarcadores |
 | 3 — Detecção de Anomalias | **Baseline pronto** (loaders Challenge 2019 + UCI HAR); falta rodar/documentar |
 
 ## Decisões-chave (não reabrir sem motivo)
@@ -27,11 +27,18 @@
 ## Ambiente
 
 - Windows 11, **Python 3.12.6**, GPU **NVIDIA MX330 (2 GB)** — fraca; OpenPose ~1,2 s/frame.
+- ⚠️ **O projeto roda em `.venv` (gitignored, na raiz). SEMPRE ative antes de rodar
+  qualquer comando** — `.venv\Scripts\Activate.ps1` no PowerShell. A máquina também tem um
+  Python de sistema em `C:\Python312` com **versões diferentes** das bibliotecas
+  (scikit-learn 1.7.2 no sistema vs. 1.9.0 no venv, pandas 2.3.3 vs. 3.0.3). Rodar no
+  interpretador errado não quebra, mas mede outro ambiente. Confira com
+  `python -c "import sys; print(sys.prefix)"`.
 - OpenPose em `tools/openpose/` (gitignored). Modelo BODY_25 baixado de mirror HuggingFace
   (o servidor da CMU está morto) — ver `docs/openpose_setup.md`.
-- Dependências em `requirements.txt`. Recentes: `gradio`, `imageio-ffmpeg` (ffmpeg embutido
-  p/ transcodar o overlay a H.264).
-- Usuário tem e-mail acadêmico, **mas SEM cota no Azure for Students**.
+- Dependências em `requirements.txt` (pisos flexíveis) e **`requirements-lock.txt`**
+  (versões exatas do `.venv`, para auditar os números do relatório).
+- **Nuvem: AWS** (Transcribe + Comprehend Medical). A Azure foi descartada — usuário tem
+  e-mail acadêmico mas SEM cota no Azure for Students; a AWS foi liberada depois.
 
 ## Pipeline de Vídeo — `src/video/`
 
@@ -50,6 +57,11 @@
 ## Comandos
 
 ```bash
+# 0. SEMPRE primeiro: ativar o venv
+.venv\Scripts\Activate.ps1         # PowerShell
+# source .venv/Scripts/activate    # Git Bash
+
+# --- Entrega 1 (vídeo) ---
 # CLI completo (extrai + analisa + overlay + valida), com progresso
 python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
@@ -57,6 +69,16 @@ python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
 
 # App web de demonstração
 python -m src.video.app            # http://localhost:7860
+
+# --- Entrega 2 (áudio) ---
+# Coswara: estatísticas e coorte equilibrada
+python -m src.audio.dataset --root data/audio/coswara --resumo
+python -m src.audio.dataset --root data/audio/coswara --coorte \
+    --lotes 20220224 20210406 --por-grupo 30
+
+# Consultas médicas: estatísticas e recorte
+python -m src.audio.consultas --root data/audio/consultas --resumo
+python -m src.audio.consultas --root data/audio/consultas --caso RES0001 --paciente
 
 # Testes (9 passando)
 pytest
@@ -97,13 +119,35 @@ pytest
 - `CLAUDE.md` é gitignored — **manter como está** (não editar).
 - Commits frequentes, mensagens em PT-BR, terminando com `Co-Authored-By: Claude ...`.
 
+## Entrega 2 — Áudio (`src/audio/`, branch `feature/entrega-2-audio`)
+
+**Duas fontes, por necessidade técnica** — não é redundância:
+
+| Dataset | O que fornece | Alimenta |
+|---|---|---|
+| **Coswara** (`dataset.py`) | fonação sustentada, respiração e tosse, com sintoma por participante | biomarcadores (librosa) |
+| **Consultas simuladas** (`consultas.py`) | fala clínica espontânea + transcrição humana | Transcribe → Comprehend Medical |
+
+Jitter/shimmer/F0 exigem **vogal sustentada** — não se calcula de forma confiável em
+conversa espontânea com dois falantes. E o Coswara só tem gente **contando números**, que
+não gera linguagem clínica para o Comprehend Medical extrair. Nenhum substitui o outro.
+
+- Coswara: 2 lotes baixados (20220224 e 20210406, 1,7 GB). Coorte equilibrada 30+30.
+  **Controle exige ausência de sintomas**, não só `covid_status == healthy` (121 dos 1.433
+  "healthy" relatam sintoma).
+- Consultas: 272 casos (213 respiratórios), CC0, figshare DOI 10.6084/m9.figshare.16550013.
+  As transcrições humanas são **ground-truth para medir o WER do Transcribe**.
+  Armadilha tratada: 2 arquivos estão em UTF-16, o resto em UTF-8.
+
 ## Próximos passos
 
 1. ~~Vídeo curto sem pessoa ao fundo para o demo~~ — **resolvido: PM_034.** Entrega 1 fechada.
-2. **Entrega 2 (Áudio/Azure):** baixar **Coswara**; pipeline Azure Speech-to-Text + Text
-   Analytics (Health) + biomarcadores acústicos (librosa). Credenciais Azure via `.env`
-   (modelo em `.env.example`). Estruturar `src/audio/`.
+2. **Entrega 2:** `pip install boto3` **no venv** (pendente); criar bucket S3 e definir a
+   região (`us-east-1` sugerida — confirmar disponibilidade do Comprehend Medical); depois
+   escrever upload S3 → Transcribe → Comprehend Medical e os biomarcadores.
 3. **Entrega 3:** baixar Challenge 2019 + UCI HAR, rodar e documentar; Synthea p/ prescrições.
-4. **Relatório técnico** (`reports/TECHNICAL_REPORT_FASE4.md`): completar as seções
-   **[Em desenvolvimento]** (áudio, integração/alerta em nuvem, conclusão).
-5. **Vídeo demo** (YouTube/Vimeo, até 15 min) mostrando o fluxo multimodal.
+4. **Relatório técnico**: completar as seções **[Em desenvolvimento]**. Atenção: as seções
+   **4 e 6 ainda descrevem o pipeline Azure** — reescrever para AWS quando a Entrega 2
+   estiver rodando, com resultados reais em vez de promessas.
+5. **Vídeo demo** (YouTube/Vimeo, até 15 min). Orçamento acordado: 1min abertura, 3min30
+   vídeo, 4min áudio, 2min30 anomalias, 2min nuvem/alerta, 1min conclusão, 1min folga.

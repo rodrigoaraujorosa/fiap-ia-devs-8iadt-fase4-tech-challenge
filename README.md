@@ -80,6 +80,16 @@ cp .env.example .env
 #   e preencha AWS_REGION / AWS_S3_BUCKET (ou use `aws configure`)
 ```
 
+> ⚠️ **Ative o ambiente virtual antes de qualquer comando deste README.** Todos os
+> `python -m src...` assumem o `.venv` ativo. Rodar com o Python do sistema pode até
+> funcionar, mas usa outras versões das bibliotecas — foi o que aconteceu durante o
+> desenvolvimento, e o `scikit-learn` chegou a divergir em uma versão menor entre os dois
+> ambientes. Para conferir qual interpretador está ativo:
+>
+> ```bash
+> python -c "import sys; print(sys.prefix)"   # deve apontar para .../.venv
+> ```
+
 📥 As instruções de **download de cada dataset** estão em
 [`docs/datasets_README.md`](docs/datasets_README.md).
 
