@@ -72,10 +72,12 @@ source .venv/bin/activate
 
 # 2. Instalar dependências
 pip install -r requirements.txt
+#   Para reproduzir exatamente os números do relatório, use o lock:
+#   pip install -r requirements-lock.txt
 
-# 3. (Entrega 2) Configurar credenciais Azure
+# 3. (Entrega 2) Configurar credenciais AWS
 cp .env.example .env
-#   e preencha AZURE_SPEECH_KEY / AZURE_LANGUAGE_KEY ...
+#   e preencha AWS_REGION / AWS_S3_BUCKET (ou use `aws configure`)
 ```
 
 📥 As instruções de **download de cada dataset** estão em

@@ -697,10 +697,9 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | `scikit-learn` | IsolationForest, imputação |
 | `matplotlib`, `seaborn` | Gráficos e relatórios |
 | `opencv-python` | Leitura de vídeo e overlay do esqueleto |
-| `azure-cognitiveservices-speech` | Azure Speech-to-Text (Entrega 2) |
-| `azure-ai-textanalytics` | Azure Text Analytics (Entrega 2) |
+| `boto3` | Amazon Transcribe e Comprehend Medical (Entrega 2) |
 | `librosa`, `soundfile` | Biomarcadores acústicos (Entrega 2) |
-| `python-dotenv` | Carregamento de credenciais Azure |
+| `python-dotenv` | Carregamento de credenciais da nuvem |
 | `pytest` | Testes automatizados |
 
 ---
@@ -711,7 +710,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 
 - Python 3.10+ e as dependências de `requirements.txt`
 - OpenPose v1.7.0 (binário portátil) — ver `docs/openpose_setup.md`
-- (Entrega 2) Conta Azure com recursos de Speech e Language; credenciais em `.env`
+- (Entrega 2) Conta AWS com acesso a Transcribe, Comprehend Medical e um bucket S3;
+  credenciais em `.env` ou `~/.aws/credentials`
 
 ### 10.2 Instalação
 
@@ -721,6 +721,29 @@ source .venv/Scripts/activate   # Windows (Git Bash)
 # source .venv/bin/activate     # Linux / macOS
 pip install -r requirements.txt
 ```
+
+**Determinismo e versões.** Os resultados deste relatório são reprodutíveis: o
+`random_state = 42` é fixo em todos os detectores e as demais operações (mediana, MAD,
+cálculo de ângulos) são determinísticas. Isso foi verificado na prática — os artefatos
+foram apagados e os três vídeos reprocessados do zero, e as taxas de validação saíram
+idênticas às da execução anterior.
+
+O `requirements.txt` declara **pisos** de versão (`numpy>=1.24`), para instalar sem atrito
+em qualquer máquina. O risco dessa escolha é que `random_state` fixa a *semente*, não o
+*algoritmo*: se uma versão futura do `scikit-learn` alterar a implementação interna do
+`IsolationForest`, os valores publicados aqui podem não se reproduzir.
+
+Por isso o repositório traz também **`requirements-lock.txt`**, com as versões exatas sob
+as quais os números deste relatório foram medidos. Para auditar os resultados:
+
+```bash
+pip install -r requirements-lock.txt
+```
+
+Um teste adicional confirmou a estabilidade entre versões: após uma atualização do numpy
+(1.x → 2.4.6) motivada por outra dependência, o pipeline foi recalculado a partir dos
+mesmos keypoints e produziu resultados **idênticos bit a bit** nos três vídeos (96, 576 e
+122 frames sinalizados), com o CSV de validação por repetição inalterado.
 
 ### 10.3 Execução — Entrega 1 (Análise de Vídeo)
 
