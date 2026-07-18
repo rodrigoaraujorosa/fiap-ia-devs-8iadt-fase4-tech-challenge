@@ -85,12 +85,17 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
         try:
             seg = load_segmentation(SEG_CSV, video_name.split("-Camera")[0])
             exercise = exercise_label(seg)
-            _, by_class = validate(res, seg, frame_step=frame_step)
+            per_rep, by_class = validate(res, seg, frame_step=frame_step)
+            # mesmo artefato que o CLI gera: detalhe por repetição em CSV
+            os.makedirs(OUT_DIR, exist_ok=True)
+            val_csv = os.path.join(OUT_DIR, f"validacao_{video_name}.csv")
+            per_rep.to_csv(val_csv, index=False)
             c, i = by_class.get(1, float("nan")), by_class.get(0, float("nan"))
             sep = "✅" if (0 in by_class.index and 1 in by_class.index and i > c) else "—"
             validation_md = (f"### Validação contra o ground-truth ({exercise})\n"
                              f"Taxa média de desvio — **corretas: {c:.3f}** · "
-                             f"**incorretas: {i:.3f}** {sep}")
+                             f"**incorretas: {i:.3f}** {sep}\n\n"
+                             f"_Detalhe por repetição salvo em `{os.path.relpath(val_csv, ROOT)}`._")
         except Exception as e:  # noqa: BLE001 — demo: mostra o erro em vez de quebrar
             validation_md = f"_(validação indisponível: {e})_"
 
