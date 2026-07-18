@@ -226,6 +226,49 @@ def speaker_turns(data: dict) -> list[dict]:
     return turns
 
 
+def identify_patient_speaker(turns: list[dict]) -> str | None:
+    """
+    Descobre qual rótulo da diarização (``spk_0``/``spk_1``) é o paciente.
+
+    O Transcribe rotula os falantes por ordem de aparição, sem saber quem é quem. Dois
+    sinais independentes identificam o paciente no formato OSCE deste dataset:
+
+    1. **quem fala mais** — o paciente descreve sintomas, o médico faz perguntas curtas;
+    2. **quem NÃO abre a consulta** — quem inicia é sempre o médico ("what brings you
+       in today?").
+
+    Usa-se a contagem de palavras como critério e a ordem de fala como conferência: se os
+    dois discordarem, devolve ``None`` em vez de arriscar um palpite — atribuir as falas
+    ao papel errado inverteria todo o relatório clínico.
+    """
+    if not turns:
+        return None
+
+    words: dict[str, int] = {}
+    for t in turns:
+        words[t["speaker"]] = words.get(t["speaker"], 0) + len(t["text"].split())
+    if len(words) < 2:
+        return None
+
+    by_words = max(words, key=words.get)
+    first_speaker = turns[0]["speaker"]
+    return by_words if by_words != first_speaker else None
+
+
+def patient_text_from_aws(data: dict) -> str:
+    """
+    Texto só das falas do paciente, a partir da diarização do Transcribe.
+
+    Sem isso, a extração de entidades rodaria sobre a consulta inteira e contaria as
+    **perguntas do médico** ("any rashes? skin changes?") como achados do paciente.
+    """
+    turns = speaker_turns(data)
+    patient = identify_patient_speaker(turns)
+    if patient is None:
+        return transcript_text(data)   # não deu para separar: devolve tudo, sem inventar
+    return " ".join(t["text"] for t in turns if t["speaker"] == patient)
+
+
 def evaluate(case: str, root: str | Path, data: dict, keep_fillers: bool = False) -> dict:
     """Compara a transcrição da AWS com a referência humana e devolve as métricas."""
     ref = normalize(full_text(root, case), drop_fillers=not keep_fillers)
