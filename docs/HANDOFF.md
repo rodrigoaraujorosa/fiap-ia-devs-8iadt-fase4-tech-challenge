@@ -7,7 +7,7 @@
 
 | Entrega | Estado |
 |---|---|
-| 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 2 vídeos (PM_008 e PM_034) + app Gradio com linguagem para equipe médica |
+| 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 3 experimentos (PM_008, PM_034, PM_006) + app Gradio com linguagem para equipe médica + screenshots no relatório |
 | 2 — Análise de Áudio (Azure) | **Não iniciada** (próxima grande peça) |
 | 3 — Detecção de Anomalias | **Baseline pronto** (loaders Challenge 2019 + UCI HAR); falta rodar/documentar |
 
@@ -73,8 +73,12 @@ pytest
     (1 paciente). Caso de **validação quantitativa** mais extenso: 33,3% de frames com
     desvio; taxa média **correto 0,430 vs incorreto 0,614** (separação ~1,4x — o agachamento
     é de grande amplitude, então até a execução correta se afasta da mediana do vídeo).
-  - **PM_006** — Ex4, ~31 s. **Tem uma pessoa ao fundo** — substituído pelo PM_034 na demo;
-    mantido só como caso histórico (o relatório dele está versionado).
+  - **PM_006** — Ex4, ~35 s, 10 repetições (5/5). Caso de **condições adversas de
+    captura**: luzes apagadas, câmera em meio-perfil e 1 pessoa ao fundo. Taxa média
+    **correto 0,175 vs incorreto 0,488** (razão 2,8x, contra 10,5x do PM_034) — a separação
+    resiste ao pior cenário. **Não é experimento controlado:** difere do PM_034 também no
+    sujeito (person_id 1 vs 4) e na perna (direita vs esquerda), então a queda não é
+    atribuível a um fator isolado. Ver a ressalva na §3.3 do relatório técnico.
 
 ## Workflow do usuário (importante)
 

@@ -154,23 +154,57 @@ validar quantitativamente os desvios detectados.
 `repetition_number`, `exercise_id`, intervalo de frames (`first_frame`, `last_frame`),
 orientação da câmera e `correctness` (0/1), entre outros campos.
 
-### 3.3 Vídeos de Demonstração e Validação
+### 3.3 Vídeos Utilizados: Três Experimentos
 
-Foram usados dois vídeos do REHAB24-6, ambos contendo execuções corretas e incorretas no
-mesmo vídeo. **PM_008** é o caso de validação quantitativa principal (mais longo, mais
-repetições); **PM_034** é o caso usado na demonstração ao vivo, por ser curto e não ter
-observadores em cena (`extra_person_in_cam17 = 0` no `Segmentation.csv`), o que evita
-qualquer ambiguidade visual na seleção da pessoa principal.
+Foram executados **três experimentos** sobre vídeos do REHAB24-6, todos contendo execuções
+corretas e incorretas no mesmo vídeo. Não são três repetições do mesmo teste: cada um isola
+uma variável diferente.
 
-| Atributo | PM_008 (validação) | PM_034 (demonstração) |
-|:--|:--|:--|
-| Exercício | Ex6 — agachamento | Ex4 — abdução de perna (esquerda) |
-| Resolução / taxa | 1920x1080, 30 fps | 1920x1080, 30 fps |
-| Duração | ~2 min 53 s (5.191 frames) | ~37 s (1.108 frames) |
-| Câmera | Camera17 (horizontal) | Camera17 (frontal) |
-| Repetições | 27 | 10 |
-| Correção | 21 corretas, 6 incorretas (rep. 17, 23–27) | 5 corretas, 5 incorretas (rep. 6–10) |
-| Observadores em cena | não | não |
+| Atributo | PM_008 | PM_034 | PM_006 |
+|:--|:--|:--|:--|
+| Papel | validação quantitativa | demonstração | condição de captura adversa |
+| Exercício | Ex6 — agachamento | Ex4 — abdução de perna | Ex4 — abdução de perna |
+| Subtipo | — | perna esquerda | perna direita |
+| Sujeito (`person_id`) | 1 | 4 | 1 |
+| Resolução / taxa | 1920x1080, 30 fps | 1920x1080, 30 fps | 1920x1080, 30 fps |
+| Duração | ~2 min 53 s (5.191 frames) | ~37 s (1.108 frames) | ~35 s (1.042 frames) |
+| Orientação da câmera | frontal e meio-perfil | frontal | meio-perfil |
+| Iluminação (`lights_on`) | 0 | 1 | 0 |
+| Repetições | 27 | 10 | 10 |
+| Correção | 21 corretas, 6 incorretas | 5 corretas, 5 incorretas | 5 corretas, 5 incorretas |
+| `extra_person_in_cam17` | 0 | 0 | 3 |
+| Pessoas extras observadas | 0 | 0 | **1** |
+
+Os papéis:
+
+- **PM_008** é o caso mais extenso (27 repetições) e o de maior volume de frames — a
+  validação quantitativa principal, e o único de exercício diferente.
+- **PM_034** é a execução em **condições favoráveis**: câmera frontal, luzes acesas, cena
+  sem outras pessoas. É o vídeo da demonstração.
+- **PM_006** é a execução em **condições adversas**: câmera em meio-perfil, luzes apagadas
+  e uma pessoa ao fundo. Comparado ao PM_034, mede quanto o pipeline degrada fora do
+  cenário ideal (resultados em 3.8).
+
+> **Este par não é um experimento controlado.** PM_034 e PM_006 compartilham o exercício e a
+> estrutura de repetições (10, sendo 5 corretas e 5 incorretas), mas diferem em **pelo menos
+> cinco variáveis simultâneas**: sujeito (`person_id` 4 e 1), perna trabalhada (esquerda e
+> direita), orientação da câmera (frontal e meio-perfil), iluminação (acesa e apagada) e
+> presença de uma pessoa ao fundo. A diferença de desempenho entre eles é real e medida, mas
+> **não pode ser atribuída a nenhuma dessas variáveis isoladamente** — em particular, a
+> iluminação apagada é uma explicação tão plausível quanto o observador para a perda de
+> qualidade na detecção de juntas. Isolar cada fator exigiria selecionar pares de vídeos que
+> variem uma variável por vez, o que o REHAB24-6 permite e fica registrado como trabalho
+> futuro.
+
+> **Nota sobre o rótulo `extra_person_in_cam17`.** O campo assume os valores 0, 1, 2 e 3 no
+> `Segmentation.csv`, mas a documentação do REHAB24-6 não acompanha o arquivo e **não foi
+> possível confirmar se o valor é uma contagem de pessoas ou um código de categoria**. A
+> inspeção direta do PM_006 (valor 3) mostra **uma única pessoa extra** em cena, o que
+> descarta a leitura "valor = número de pessoas". A contagem usada neste relatório é
+> portanto **empírica, medida sobre os próprios keypoints**: o OpenPose detecta 2 pessoas em
+> 302 dos 348 frames do PM_006 (87%) e 1 pessoa em 361 dos 370 frames do PM_034 (97,6%).
+> Para o argumento desta seção basta a diferença entre as cenas, que é inequívoca; o
+> significado exato do rótulo fica em aberto.
 
 ### 3.4 Extração de Pose (OpenPose BODY_25)
 
@@ -185,12 +219,23 @@ vídeo com escrita dos keypoints em JSON (um arquivo por frame).
 | Saída | 1 JSON por frame | `pose_keypoints_2d = [x0,y0,c0, ...]` |
 
 **Desempenho e subamostragem.** Na GPU local (NVIDIA MX330, 2 GB), o OpenPose processa a
-~1,2 s/frame. Processar os 5.191 frames de PM_008 levaria ~1h45. Para viabilizar a execução
-local, o vídeo é **subamostrado para 1 a cada 3 frames** (opção `--frame-step 3` do CLI;
-10 fps efetivos, 1.731 frames), reduzindo o tempo do OpenPose para ~35–45 min (varia com a
-GPU; o pipeline reporta o tempo medido no output e no relatório) sem perda relevante para o
-movimento lento do agachamento. O mapeamento é preservado: o índice `i` do keypoint
-corresponde ao frame original `3*i`, permitindo o cruzamento correto com os rótulos (ver 3.8).
+~1,2 s/frame (medido: `1.22s/frame` na execução da Figura 2). Processar os 5.191 frames de
+PM_008 levaria ~1h45. Para viabilizar a execução local, o vídeo é **subamostrado para 1 a
+cada 3 frames** (opção `--frame-step 3` do CLI; 10 fps efetivos, 1.731 frames), reduzindo o
+tempo do OpenPose para os 45:20 medidos (o pipeline reporta o tempo no output e no
+relatório) sem perda relevante para o movimento lento do agachamento. O mapeamento é
+preservado: o índice `i` do keypoint corresponde ao frame original `3*i`, permitindo o
+cruzamento correto com os rótulos (ver 3.8).
+
+![Uso da GPU local durante a extração de pose](figures/screenshots/uso_gpu_local.png)
+
+> **Figura 1.** Gerenciador de Tarefas durante a extração do PM_008. A MX330 opera em
+> **90% de utilização a 71 °C**, com **1,4 dos 2,0 GB** de memória dedicada ocupados — é
+> essa margem estreita de VRAM que justifica o `--net_resolution 320x176` da tabela acima:
+> resoluções maiores não cabem. A carga está na GPU dedicada, não na integrada (Intel Iris
+> Xe, 10%), confirmando que o OpenPose usa o dispositivo correto. O gargalo é a GPU, não a
+> CPU (38%) — o que explica por que a subamostragem, e não o paralelismo, é a alavanca de
+> desempenho disponível aqui.
 
 ### 3.5 Parser de Keypoints (`keypoints.py`)
 
@@ -206,6 +251,12 @@ O parser carrega os JSON do OpenPose em um `DataFrame` (uma linha por frame, col
 - **Descarte de juntas de baixa confiança:** juntas com confiança abaixo de `0.1` (ou não
   detectadas) têm coordenadas marcadas como `NaN`, evitando que ângulos sejam calculados
   sobre pontos espúrios em (0, 0).
+
+O PM_006 (3.8) exercita essa estratégia no cenário mais difícil disponível — uma pessoa ao
+fundo, luzes apagadas e câmera em meio-perfil: a seleção robusta preserva a separação entre
+execuções corretas e incorretas, ainda que a margem caia de 10,5x para 2,8x em relação ao
+vídeo capturado em condições favoráveis. Como os dois vídeos diferem em várias variáveis ao
+mesmo tempo, essa queda não é atribuível isoladamente à presença da outra pessoa.
 
 ### 3.6 Ângulos Posturais (`posture.py`)
 
@@ -292,6 +343,68 @@ de uma referência por fase do movimento em vez de uma mediana global.
 A articulação predominante foi o **ombro D** (48% dos instantes sinalizados), coerente com
 o uso dos braços para compensar o equilíbrio durante a abdução.
 
+**Resultados quantitativos (PM_006) — desempenho em condições adversas de captura.** O
+PM_006 executa o mesmo exercício do PM_034, com a mesma estrutura de repetições e duração
+equivalente, porém em condições de captura bem piores: **câmera em meio-perfil, luzes
+apagadas e uma pessoa ao fundo** (além de outro sujeito e da perna oposta — ver a ressalva
+em 3.3). Sobre os 348 frames subamostrados, o detector sinalizou 96 (27,6%):
+
+| Classe da repetição | PM_034 (condições favoráveis) | PM_006 (condições adversas) |
+|:--|:--:|:--:|
+| Correta (5 repetições) | 0,034 | 0,175 |
+| Incorreta (5 repetições) | 0,358 | 0,488 |
+| **Razão incorreta/correta** | **10,5x** | **2,8x** |
+
+O resultado relevante é que a separação **se mantém**: mesmo no pior cenário disponível, as
+repetições incorretas concentram quase 3x mais desvios que as corretas, e o sinal continua
+utilizável. A margem, porém, **cai mais de 3x** em relação ao vídeo favorável, e a queda vem
+principalmente das repetições *corretas*, cuja taxa de anomalia sobe 5x (0,034 → 0,175) — a
+degradação se manifesta como **falsos positivos** em execuções boas, não como incapacidade
+de detectar as ruins. Para um sistema de triagem clínica, esse é o modo de falha menos
+grave: perde-se especificidade, não sensibilidade.
+
+A qualidade da estimação de pose acompanha a queda: a orelha esquerda é detectada em apenas
+3,2% dos frames (contra cobertura de 100% em todas as juntas no PM_034), e a articulação
+predominante muda para a **inclinação do tronco** (71% dos instantes sinalizados, contra
+ombro D no PM_034).
+
+> **O que este resultado não demonstra.** É tentador atribuir a degradação à pessoa ao
+> fundo, mas os dois vídeos diferem simultaneamente em sujeito, perna, orientação de câmera,
+> iluminação e presença de terceiros (3.3). A iluminação apagada e o ângulo em meio-perfil
+> explicariam igualmente bem tanto a perda de cobertura das juntas quanto a mudança da
+> articulação predominante para o tronco. O que se pode afirmar é que **o pipeline preserva
+> o sinal discriminante sob condições adversas combinadas**; atribuir a queda a um fator
+> específico exigiria um desenho experimental que variasse uma variável por vez.
+
+**Consolidação dos três experimentos.**
+
+| | PM_008 | PM_034 | PM_006 |
+|:--|:--:|:--:|:--:|
+| Exercício | agachamento (Ex6) | abdução de perna (Ex4) | abdução de perna (Ex4) |
+| Condições de captura | luzes apagadas | favoráveis | adversas |
+| Frames analisados | 1.731 | 370 | 348 |
+| Frames com desvio | 576 (33,3%) | 122 (33,0%) | 96 (27,6%) |
+| Taxa — corretas | 0,430 | 0,034 | 0,175 |
+| Taxa — incorretas | 0,614 | 0,358 | 0,488 |
+| Razão | 1,4x | 10,5x | 2,8x |
+| Articulação predominante | joelho D (41%) | ombro D (48%) | tronco (71%) |
+| Tempo — OpenPose | 45:20.089 | 10:06.450 | 09:38.986 |
+| Tempo — análise | 00:15.541 | 00:21.878 | 00:02.829 |
+
+Em todos os três, a **separação tem o sinal esperado** (incorretas > corretas), sem nenhum
+ajuste de parâmetro entre execuções — o mesmo `contamination = 0.03`, o mesmo limiar
+`|z| > 3.5` e o mesmo `random_state = 42`. Esse é o resultado central da entrega: o método
+se sustenta em dois exercícios distintos, dois sujeitos e três condições de captura, com
+parâmetros fixos.
+
+A margem, porém, varia bastante (de 1,4x a 10,5x). Com três vídeos não é possível
+quantificar a contribuição de cada fator, mas os dados são compatíveis com duas
+influências: a **amplitude do movimento** (o agachamento, de grande amplitude, produz a
+menor margem) e a **qualidade da captura** (o vídeo em condições adversas produz margem
+intermediária). Ambas são hipóteses sugeridas pelos dados, não relações isoladas
+experimentalmente. O tempo de análise escala com o número de frames; o tempo de extração
+domina o custo em qualquer cenário.
+
 > **Observação de método.** A taxa de anomalia é alta mesmo nas repetições corretas (0,430)
 > porque o z-score robusto sinaliza os extremos do agachamento (fase de descida) como desvio
 > em relação à postura ereta mediana do vídeo. Como esse efeito incide igualmente sobre as
@@ -315,7 +428,83 @@ o uso dos braços para compensar o equilíbrio durante a abdução.
   **destaca visualmente os frames de desvio** — borda vermelha, o osso do ângulo que desviou
   em vermelho, e o rótulo `DESVIO: <ângulo> (|z|=...)`. Material direto para o vídeo-demo.
 
-### 3.10 Testes
+### 3.10 Ferramenta de Linha de Comando (`cli.py`)
+
+O `cli.py` executa o pipeline completo em um único comando — subamostragem, OpenPose,
+ângulos, detecção de desvios, relatório, vídeo anotado e validação — e é a ferramenta usada
+para processar lotes e para as execuções de referência deste relatório.
+
+```bash
+python -m src.video.cli --video data/video/rehab24-6/PM_008-Camera17-30fps.mp4 \
+    --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
+    --segmentation data/video/rehab24-6/Segmentation.csv
+```
+
+**Parâmetros.** A origem dos dados é obrigatória e mutuamente exclusiva: ou `--video`
+(extrai a pose antes) ou `--json-dir` (reaproveita keypoints já extraídos).
+
+| Parâmetro | Padrão | Função |
+|:--|:--|:--|
+| `--video` | — | vídeo a processar; roda o OpenPose antes. Exclusivo com `--json-dir` |
+| `--json-dir` | — | pasta com os `*_keypoints.json` já extraídos (pula o OpenPose) |
+| `--openpose-root` | — | raiz do binário do OpenPose; **obrigatório** com `--video` |
+| `--fps` | `30.0` | taxa do vídeo original, usada para converter frames em segundos |
+| `--frame-step` | `1` | processa 1 a cada N frames. `3` reduz o tempo do OpenPose em ~3x e é o valor usado nas execuções locais; também mapeia os frames na validação |
+| `--overlay` | desligado | gera o vídeo com esqueleto e desvios sobrepostos (requer `--video`) |
+| `--segmentation` | — | CSV de rótulos do REHAB24-6; ativa a validação contra o ground-truth |
+| `--video-id` | derivado do nome | id no `Segmentation.csv` (ex.: `PM_008-Camera17-30fps` → `PM_008`) |
+| `--net-resolution` | `320x176` | resolução da rede do OpenPose; menor = menos VRAM |
+| `--out` | `reports` | pasta de saída dos artefatos |
+
+**Saída.** O terminal acompanha as fases numeradas (`[0/4]` a `[4/4]`) com barra de
+progresso `tqdm` nas duas etapas longas (OpenPose e overlay), e fecha imprimindo os tempos
+por fase no formato `mm:ss.mi`, o resultado da validação e o caminho de cada artefato
+gerado.
+
+![Execução do CLI sobre o vídeo PM_008](figures/screenshots/cli_PM_008-Camera17-30fps.png)
+
+> **Figura 2.** Execução completa do CLI sobre o PM_008 (1.731 frames após subamostragem).
+> A saída mostra as quatro fases, os tempos medidos — OpenPose 45:20.089, análise 00:15.541,
+> overlay e validação somando +11:06.050, total fim-a-fim 56:42.061 — e a validação contra o
+> ground-truth (corretas 0,430 · incorretas 0,614, separação OK). Ao final, lista os quatro
+> artefatos gerados: relatório, gráfico, vídeo anotado e CSV de validação por repetição.
+
+### 3.11 Interface Web de Demonstração (`app.py`)
+
+Para uso pela **equipe clínica** e para a demonstração do desafio, o mesmo pipeline é
+exposto em uma app web local (Gradio, `python -m src.video.app`, porta 7860). A app não
+reimplementa nada: chama as mesmas funções do CLI e gera os mesmos artefatos em `reports/`.
+
+A diferença está na linguagem. Como o público não é técnico, as etapas aparecem por extenso
+("Aplicando o Modelo OpenPose", "Overlay (esqueleto sobre o vídeo)"), cada quadro de saída
+tem uma legenda dizendo o que vai aparecer nele, e os tempos usam `mm:ss.mi`. Os controles
+são quatro: o vídeo (lista montada a partir de `data/video/rehab24-6/*.mp4`), o `frame-step`,
+a validação contra o ground-truth e o reaproveitamento de keypoints já extraídos.
+
+A sequência abaixo mostra o fluxo completo do ponto de vista de quem usa a ferramenta.
+
+![Vídeo original do PM_034, sem anotação](figures/screenshots/video_sem_overlay_PM_034-Camera17-30fps.png)
+
+> **Figura 3 — antes.** O material de partida: o vídeo bruto do PM_034 (abdução de perna),
+> como a equipe o receberia hoje. A avaliação depende inteiramente da observação visual do
+> profissional, sem nenhuma medida objetiva de ângulo ou marcação de instantes suspeitos.
+
+![Interface Gradio processando o PM_034](figures/screenshots/gradio_processando_PM_034-Camera17-30fps.png)
+
+> **Figura 4 — durante.** A app em processamento, com o `frame-step` em 3 e o
+> reaproveitamento de keypoints desligado (extração completa). A barra informa a etapa em
+> linguagem corrente e o progresso real ("Aplicando o Modelo OpenPose — 104/370 frames"),
+> e cada quadro já anuncia o que vai exibir ao terminar.
+
+![Interface Gradio com o resultado do PM_034](figures/screenshots/gradio_finalizado_PM_034-Camera17-30fps.png)
+
+> **Figura 5 — depois.** O mesmo instante da Figura 3, agora processado. À esquerda, os
+> ângulos ao longo dos 37 s com as faixas rosa marcando os instantes de desvio; à direita, o
+> vídeo com o esqueleto BODY_25 sobreposto, a borda vermelha sinalizando o frame como desvio
+> e o osso do ângulo responsável destacado em vermelho (ombro, no frame 0). Abaixo — fora do
+> enquadramento — seguem a validação contra o ground-truth e o relatório completo.
+
+### 3.12 Testes
 
 O pipeline é coberto por testes automatizados que usam **keypoints sintéticos** (sem
 necessidade de OpenPose nem do dataset): validam o cálculo de ângulos, a detecção de
@@ -546,16 +735,13 @@ python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
 
 # A partir de JSONs já extraídos
 python -m src.video.cli --json-dir reports/json/PM_034 --fps 30
+
+# App web local de demonstração (abre em http://localhost:7860)
+python -m src.video.app
 ```
 
-Para a demonstração há também uma **app web local** (Gradio): `python -m src.video.app`
-(abre em `http://localhost:7860`), que mostra o progresso do processamento e, ao final, o
-gráfico, o relatório, a validação e o vídeo com o esqueleto sobreposto.
-
-A interface é escrita para o **público clínico**, não para o desenvolvedor: as etapas
-aparecem por extenso ("Aplicando o Modelo OpenPose", "Overlay (esqueleto sobre o vídeo)"),
-cada quadro de saída tem uma legenda explicando o que vai surgir nele, e os tempos de
-processamento são exibidos no formato `mm:ss.mi`.
+A tabela completa de parâmetros do CLI está na **seção 3.10**; a interface web e seu fluxo
+de uso, na **seção 3.11**.
 
 ### 10.4 Execução — Entrega 3 (Detecção de Anomalias)
 
@@ -583,15 +769,22 @@ pytest -q
 | Azure Anomaly Detector aposentado | Sem serviço gerenciado para séries temporais | Detecção local (IsolationForest) |
 | Entrega 2 (áudio) em desenvolvimento | Modalidade ainda não integrada | Concluir pipeline Azure + Coswara |
 | Detecção não-supervisionada | Limiares definidos empiricamente | Calibração com os rótulos disponíveis |
+| Referência = mediana global do vídeo | Em movimentos de grande amplitude (agachamento), a execução correta também se afasta da mediana e a separação cai para 1,4x (3.8) | Referência por fase do movimento em vez de mediana única |
+| Sensibilidade às condições de captura | Em condições adversas (pouca luz, meio-perfil, pessoa ao fundo), a margem cai de 10,5x para 2,8x, por falsos positivos em execuções corretas (3.8) | Rastreamento de identidade entre frames; máscara da região de interesse; normalização por iluminação |
 
 ### 11.2 Trabalhos Futuros
 
 1. Concluir a Entrega 2 (Azure Speech-to-Text + Text Analytics + biomarcadores)
-2. Completar a validação quantitativa do vídeo contra os rótulos do REHAB24-6
+2. Adotar uma referência **por fase do movimento** (em vez da mediana global) para recuperar
+   a separação em exercícios de grande amplitude — a limitação mais clara medida em 3.8
 3. Implementar a camada de fusão e o fluxo de alerta em nuvem
 4. Calibrar os limiares de anomalia com os *ground-truths* disponíveis
-5. Processar mais vídeos/exercícios do REHAB24-6 para robustez
-6. Avaliar modelos temporais (LSTM/autoencoder) para as séries de sinais vitais
+5. Processar mais vídeos/exercícios do REHAB24-6 para robustez (hoje: 3 experimentos,
+   2 exercícios, 2 sujeitos)
+6. **Isolar os fatores de degradação** com pares de vídeos que variem uma variável por vez
+   (iluminação, orientação da câmera, presença de terceiros) — o REHAB24-6 tem metadados
+   para montar esse desenho, que a comparação atual (3.3) não permite
+7. Avaliar modelos temporais (LSTM/autoencoder) para as séries de sinais vitais
 
 ---
 

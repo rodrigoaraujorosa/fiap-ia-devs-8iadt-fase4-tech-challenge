@@ -43,10 +43,13 @@ python -m src.video.overlay --video data/video/rehab24-6/PM_034-Camera17-30fps.m
     --json-dir reports/json/PM_034 --out reports/PM_034_overlay.mp4
 ```
 
-> **Vídeos usados.** `PM_034` (Ex4, abdução de perna, ~37 s, 5 repetições corretas e 5
-> incorretas, sem observadores em cena) é o vídeo da demonstração — curto e de separação
-> nítida. `PM_008` (Ex6, agachamento, ~3 min, 27 repetições) é o caso de validação
-> quantitativa mais extenso. Resultados em [`reports/TECHNICAL_REPORT_FASE4.md`](../../reports/TECHNICAL_REPORT_FASE4.md).
+> **Três experimentos.** `PM_034` (Ex4, abdução de perna, ~37 s, 5 corretas e 5 incorretas,
+> cena limpa) é o vídeo da demonstração — curto e de separação nítida (10,5x). `PM_008`
+> (Ex6, agachamento, ~3 min, 27 repetições) é a validação quantitativa mais extensa (1,4x).
+> `PM_006` é o caso adverso: mesmo exercício do PM_034, mas com luzes apagadas, câmera em
+> meio-perfil e 1 pessoa ao fundo (2,8x) — mostra que a separação resiste fora do cenário
+> ideal. Resultados e comparação em
+> [`reports/TECHNICAL_REPORT_FASE4.md`](../../reports/TECHNICAL_REPORT_FASE4.md) §3.8.
 
 Saídas em `reports/`: relatório `.md`, vídeo `_overlay.mp4`, CSV de validação
 `validacao_<vídeo>.csv` e o gráfico em `reports/figures/*.png`.
