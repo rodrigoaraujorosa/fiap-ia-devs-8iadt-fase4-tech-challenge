@@ -62,6 +62,12 @@ models/
 # Exceção: gráficos de relatório são evidências/deliverables (versionados)
 !reports/figures/*.png
 
+# Exceção: capturas de tela do CLI e da app (documentam o uso das ferramentas).
+# A pasta precisa ser designorada explicitamente — "reports/figures/*" acima impede
+# o git de descer nela, e negações em arquivos de um diretório ignorado não valem.
+!reports/figures/screenshots/
+!reports/figures/screenshots/*.png
+
 # Keypoints JSON do OpenPose (centenas de arquivos por vídeo) — não versionar
 reports/json/
 
