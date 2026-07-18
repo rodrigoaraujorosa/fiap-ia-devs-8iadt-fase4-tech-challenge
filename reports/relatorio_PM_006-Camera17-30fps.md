@@ -43,7 +43,7 @@ Juntas com baixa detecção (<60% dos frames) — podem prejudicar os ângulos a
 - **Frames analisados:** 348 (~34.8 s a 10 fps)
 - **Frames sinalizados como desvio:** 96 (27.6%)
 - **Eventos de desvio (intervalos contíguos):** 15
-- **Tempo de processamento:** Análise 9.0 s
+- **Tempo de processamento:** Análise 00:03.122
 
 | Início (s) | Fim (s) | Duração (s) | Articulação predominante | Severidade (z máx) |
 |---|---|---|---|---|
