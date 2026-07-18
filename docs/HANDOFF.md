@@ -72,13 +72,20 @@ python -m src.video.app            # http://localhost:7860
 
 # --- Entrega 2 (áudio) ---
 # Coswara: estatísticas e coorte equilibrada
-python -m src.audio.dataset --root data/audio/coswara --resumo
-python -m src.audio.dataset --root data/audio/coswara --coorte \
-    --lotes 20220224 20210406 --por-grupo 30
+python -m src.audio.dataset --root data/audio/coswara --summary
+python -m src.audio.dataset --root data/audio/coswara --cohort \
+    --batches 20220224 20210406 --per-group 30
 
 # Consultas médicas: estatísticas e recorte
-python -m src.audio.consultas --root data/audio/consultas --resumo
-python -m src.audio.consultas --root data/audio/consultas --caso RES0001 --paciente
+python -m src.audio.consultations --root data/audio/consultas --summary
+python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
+
+# Transcrição (CUSTA DINHEIRO — cacheia em reports/transcriptions/)
+python -m src.audio.transcribe --cases RES0029
+python -m src.audio.transcribe --report --out reports/wer_consultations.csv  # só do cache
+
+# Verificação do ambiente AWS (não custa nada)
+python -m src.common.config
 
 # Testes (9 passando)
 pytest
@@ -111,6 +118,17 @@ pytest
 - `reports/json/` é gitignored (centenas de JSONs). Gráficos de relatório (`reports/figures/*.png`)
   são versionáveis (exceção no `.gitignore`).
 
+## Convenções de código (importante)
+
+- **Código em inglês, comentários em pt-BR.** Nomes de arquivo, funções, variáveis, colunas
+  de DataFrame e **parâmetros de CLI** em inglês (`--frame-step`, `--per-group`,
+  `--keep-fillers`); docstrings e comentários em português. A Entrega 1 já seguia isso; a
+  Entrega 2 nasceu em português e foi convertida — não reintroduzir.
+- **Relatórios para a equipe médica são bilíngues.** O áudio-fonte é em inglês, então o
+  trecho citado (transcrição, entidade extraída) aparece **no original em inglês, seguido
+  da tradução em pt-BR**. Nunca só em inglês, nunca traduzido sem o original — a equipe
+  precisa poder conferir contra a gravação.
+
 ## Preferências
 
 - **README** com emojis/badges (default do usuário). **Relatório técnico SEM ícones.**
@@ -126,7 +144,7 @@ pytest
 | Dataset | O que fornece | Alimenta |
 |---|---|---|
 | **Coswara** (`dataset.py`) | fonação sustentada, respiração e tosse, com sintoma por participante | biomarcadores (librosa) |
-| **Consultas simuladas** (`consultas.py`) | fala clínica espontânea + transcrição humana | Transcribe → Comprehend Medical |
+| **Consultas simuladas** (`consultations.py`) | fala clínica espontânea + transcrição humana | Transcribe → Comprehend Medical |
 
 Jitter/shimmer/F0 exigem **vogal sustentada** — não se calcula de forma confiável em
 conversa espontânea com dois falantes. E o Coswara só tem gente **contando números**, que

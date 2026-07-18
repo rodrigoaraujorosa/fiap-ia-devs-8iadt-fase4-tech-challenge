@@ -1,0 +1,2 @@
+case,wer,substitutions,insertions,deletions,reference_words,aws_words,human_turns,aws_turns,job_seconds
+RES0029,0.0537,20,16,6,782,792,69,65,47.0

@@ -91,11 +91,11 @@ clínicos do paciente.
 > texto corrompido, e o caso aparece silenciosamente com zero turnos de fala. O loader
 > detecta a codificação pelo BOM.
 
-Use `src/audio/consultas.py`:
+Use `src/audio/consultations.py`:
 
 ```bash
-python -m src.audio.consultas --root data/audio/consultas --resumo
-python -m src.audio.consultas --root data/audio/consultas --caso RES0001 --paciente
+python -m src.audio.consultations --root data/audio/consultas --summary
+python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
 ```
 
 ---
@@ -134,7 +134,7 @@ for p in aa ab ac ad ae af ag ah ai aj ak al am an ao; do
   curl -L -o "data/audio/coswara/raw/20220224/20220224.tar.gz.$p" \
     "$BASE/20220224/20220224.tar.gz.$p"
 done
-python -m src.audio.dataset --root data/audio/coswara --extrair 20220224
+python -m src.audio.dataset --root data/audio/coswara --extract 20220224
 ```
 
 Página oficial: https://github.com/iiscleap/Coswara-Data (open-access, **não-comercial**).
@@ -158,14 +158,14 @@ respiratória, `ftg` = fadiga — exatamente os sintomas do enunciado do desafio
 > **ausência de qualquer sintoma relatado**.
 
 > 💡 Os `.tar.gz` vêm fatiados em partes de 100 MB porque o GitHub limita o tamanho de
-> arquivo. Elas precisam ser concatenadas antes de descompactar — `--extrair` faz isso.
+> arquivo. Elas precisam ser concatenadas antes de descompactar — `--extract` faz isso.
 
 Use `src/audio/dataset.py`:
 
 ```bash
-python -m src.audio.dataset --root data/audio/coswara --resumo
-python -m src.audio.dataset --root data/audio/coswara --coorte \
-    --lotes 20220224 20210406 --por-grupo 30
+python -m src.audio.dataset --root data/audio/coswara --summary
+python -m src.audio.dataset --root data/audio/coswara --cohort \
+    --batches 20220224 20210406 --per-group 30
 ```
 
 ---
@@ -268,8 +268,8 @@ Com o `.venv` ativo, a partir da raiz do projeto:
 python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay     --segmentation data/video/rehab24-6/Segmentation.csv
 
 # Entrega 2 — áudio
-python -m src.audio.consultas --root data/audio/consultas --resumo
-python -m src.audio.dataset   --root data/audio/coswara  --resumo
+python -m src.audio.consultations --root data/audio/consultas --summary
+python -m src.audio.dataset   --root data/audio/coswara  --summary
 
 # Entrega 3 — anomalias
 python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019

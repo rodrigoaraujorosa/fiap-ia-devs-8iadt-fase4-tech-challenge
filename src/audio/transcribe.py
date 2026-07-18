@@ -12,13 +12,13 @@ medido. O WER (Word Error Rate) contra a referência humana dá um número defen
 relatório, em vez de uma captura de tela.
 
 **Custo.** O Transcribe cobra por minuto de áudio processado e cada consulta tem 11-15 min.
-Por isso o módulo *sempre* cacheia em ``reports/transcricoes/<caso>.json`` e nunca
-reprocessa um caso já transcrito, a menos que se peça ``--forcar``.
+Por isso o módulo *sempre* cacheia em ``reports/transcriptions/<case>.json`` e nunca
+reprocessa um caso já transcrito, a menos que se peça ``--force``.
 
 Uso:
-    python -m src.audio.transcribe --casos RES0001              # um caso
-    python -m src.audio.transcribe --casos RES0001 RES0010      # vários
-    python -m src.audio.transcribe --relatorio                  # WER do que já foi transcrito
+    python -m src.audio.transcribe --cases RES0001              # um caso
+    python -m src.audio.transcribe --cases RES0001 RES0010      # vários
+    python -m src.audio.transcribe --report                     # WER do que já foi transcrito
 """
 from __future__ import annotations
 
@@ -29,15 +29,15 @@ import time
 from pathlib import Path
 
 from ..common.config import ROOT_DIR, get_aws_config
-from .consultas import audio_path, full_text, load_transcript
+from .consultations import audio_path, full_text, load_transcript
 
-CACHE_DIR = ROOT_DIR / "reports" / "transcricoes"
-PREFIXO_S3 = "consultas"
+CACHE_DIR = ROOT_DIR / "reports" / "transcriptions"
+S3_PREFIX = "consultations"
 
 # Marcadores de hesitação. O anotador humano transcreveu "um", "uh", "ahh"; o Transcribe
 # normalmente os omite. Contá-los como erro mede a convenção de anotação, não a qualidade
-# do reconhecimento — por isso são removíveis dos dois lados (ver --com-hesitacao).
-HESITACOES = {
+# do reconhecimento — por isso são removíveis dos dois lados (ver --keep-fillers).
+FILLERS = {
     "um", "uh", "uhh", "umm", "ah", "ahh", "ahhh", "hmm", "mmm", "mhm",
     "er", "erm", "eh", "oh", "hm",
 }
@@ -45,22 +45,22 @@ HESITACOES = {
 
 # ----- Normalização e WER -----
 
-def normalizar(texto: str, remover_hesitacao: bool = True) -> list[str]:
+def normalize(text: str, drop_fillers: bool = True) -> list[str]:
     """
     Reduz o texto a uma lista de palavras comparável entre referência e hipótese.
 
     Minúsculas, sem pontuação e com espaços colapsados — sem isso o WER mediria
     diferenças de estilo de anotação (vírgulas, maiúsculas) em vez de reconhecimento.
     """
-    texto = texto.lower()
-    texto = re.sub(r"[^\w\s']", " ", texto)   # mantém apóstrofo: "i'm" != "im"
-    palavras = texto.split()
-    if remover_hesitacao:
-        palavras = [p for p in palavras if p not in HESITACOES]
-    return palavras
+    text = text.lower()
+    text = re.sub(r"[^\w\s']", " ", text)   # mantém apóstrofo: "i'm" != "im"
+    words = text.split()
+    if drop_fillers:
+        words = [w for w in words if w not in FILLERS]
+    return words
 
 
-def wer(referencia: list[str], hipotese: list[str]) -> dict:
+def wer(reference: list[str], hypothesis: list[str]) -> dict:
     """
     Word Error Rate entre duas listas de palavras, com o detalhe dos erros.
 
@@ -69,11 +69,11 @@ def wer(referencia: list[str], hipotese: list[str]) -> dict:
     tipo de erro, porque eles têm causas diferentes: deleção costuma ser fala sobreposta,
     inserção costuma ser ruído interpretado como palavra.
     """
-    n, m = len(referencia), len(hipotese)
+    n, m = len(reference), len(hypothesis)
     if n == 0:
-        return {"wer": float("nan"), "sub": 0, "ins": m, "del": 0, "palavras_ref": 0}
+        return {"wer": float("nan"), "sub": 0, "ins": m, "del": 0, "ref_words": 0}
 
-    # d[i][j] = custo mínimo para alinhar referencia[:i] com hipotese[:j]
+    # d[i][j] = custo mínimo para alinhar reference[:i] com hypothesis[:j]
     d = [[0] * (m + 1) for _ in range(n + 1)]
     for i in range(n + 1):
         d[i][0] = i
@@ -81,15 +81,15 @@ def wer(referencia: list[str], hipotese: list[str]) -> dict:
         d[0][j] = j
     for i in range(1, n + 1):
         for j in range(1, m + 1):
-            custo = 0 if referencia[i - 1] == hipotese[j - 1] else 1
-            d[i][j] = min(d[i - 1][j] + 1,          # deleção
-                          d[i][j - 1] + 1,          # inserção
-                          d[i - 1][j - 1] + custo)  # substituição/acerto
+            cost = 0 if reference[i - 1] == hypothesis[j - 1] else 1
+            d[i][j] = min(d[i - 1][j] + 1,         # deleção
+                          d[i][j - 1] + 1,         # inserção
+                          d[i - 1][j - 1] + cost)  # substituição/acerto
 
     # Retrocede pelo caminho ótimo para separar os tipos de erro.
     i, j, sub, ins, dele = n, m, 0, 0, 0
     while i > 0 or j > 0:
-        if i > 0 and j > 0 and referencia[i - 1] == hipotese[j - 1] and d[i][j] == d[i - 1][j - 1]:
+        if i > 0 and j > 0 and reference[i - 1] == hypothesis[j - 1] and d[i][j] == d[i - 1][j - 1]:
             i, j = i - 1, j - 1
         elif i > 0 and j > 0 and d[i][j] == d[i - 1][j - 1] + 1:
             sub += 1
@@ -102,46 +102,46 @@ def wer(referencia: list[str], hipotese: list[str]) -> dict:
             i -= 1
 
     return {"wer": (sub + ins + dele) / n, "sub": sub, "ins": ins, "del": dele,
-            "palavras_ref": n}
+            "ref_words": n}
 
 
 # ----- AWS -----
 
-def _clientes(region: str):
+def _clients(region: str):
     import boto3
     return boto3.client("s3", region_name=region), boto3.client("transcribe", region_name=region)
 
 
-def enviar_para_s3(caso: str, root: str | Path, bucket: str, region: str) -> str:
+def upload_to_s3(case: str, root: str | Path, bucket: str, region: str) -> str:
     """Envia o MP3 do caso para o S3 (se ainda não estiver lá) e devolve a URI."""
     from botocore.exceptions import ClientError
 
-    s3, _ = _clientes(region)
-    chave = f"{PREFIXO_S3}/{caso}.mp3"
+    s3, _ = _clients(region)
+    key = f"{S3_PREFIX}/{case}.mp3"
     try:
-        s3.head_object(Bucket=bucket, Key=chave)   # já enviado numa execução anterior
+        s3.head_object(Bucket=bucket, Key=key)   # já enviado numa execução anterior
     except ClientError as e:
         if e.response["Error"]["Code"] not in ("404", "NoSuchKey", "NotFound"):
             raise
-        s3.upload_file(str(audio_path(root, caso)), bucket, chave)
-    return f"s3://{bucket}/{chave}"
+        s3.upload_file(str(audio_path(root, case)), bucket, key)
+    return f"s3://{bucket}/{key}"
 
 
-def transcrever(
-    caso: str,
+def transcribe_case(
+    case: str,
     root: str | Path,
     bucket: str,
     region: str,
-    idioma: str = "en-US",
-    falantes: int = 2,
-    intervalo: float = 15.0,
+    language: str = "en-US",
+    speakers: int = 2,
+    poll_interval: float = 15.0,
     timeout: float = 1800.0,
-    progresso=None,
+    progress=None,
 ) -> dict:
     """
     Roda o job do Transcribe para um caso e devolve o resultado bruto da AWS.
 
-    ``falantes=2`` liga a diarização: a consulta é um diálogo médico-paciente, e separar
+    ``speakers=2`` liga a diarização: a consulta é um diálogo médico-paciente, e separar
     os interlocutores permite comparar com os turnos ``D:``/``P:`` da referência humana.
 
     O nome do job carrega o instante de início porque a AWS **não permite reaproveitar o
@@ -149,59 +149,59 @@ def transcrever(
     """
     import urllib.request
 
-    _, tr = _clientes(region)
-    uri = enviar_para_s3(caso, root, bucket, region)
-    nome_job = f"consulta-{caso}-{int(time.time())}"
+    _, tr = _clients(region)
+    uri = upload_to_s3(case, root, bucket, region)
+    job_name = f"consultation-{case}-{int(time.time())}"
 
     tr.start_transcription_job(
-        TranscriptionJobName=nome_job,
+        TranscriptionJobName=job_name,
         Media={"MediaFileUri": uri},
         MediaFormat="mp3",
-        LanguageCode=idioma,
-        Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": falantes},
+        LanguageCode=language,
+        Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": speakers},
     )
 
     t0 = time.perf_counter()
     while True:
-        job = tr.get_transcription_job(TranscriptionJobName=nome_job)["TranscriptionJob"]
+        job = tr.get_transcription_job(TranscriptionJobName=job_name)["TranscriptionJob"]
         status = job["TranscriptionJobStatus"]
         if status in ("COMPLETED", "FAILED"):
             break
         if time.perf_counter() - t0 > timeout:
-            raise TimeoutError(f"job {nome_job} passou de {timeout:.0f}s ainda em {status}")
-        if progresso:
-            progresso(caso, status, time.perf_counter() - t0)
-        time.sleep(intervalo)
+            raise TimeoutError(f"job {job_name} passou de {timeout:.0f}s ainda em {status}")
+        if progress:
+            progress(case, status, time.perf_counter() - t0)
+        time.sleep(poll_interval)
 
     if status == "FAILED":
-        raise RuntimeError(f"job {nome_job} falhou: {job.get('FailureReason', '?')}")
+        raise RuntimeError(f"job {job_name} falhou: {job.get('FailureReason', '?')}")
 
     url = job["Transcript"]["TranscriptFileUri"]
     with urllib.request.urlopen(url) as r:  # noqa: S310 — URL vem da própria AWS
-        dados = json.load(r)
+        data = json.load(r)
 
-    dados["_meta"] = {
-        "caso": caso,
-        "job": nome_job,
-        "segundos": round(time.perf_counter() - t0, 1),
+    data["_meta"] = {
+        "case": case,
+        "job": job_name,
+        "seconds": round(time.perf_counter() - t0, 1),
         "uri": uri,
-        "idioma": idioma,
+        "language": language,
     }
-    return dados
+    return data
 
 
 # ----- Cache e resultado -----
 
-def caminho_cache(caso: str) -> Path:
-    return CACHE_DIR / f"{caso}.json"
+def cache_path(case: str) -> Path:
+    return CACHE_DIR / f"{case}.json"
 
 
-def texto_da_transcricao(dados: dict) -> str:
+def transcript_text(data: dict) -> str:
     """Texto corrido devolvido pelo Transcribe."""
-    return dados["results"]["transcripts"][0]["transcript"]
+    return data["results"]["transcripts"][0]["transcript"]
 
 
-def turnos_por_falante(dados: dict) -> list[dict]:
+def speaker_turns(data: dict) -> list[dict]:
     """
     Reconstrói os turnos a partir da diarização.
 
@@ -209,112 +209,112 @@ def turnos_por_falante(dados: dict) -> list[dict]:
     segmentos contíguos de um mesmo falante são unidos, para o formato ficar comparável
     ao da referência humana (um turno por fala).
     """
-    segmentos = dados["results"].get("speaker_labels", {}).get("segments", [])
-    itens = {i["start_time"]: i for i in dados["results"]["items"] if "start_time" in i}
+    segments = data["results"].get("speaker_labels", {}).get("segments", [])
+    items = {i["start_time"]: i for i in data["results"]["items"] if "start_time" in i}
 
-    turnos: list[dict] = []
-    for seg in segmentos:
-        palavras = [itens[it["start_time"]]["alternatives"][0]["content"]
-                    for it in seg.get("items", []) if it["start_time"] in itens]
-        if not palavras:
+    turns: list[dict] = []
+    for seg in segments:
+        words = [items[it["start_time"]]["alternatives"][0]["content"]
+                 for it in seg.get("items", []) if it["start_time"] in items]
+        if not words:
             continue
-        texto = " ".join(palavras)
-        if turnos and turnos[-1]["falante"] == seg["speaker_label"]:
-            turnos[-1]["texto"] += f" {texto}"
+        text = " ".join(words)
+        if turns and turns[-1]["speaker"] == seg["speaker_label"]:
+            turns[-1]["text"] += f" {text}"
         else:
-            turnos.append({"falante": seg["speaker_label"], "texto": texto})
-    return turnos
+            turns.append({"speaker": seg["speaker_label"], "text": text})
+    return turns
 
 
-def avaliar(caso: str, root: str | Path, dados: dict, com_hesitacao: bool = False) -> dict:
+def evaluate(case: str, root: str | Path, data: dict, keep_fillers: bool = False) -> dict:
     """Compara a transcrição da AWS com a referência humana e devolve as métricas."""
-    ref = normalizar(full_text(root, caso), remover_hesitacao=not com_hesitacao)
-    hip = normalizar(texto_da_transcricao(dados), remover_hesitacao=not com_hesitacao)
-    # full_text() prefixa "medico:"/"paciente:" em cada linha — fora da comparação.
-    ref = [p for p in ref if p not in ("medico", "paciente")]
+    ref = normalize(full_text(root, case), drop_fillers=not keep_fillers)
+    hyp = normalize(transcript_text(data), drop_fillers=not keep_fillers)
+    # full_text() prefixa "doctor:"/"patient:" em cada linha — fora da comparação.
+    ref = [w for w in ref if w not in ("doctor", "patient")]
 
-    m = wer(ref, hip)
-    humanos = load_transcript(root, caso)
+    m = wer(ref, hyp)
+    human = load_transcript(root, case)
     return {
-        "caso": caso,
+        "case": case,
         "wer": round(m["wer"], 4),
-        "substituicoes": m["sub"],
-        "insercoes": m["ins"],
-        "delecoes": m["del"],
-        "palavras_referencia": m["palavras_ref"],
-        "palavras_aws": len(hip),
-        "turnos_humanos": len(humanos),
-        "turnos_aws": len(turnos_por_falante(dados)),
-        "segundos_job": dados.get("_meta", {}).get("segundos"),
+        "substitutions": m["sub"],
+        "insertions": m["ins"],
+        "deletions": m["del"],
+        "reference_words": m["ref_words"],
+        "aws_words": len(hyp),
+        "human_turns": len(human),
+        "aws_turns": len(speaker_turns(data)),
+        "job_seconds": data.get("_meta", {}).get("seconds"),
     }
 
 
-def processar(
-    casos: list[str],
+def process(
+    cases: list[str],
     root: str | Path,
     bucket: str,
     region: str,
-    forcar: bool = False,
-    com_hesitacao: bool = False,
+    force: bool = False,
+    keep_fillers: bool = False,
 ) -> list[dict]:
     """Transcreve (ou reaproveita do cache) e avalia cada caso."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    resultados = []
+    results = []
 
-    for caso in casos:
-        cache = caminho_cache(caso)
-        if cache.exists() and not forcar:
-            print(f"[{caso}] reaproveitando transcrição em cache")
-            dados = json.loads(cache.read_text(encoding="utf-8"))
+    for case in cases:
+        cache = cache_path(case)
+        if cache.exists() and not force:
+            print(f"[{case}] reaproveitando transcrição em cache")
+            data = json.loads(cache.read_text(encoding="utf-8"))
         else:
-            print(f"[{caso}] enviando ao S3 e iniciando o job...")
-            dados = transcrever(
-                caso, root, bucket, region,
-                progresso=lambda c, s, t: print(f"[{c}] {s} — {t:.0f}s", end="\r"),
+            print(f"[{case}] enviando ao S3 e iniciando o job...")
+            data = transcribe_case(
+                case, root, bucket, region,
+                progress=lambda c, s, t: print(f"[{c}] {s} — {t:.0f}s", end="\r"),
             )
-            cache.write_text(json.dumps(dados, ensure_ascii=False), encoding="utf-8")
-            print(f"[{caso}] concluído em {dados['_meta']['segundos']:.0f}s"
+            cache.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            print(f"[{case}] concluído em {data['_meta']['seconds']:.0f}s"
                   f" — salvo em {cache.relative_to(ROOT_DIR)}")
 
-        resultados.append(avaliar(caso, root, dados, com_hesitacao=com_hesitacao))
-    return resultados
+        results.append(evaluate(case, root, data, keep_fillers=keep_fillers))
+    return results
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Transcrição de consultas com Amazon Transcribe.")
     ap.add_argument("--root", default="data/audio/consultas", help="raiz do dataset")
-    ap.add_argument("--casos", nargs="+", help="casos a transcrever (ex.: RES0001)")
-    ap.add_argument("--forcar", action="store_true",
+    ap.add_argument("--cases", nargs="+", help="casos a transcrever (ex.: RES0001)")
+    ap.add_argument("--force", action="store_true",
                     help="reprocessa mesmo se já houver cache (custa dinheiro de novo)")
-    ap.add_argument("--com-hesitacao", action="store_true",
+    ap.add_argument("--keep-fillers", action="store_true",
                     help="conta 'um', 'uh' etc. no WER (padrão: remove dos dois lados)")
-    ap.add_argument("--relatorio", action="store_true",
+    ap.add_argument("--report", action="store_true",
                     help="avalia tudo o que já está em cache, sem chamar a AWS")
     ap.add_argument("--out", help="salva as métricas em CSV")
     args = ap.parse_args()
 
     cfg = get_aws_config()
 
-    if args.relatorio:
-        casos = sorted(p.stem for p in CACHE_DIR.glob("*.json"))
-        if not casos:
-            print("nenhuma transcrição em cache — rode com --casos primeiro")
+    if args.report:
+        cases = sorted(p.stem for p in CACHE_DIR.glob("*.json"))
+        if not cases:
+            print("nenhuma transcrição em cache — rode com --cases primeiro")
             return
-    elif args.casos:
-        casos = args.casos
+    elif args.cases:
+        cases = args.cases
     else:
         ap.print_help()
         return
 
-    if not args.relatorio and (not cfg["region"] or not cfg["s3_bucket"]):
+    if not args.report and (not cfg["region"] or not cfg["s3_bucket"]):
         print("AWS não configurada. Rode: python -m src.common.config")
         return
 
-    resultados = processar(casos, args.root, cfg["s3_bucket"], cfg["region"],
-                           forcar=args.forcar, com_hesitacao=args.com_hesitacao)
+    results = process(cases, args.root, cfg["s3_bucket"], cfg["region"],
+                      force=args.force, keep_fillers=args.keep_fillers)
 
     import pandas as pd
-    df = pd.DataFrame(resultados)
+    df = pd.DataFrame(results)
     print(f"\n{df.to_string(index=False)}")
     if len(df) > 1:
         print(f"\nWER médio: {df['wer'].mean():.3f}  (mediana {df['wer'].median():.3f})")

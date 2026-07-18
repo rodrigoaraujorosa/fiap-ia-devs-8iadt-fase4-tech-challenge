@@ -46,14 +46,14 @@ nuvem — o que custa dinheiro e polui o resultado.
 
 ```bash
 # estatísticas dos metadados (não precisa do áudio)
-python -m src.audio.dataset --root data/audio/coswara --resumo
+python -m src.audio.dataset --root data/audio/coswara --summary
 
 # monta a coorte equilibrada e salva em CSV
-python -m src.audio.dataset --root data/audio/coswara --coorte \
-    --lotes 20220224 20210406 --por-grupo 30 --out reports/coorte_audio.csv
+python -m src.audio.dataset --root data/audio/coswara --cohort \
+    --batches 20220224 20210406 --per-group 30 --out reports/audio_cohort.csv
 
 # junta as partes .tar.gz.a* e extrai um lote
-python -m src.audio.dataset --root data/audio/coswara --extrair 20220224
+python -m src.audio.dataset --root data/audio/coswara --extract 20220224
 ```
 
 ## Definição dos grupos

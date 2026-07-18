@@ -6,7 +6,7 @@ O Coswara publica, por lote de coleta, um `.tar.gz` fatiado em partes de 100 MB
 
 - ``combined_data.csv``  — uma linha por participante (sintomas, comorbidades, idade...)
 - ``csv_labels_legend.json`` — legenda das colunas abreviadas (``bd``, ``ftg``, ...)
-- ``annotations/<som>_labels.csv`` — qualidade de cada gravação, avaliada por escuta
+- ``annotations/<sound>_labels.csv`` — qualidade de cada gravação, avaliada por escuta
   manual: 0 (ruim), 1 (boa), 2 (excelente)
 
 Cada participante contribui com **nove** gravações. Este módulo lê os metadados,
@@ -14,8 +14,8 @@ cruza com a qualidade e monta a coorte de trabalho — sem tocar no áudio, o qu
 permite decidir o recorte antes de gastar chamadas de nuvem.
 
 Uso:
-    python -m src.audio.dataset --root data/audio/coswara --resumo
-    python -m src.audio.dataset --root data/audio/coswara --coorte --por-grupo 30
+    python -m src.audio.dataset --root data/audio/coswara --summary
+    python -m src.audio.dataset --root data/audio/coswara --cohort --per-group 30
 """
 from __future__ import annotations
 
@@ -41,12 +41,24 @@ SPEECH_SOUNDS = ("counting-normal", "counting-fast")
 # Sintomas do enunciado do desafio ("dificuldades respiratórias e cansaço"),
 # nas abreviações do Coswara.
 SYMPTOM_COLS = {
-    "bd": "dificuldade_respiratoria",
-    "ftg": "fadiga",
+    "bd": "breathing_difficulty",
+    "ftg": "fatigue",
+    "cough": "cough",
+    "fever": "fever",
+    "st": "sore_throat",
+    "cld": "chronic_lung_disease",
+    "asthma": "asthma",
+    "pneumonia": "pneumonia",
+}
+
+# Rótulo exibido para cada sintoma, usado nos relatórios em pt-BR.
+SYMPTOM_LABELS_PT = {
+    "breathing_difficulty": "dificuldade respiratória",
+    "fatigue": "fadiga",
     "cough": "tosse",
     "fever": "febre",
-    "st": "dor_de_garganta",
-    "cld": "doenca_pulmonar_cronica",
+    "sore_throat": "dor de garganta",
+    "chronic_lung_disease": "doença pulmonar crônica",
     "asthma": "asma",
     "pneumonia": "pneumonia",
 }
@@ -63,22 +75,22 @@ def load_metadata(root: str | Path) -> pd.DataFrame:
     """
     Lê ``combined_data.csv`` e devolve um DataFrame com os sintomas normalizados.
 
-    Acrescenta as colunas booleanas de :data:`SYMPTOM_COLS` (em português), além de
-    ``sintomatico`` (dificuldade respiratória **ou** fadiga) e ``saudavel``.
+    Acrescenta as colunas booleanas de :data:`SYMPTOM_COLS`, além de ``symptomatic``
+    (dificuldade respiratória **ou** fadiga), ``any_symptom`` e ``healthy``.
     """
     root = Path(root)
     df = pd.read_csv(root / "combined_data.csv")
 
-    for col, nome in SYMPTOM_COLS.items():
-        df[nome] = _as_bool(df[col]) if col in df.columns else False
+    for abbrev, col in SYMPTOM_COLS.items():
+        df[col] = _as_bool(df[abbrev]) if abbrev in df.columns else False
 
-    df["sintomatico"] = df["dificuldade_respiratoria"] | df["fadiga"]
-    df["algum_sintoma"] = df[list(SYMPTOM_COLS.values())].any(axis=1)
+    df["symptomatic"] = df["breathing_difficulty"] | df["fatigue"]
+    df["any_symptom"] = df[list(SYMPTOM_COLS.values())].any(axis=1)
 
     # `covid_status == healthy` NÃO basta para o grupo de controle: 121 dos 1.433
     # participantes assim declarados relatam algum sintoma (12 deles justamente
     # dificuldade respiratória ou fadiga). O controle exige ausência de sintomas.
-    df["saudavel"] = df["covid_status"].eq("healthy") & ~df["algum_sintoma"]
+    df["healthy"] = df["covid_status"].eq("healthy") & ~df["any_symptom"]
     return df
 
 
@@ -90,26 +102,26 @@ def load_legend(root: str | Path) -> dict[str, str]:
 
 def load_quality(root: str | Path) -> pd.DataFrame:
     """
-    Lê ``annotations/*_labels.csv`` e devolve (id, som, qualidade) em formato longo.
+    Lê ``annotations/*_labels.csv`` e devolve (id, sound, quality) em formato longo.
 
     A qualidade vem de escuta manual: 0 ruim, 1 boa, 2 excelente. Filtrar por ela
     evita mandar gravação inaudível para a nuvem — o que custa dinheiro e polui o
     resultado.
     """
     root = Path(root)
-    linhas = []
-    for som in SOUNDS:
-        f = root / "annotations" / f"{som}_labels.csv"
+    rows = []
+    for sound in SOUNDS:
+        f = root / "annotations" / f"{sound}_labels.csv"
         if not f.exists():
             continue
         d = pd.read_csv(f)
         d.columns = [c.strip() for c in d.columns]
-        d["id"] = d["FILENAME"].str.replace(f"_{som}", "", regex=False)
-        d["som"] = som
-        linhas.append(d[["id", "som", "QUALITY"]].rename(columns={"QUALITY": "qualidade"}))
-    if not linhas:
-        return pd.DataFrame(columns=["id", "som", "qualidade"])
-    return pd.concat(linhas, ignore_index=True)
+        d["id"] = d["FILENAME"].str.replace(f"_{sound}", "", regex=False)
+        d["sound"] = sound
+        rows.append(d[["id", "sound", "QUALITY"]].rename(columns={"QUALITY": "quality"}))
+    if not rows:
+        return pd.DataFrame(columns=["id", "sound", "quality"])
+    return pd.concat(rows, ignore_index=True)
 
 
 def load_folder_ids(root: str | Path) -> pd.DataFrame:
@@ -121,7 +133,7 @@ def load_folder_ids(root: str | Path) -> pd.DataFrame:
     arquivo o áudio de um participante está.
     """
     root = Path(root)
-    linhas = []
+    rows = []
     for f in sorted((root / "folder_csv").glob("*.csv")):
         try:
             d = pd.read_csv(f)
@@ -129,138 +141,141 @@ def load_folder_ids(root: str | Path) -> pd.DataFrame:
             continue
         if "id" not in d.columns:
             continue
-        linhas.append(pd.DataFrame({"id": d["id"], "lote": f.stem}))
-    if not linhas:
-        return pd.DataFrame(columns=["id", "lote"])
-    return pd.concat(linhas, ignore_index=True).drop_duplicates("id")
+        rows.append(pd.DataFrame({"id": d["id"], "batch": f.stem}))
+    if not rows:
+        return pd.DataFrame(columns=["id", "batch"])
+    return pd.concat(rows, ignore_index=True).drop_duplicates("id")
 
 
 def build_cohort(
     root: str | Path,
-    lotes: list[str] | None = None,
-    som: str = "counting-normal",
-    por_grupo: int | None = None,
+    batches: list[str] | None = None,
+    sound: str = "counting-normal",
+    per_group: int | None = None,
     seed: int = 42,
 ) -> pd.DataFrame:
     """
     Monta a coorte de trabalho: participantes com áudio disponível e de boa qualidade.
 
-    Devolve um DataFrame com ``grupo`` ('sintomatico' ou 'saudavel'), pronto para o
-    pipeline. ``por_grupo`` equilibra as classes por amostragem — sem isso a coorte
+    Devolve um DataFrame com ``group`` ('symptomatic' ou 'healthy'), pronto para o
+    pipeline. ``per_group`` equilibra as classes por amostragem — sem isso a coorte
     fica enviesada, já que os lotes têm muito mais sintomáticos que saudáveis.
 
-    ``som`` é a gravação usada como critério de qualidade (padrão: a fala que vai
+    ``sound`` é a gravação usada como critério de qualidade (padrão: a fala que vai
     para o Transcribe).
     """
     meta = load_metadata(root)
-    mapa = load_folder_ids(root)
-    qual = load_quality(root)
+    batch_map = load_folder_ids(root)
+    quality = load_quality(root)
 
-    df = meta.merge(mapa, on="id", how="inner")
-    if lotes:
-        df = df[df["lote"].isin(lotes)]
+    df = meta.merge(batch_map, on="id", how="inner")
+    if batches:
+        df = df[df["batch"].isin(batches)]
 
-    q = qual[qual["som"] == som][["id", "qualidade"]]
+    q = quality[quality["sound"] == sound][["id", "quality"]]
     df = df.merge(q, on="id", how="left")
-    df = df[df["qualidade"] >= QUALITY_OK]
+    df = df[df["quality"] >= QUALITY_OK]
 
     # Só interessam os dois extremos, e eles precisam ser mutuamente exclusivos:
     # quem tem dificuldade respiratória ou fadiga, e quem não relata sintoma nenhum.
-    df = df[df["sintomatico"] | df["saudavel"]].copy()
-    df["grupo"] = df["sintomatico"].map({True: "sintomatico", False: "saudavel"})
+    df = df[df["symptomatic"] | df["healthy"]].copy()
+    df["group"] = df["symptomatic"].map({True: "symptomatic", False: "healthy"})
 
-    if por_grupo:
-        df = (df.groupby("grupo", group_keys=False)[df.columns]
-                .apply(lambda g: g.sample(min(len(g), por_grupo), random_state=seed)))
+    if per_group:
+        df = (df.groupby("group", group_keys=False)[df.columns]
+                .apply(lambda g: g.sample(min(len(g), per_group), random_state=seed)))
 
-    cols = ["id", "lote", "grupo", "a", "g", "covid_status", "qualidade",
+    cols = ["id", "batch", "group", "a", "g", "covid_status", "quality",
             *SYMPTOM_COLS.values()]
     return df[[c for c in cols if c in df.columns]].reset_index(drop=True)
 
 
-def extract_lote(root: str | Path, lote: str, dest: str | Path | None = None) -> Path:
+def extract_batch(root: str | Path, batch: str, dest: str | Path | None = None) -> Path:
     """
-    Junta as partes ``<lote>.tar.gz.a*`` e extrai o lote.
+    Junta as partes ``<batch>.tar.gz.a*`` e extrai o lote.
 
     O Coswara fatia cada lote em partes de 100 MB porque o GitHub limita o tamanho
     de arquivo; elas precisam ser concatenadas antes de descompactar. Se o destino
     já existir, não refaz o trabalho.
     """
     root = Path(root)
-    origem = root / "raw" / lote
+    source = root / "raw" / batch
     dest = Path(dest) if dest else root / "extracted"
     dest.mkdir(parents=True, exist_ok=True)
-    if (dest / lote).exists():
-        return dest / lote
+    if (dest / batch).exists():
+        return dest / batch
 
-    partes = sorted(origem.glob(f"{lote}.tar.gz.*"))
-    if not partes:
-        raise FileNotFoundError(f"nenhuma parte encontrada em {origem}")
+    parts = sorted(source.glob(f"{batch}.tar.gz.*"))
+    if not parts:
+        raise FileNotFoundError(f"nenhuma parte encontrada em {source}")
 
-    combinado = origem / f"{lote}.tar.gz"
-    with open(combinado, "wb") as saida:
-        for p in partes:
-            with open(p, "rb") as parte:
-                while chunk := parte.read(1024 * 1024):
-                    saida.write(chunk)
-    with tarfile.open(combinado, "r:gz") as tar:
+    merged = source / f"{batch}.tar.gz"
+    with open(merged, "wb") as out:
+        for p in parts:
+            with open(p, "rb") as part:
+                while chunk := part.read(1024 * 1024):
+                    out.write(chunk)
+    with tarfile.open(merged, "r:gz") as tar:
         # filter="data": recusa caminhos absolutos e ".." no tar — o padrão do Python 3.14
         # e a única postura sensata ao extrair arquivo baixado da internet.
         tar.extractall(dest, filter="data")
-    os.remove(combinado)  # o .tar.gz reconstruído é redundante depois de extraído
-    return dest / lote
+    os.remove(merged)  # o .tar.gz reconstruído é redundante depois de extraído
+    return dest / batch
 
 
-def audio_path(root: str | Path, lote: str, user_id: str, som: str) -> Path:
+def audio_path(root: str | Path, batch: str, user_id: str, sound: str) -> Path:
     """Caminho da gravação de um participante, dentro do lote já extraído."""
-    return Path(root) / "extracted" / lote / user_id / f"{som}.wav"
+    return Path(root) / "extracted" / batch / user_id / f"{sound}.wav"
 
 
-def _resumo(root: str | Path) -> None:
+def _summary(root: str | Path) -> None:
     meta = load_metadata(root)
-    qual = load_quality(root)
-    mapa = load_folder_ids(root)
+    quality = load_quality(root)
+    batch_map = load_folder_ids(root)
     print(f"participantes no combined_data: {len(meta)}")
-    print(f"lotes mapeados: {mapa['lote'].nunique()} | participantes mapeados: {len(mapa)}")
+    print(f"lotes mapeados: {batch_map['batch'].nunique()}"
+          f" | participantes mapeados: {len(batch_map)}")
     print("\nstatus de saúde:")
     print(meta["covid_status"].value_counts().to_string())
     print("\nsintomas (True):")
-    for nome in SYMPTOM_COLS.values():
-        n = int(meta[nome].sum())
-        print(f"  {nome:26s} {n:5d} ({n / len(meta) * 100:.1f}%)")
-    print(f"\nsintomáticos (resp. ou fadiga): {int(meta['sintomatico'].sum())}")
-    print(f"saudáveis: {int(meta['saudavel'].sum())}")
-    if not qual.empty:
+    for col in SYMPTOM_COLS.values():
+        n = int(meta[col].sum())
+        rotulo = SYMPTOM_LABELS_PT.get(col, col)
+        print(f"  {rotulo:26s} {n:5d} ({n / len(meta) * 100:.1f}%)")
+    print(f"\nsintomáticos (resp. ou fadiga): {int(meta['symptomatic'].sum())}")
+    print(f"saudáveis (sem sintoma algum): {int(meta['healthy'].sum())}")
+    if not quality.empty:
         print("\nqualidade das gravações (0 ruim, 1 boa, 2 excelente):")
-        print(qual.pivot_table(index="som", columns="qualidade", aggfunc="size",
-                               fill_value=0).to_string())
+        print(quality.pivot_table(index="sound", columns="quality", aggfunc="size",
+                                  fill_value=0).to_string())
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Loader e recorte do dataset Coswara.")
     ap.add_argument("--root", default="data/audio/coswara", help="raiz dos dados do Coswara")
-    ap.add_argument("--resumo", action="store_true", help="estatísticas dos metadados")
-    ap.add_argument("--coorte", action="store_true", help="monta a coorte de trabalho")
-    ap.add_argument("--lotes", nargs="*", help="lotes a considerar (ex.: 20220224 20210406)")
-    ap.add_argument("--som", default="counting-normal", help="gravação usada como critério")
-    ap.add_argument("--por-grupo", type=int, help="equilibra as classes com N por grupo")
-    ap.add_argument("--extrair", metavar="LOTE", help="junta as partes e extrai um lote")
+    ap.add_argument("--summary", action="store_true", help="estatísticas dos metadados")
+    ap.add_argument("--cohort", action="store_true", help="monta a coorte de trabalho")
+    ap.add_argument("--batches", nargs="*", help="lotes a considerar (ex.: 20220224 20210406)")
+    ap.add_argument("--sound", default="counting-normal", help="gravação usada como critério")
+    ap.add_argument("--per-group", type=int, help="equilibra as classes com N por grupo")
+    ap.add_argument("--extract", metavar="BATCH", help="junta as partes e extrai um lote")
     ap.add_argument("--out", help="salva a coorte em CSV")
     args = ap.parse_args()
 
-    if args.extrair:
-        destino = extract_lote(args.root, args.extrair)
-        print(f"lote extraído em {destino}")
+    if args.extract:
+        dest = extract_batch(args.root, args.extract)
+        print(f"lote extraído em {dest}")
         return
 
-    if args.resumo:
-        _resumo(args.root)
+    if args.summary:
+        _summary(args.root)
         return
 
-    if args.coorte:
-        c = build_cohort(args.root, lotes=args.lotes, som=args.som, por_grupo=args.por_grupo)
+    if args.cohort:
+        c = build_cohort(args.root, batches=args.batches, sound=args.sound,
+                         per_group=args.per_group)
         print(f"coorte: {len(c)} participantes")
-        print(c["grupo"].value_counts().to_string())
+        print(c["group"].value_counts().to_string())
         print(f"\nidade média: {c['a'].mean():.1f} | gênero: {c['g'].value_counts().to_dict()}")
         print(f"\n{c.head(10).to_string(index=False)}")
         if args.out:
