@@ -1324,7 +1324,7 @@ janela de leitura vira uma coluna, com a atividade real em cima e o alerta embai
 
 ### 5.9 Testes
 
-`tests/test_anomaly.py` cobre a entrega com 25 testes sobre séries sintéticas, sem exigir
+`tests/test_anomaly.py` cobre a entrega com 28 testes sobre séries sintéticas, sem exigir
 os datasets baixados. Além do caminho feliz, os testes fixam as decisões que, se revertidas,
 produzem números melhores do que a realidade sem levantar erro: a separação entre treino e
 teste (nenhum paciente aparece nos dois, nenhum paciente séptico entra no treino), a
@@ -1663,7 +1663,7 @@ O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 pytest -q
 ```
 
-São **34 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 25
+São **37 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 28
 da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles exige os
 datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
 automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
@@ -1782,7 +1782,7 @@ o trabalho, e nenhuma delas foi delegada:
 Nenhum número deste relatório foi produzido por inferência da ferramenta: todos vêm de
 execuções registradas.
 
-- **34 testes automatizados** (`pytest`), 9 da Entrega 1 e 25 da Entrega 3, que não exigem
+- **37 testes automatizados** (`pytest`), 9 da Entrega 1 e 28 da Entrega 3, que não exigem
   os datasets baixados nem credenciais de nuvem (10.5). Boa parte deles fixa decisões que,
   se revertidas, produziriam números melhores do que a realidade sem levantar erro — como a
   janela do cálculo de antecedência e a exigência de que embaralhar o `SepsisLabel` não

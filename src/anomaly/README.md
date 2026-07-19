@@ -136,5 +136,5 @@ de outubro de 2025. A decisão está documentada na §6.2 do relatório técnico
 pytest tests/test_anomaly.py
 ```
 
-18 testes com séries sintéticas — não exigem os datasets baixados. Cobrem sobretudo as
+28 testes com séries sintéticas — não exigem os datasets baixados. Cobrem sobretudo as
 armadilhas acima, que são silenciosas: não levantam erro, só produzem números errados.
