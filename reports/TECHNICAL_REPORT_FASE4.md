@@ -1430,6 +1430,12 @@ O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 pytest -q
 ```
 
+São **27 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 18
+da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles exige os
+datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
+automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
+o dataset (4.4).
+
 ---
 
 ## 11. Limitações e Trabalhos Futuros
