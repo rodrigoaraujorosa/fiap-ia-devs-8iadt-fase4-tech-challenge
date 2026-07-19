@@ -558,9 +558,16 @@ A sequência abaixo mostra o fluxo completo do ponto de vista de quem usa a ferr
 
 ### 3.12 Testes
 
-O pipeline é coberto por testes automatizados que usam **keypoints sintéticos** (sem
-necessidade de OpenPose nem do dataset): validam o cálculo de ângulos, a detecção de
-anomalias injetadas e a renderização do overlay.
+`tests/test_video.py` cobre a entrega com 9 testes sobre **keypoints sintéticos**, sem
+exigir o binário do OpenPose nem o dataset baixado: um esqueleto em pé com ruído leve e,
+no meio da sequência, frames com o joelho bruscamente flexionado.
+
+Os testes verificam o cálculo dos ângulos, a detecção dos desvios injetados, a estrutura do
+relatório e a renderização do overlay. Fixam também as duas decisões que, se revertidas,
+corrompem os resultados em silêncio: a **seleção da pessoa principal**, que deve preferir a
+figura grande em primeiro plano à pessoa ao fundo (3.5), e o **mapeamento de `frame_step`**,
+que converte o índice do frame subamostrado no frame original — sem ele, o cruzamento com
+os rótulos do `Segmentation.csv` desalinha e a validação mede a repetição errada (3.8).
 
 ---
 
