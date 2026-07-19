@@ -103,8 +103,9 @@ teste. As métricas são de **generalização** — séries que o modelo nunca v
   constante zero e dilui a distância entre as amostras.
 - **A FiO2 mistura escalas:** parte dos registros usa percentual (21–100) e parte usa
   fração (0,21–1,0). O loader normaliza tudo para fração antes de medir o degrau.
-- **Desmame não é anomalia.** Só aumentos de dose alertam; reduzir a FiO2 é sinal de
-  melhora e marcá-lo encheria o alerta de falsos positivos benignos.
+- **Redução de dose não é anomalia.** Só aumentos alertam; reduzir a FiO2 indica que o
+  paciente precisa de menos suporte, e marcar isso encheria o alerta de falsos positivos
+  benignos.
 
 ## 🔍 Onde está o sinal: vitais contra laboratório
 

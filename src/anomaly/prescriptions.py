@@ -65,12 +65,13 @@ def detect(df: pd.DataFrame, threshold: float = STEP_THRESHOLD) -> pd.DataFrame:
     """
     Sinaliza escalonamentos bruscos da dose.
 
-    Só **aumentos** contam como alerta: reduzir a FiO2 é desmame, sinal de melhora, e
-    marcá-lo como anomalia encheria o alerta de falsos positivos benignos.
+    Só **aumentos** contam como alerta: reduzir a dose indica melhora — o paciente está
+    precisando de menos suporte — e marcar isso como anomalia encheria o alerta de falsos
+    positivos benignos.
     """
     out = df.copy()
     out["is_escalation"] = (out["dose_change"] >= threshold).astype(int)
-    out["is_weaning"] = (out["dose_change"] <= -threshold).astype(int)
+    out["is_reduction"] = (out["dose_change"] <= -threshold).astype(int)
     return out
 
 
@@ -103,7 +104,7 @@ def evaluate(df: pd.DataFrame) -> dict:
         "patients_total": int(df["patient"].nunique()),
         "dose_coverage": float(df[DOSE].notna().mean()),
         "escalations": int(sub["is_escalation"].sum()),
-        "weanings": int(sub["is_weaning"].sum()),
+        "reductions": int(sub["is_reduction"].sum()),
         "threshold": STEP_THRESHOLD,
         "tp": tp, "fp": fp, "fn": fn, "tn": tn,
         "precision": tp / (tp + fp) if (tp + fp) else 0.0,
@@ -155,7 +156,7 @@ def monitor_patient(df_patient: pd.DataFrame,
         "monitored": len(com_dose) >= MIN_OBSERVATIONS,
         "escalations": int(len(esc)),
         "escalation_hours": esc["hour"].tolist(),
-        "weanings": int(serie["is_weaning"].sum()),
+        "reductions": int(serie["is_reduction"].sum()),
         "dose_min": float(com_dose["dose"].min()) if len(com_dose) else None,
         "dose_max": float(com_dose["dose"].max()) if len(com_dose) else None,
     }

@@ -88,7 +88,7 @@ def run_prescriptions(df: pd.DataFrame) -> dict:
     m = r["metrics"]
     print(f"      {m['eligible_patients']} pacientes elegíveis | "
           f"cobertura da FiO2 {m['dose_coverage']:.1%}")
-    print(f"      {m['escalations']} escalonamentos | {m['weanings']} desmames")
+    print(f"      {m['escalations']} escalonamentos | {m['reductions']} reduções")
     print(f"      sepse entre os que escalonaram {m['sepsis_rate_escalated']:.1%} "
           f"vs {m['sepsis_rate_not_escalated']:.1%} entre os que não")
     print(f"      ({_fmt(time.perf_counter() - t0)})")
@@ -184,8 +184,8 @@ def monitor(patient_id: str, data_dir: str) -> None:
                   f"{', '.join(str(h) for h in px['escalation_hours'])}")
         else:
             print("  Nenhum escalonamento brusco.")
-        if px["weanings"]:
-            print(f"  {px['weanings']} desmame(s) — não geram alerta.")
+        if px["reductions"]:
+            print(f"  {px['reductions']} redução(ões) de dose — não geram alerta.")
 
     # ------------------------------------------------------------ conferência
     print("\nCONFERÊNCIA COM O GROUND-TRUTH (não usado na detecção)")

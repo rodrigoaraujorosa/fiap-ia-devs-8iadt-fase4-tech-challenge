@@ -73,7 +73,7 @@ Não existe fonte pública aberta e granular de prescrições hospitalares — a
 
 Com 2942 pacientes elegíveis (de 5000; cobertura da FiO2 14.2%) e degrau de 0.15:
 
-- 963 escalonamentos e 2374 desmames detectados.
+- 963 escalonamentos e 2374 reduções de dose.
 - Entre os pacientes que escalonaram, **17.9%** desenvolveram sepse; entre os que não escalonaram, **10.5%** — cerca de duas vezes mais.
 - Recall 34.6%, precisão 17.9%.
 - **53** pacientes escalonaram dentro da janela de 48 h antes do início, com antecedência mediana **20 h**.

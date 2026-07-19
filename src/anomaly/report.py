@@ -174,7 +174,7 @@ def build_report(vitals: dict, movement: dict, prescriptions: dict,
         f"(de {px['patients_total']}; cobertura da FiO2 {_pct(px['dose_coverage'])}) e "
         f"degrau de {px['threshold']:.2f}:")
     add("")
-    add(f"- {px['escalations']} escalonamentos e {px['weanings']} desmames detectados.")
+    add(f"- {px['escalations']} escalonamentos e {px['reductions']} reduções de dose.")
     add(f"- Entre os pacientes que escalonaram, **{_pct(px['sepsis_rate_escalated'])}** "
         f"desenvolveram sepse; entre os que não escalonaram, "
         f"**{_pct(px['sepsis_rate_not_escalated'])}** — cerca de duas vezes mais.")

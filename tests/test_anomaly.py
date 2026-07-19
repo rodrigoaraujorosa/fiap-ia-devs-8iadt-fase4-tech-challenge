@@ -226,12 +226,12 @@ def _com_dose(pid: str, doses: list[float], onset: int | None = None) -> pd.Data
     return df
 
 
-def test_escalonamento_detectado_e_desmame_nao():
-    """Subir a dose alerta; reduzir é desmame e não pode alertar."""
+def test_escalonamento_detectado_e_reducao_nao():
+    """Subir a dose alerta; reduzir indica melhora e não pode alertar."""
     doses = [0.30] * 5 + [0.60] * 5 + [0.30] * 5      # sobe 0,30 e depois cai 0,30
     r = prescriptions.detect(prescriptions.build_series(_com_dose("p1", doses)))
     assert r["is_escalation"].sum() == 1
-    assert r["is_weaning"].sum() == 1
+    assert r["is_reduction"].sum() == 1
     assert r.loc[r["is_escalation"] == 1, "hour"].iloc[0] == 5
 
 

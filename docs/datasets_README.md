@@ -188,7 +188,7 @@ série ao longo das horas é uma série de doses, que é o objeto da subtarefa. 
 campo de melhor cobertura entre os não-vitais (14,2%).
 
 Anomalia = degrau de 0,15 ou mais entre coletas consecutivas. Só **aumentos** alertam:
-reduzir a FiO2 é desmame, sinal de melhora.
+reduzir a dose indica melhora, e não gera alerta.
 
 A alternativa considerada e descartada foi o **Synthea** (gerador sintético que produz
 `medications.csv` com `START, STOP, PATIENT, CODE, DESCRIPTION`). Seria mais fiel ao

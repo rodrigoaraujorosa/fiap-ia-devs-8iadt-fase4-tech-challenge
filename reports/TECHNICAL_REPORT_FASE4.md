@@ -1068,13 +1068,13 @@ ao longo das horas é uma série de doses. A alternativa era gerar dados sintét
 Synthea, que exige Java JDK e geração local e demanda a mesma ressalva.
 
 **Detecção.** Anomalia é um degrau de 0,15 ou mais entre coletas consecutivas, numa escala
-que vai de 0,21 (ar ambiente) a 1,0. Apenas **aumentos** alertam: reduzir a FiO2 é desmame,
-sinal de melhora. O dataset mistura duas notações — percentual (21 a 100) e fração (0,21 a
+que vai de 0,21 (ar ambiente) a 1,0. Apenas **aumentos** alertam: reduzir a dose indica
+que o paciente precisa de menos suporte, isto é, melhora. O dataset mistura duas notações — percentual (21 a 100) e fração (0,21 a
 1,0) — e o loader converte tudo para fração antes de medir a variação.
 
 **Resultados quantitativos.** Sobre os mesmos 5.000 pacientes, dos quais 2.942 têm ao menos
 três registros de dose (cobertura da FiO2: 14,2% das horas), foram detectados 963
-escalonamentos e 2.374 desmames:
+escalonamentos e 2.374 reduções de dose:
 
 | Grupo | Desenvolveram sepse |
 |:--|:--:|
@@ -1131,8 +1131,8 @@ rótulo é exibido apenas na seção de conferência — nunca entra na pontuaç
 > **Figura 10.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
 > nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
 > prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
-> primeiro deles **24 horas antes** do início. Os dois desmames detectados não geram alerta,
-> por serem sinal de melhora.
+> primeiro deles **24 horas antes** do início. As duas reduções de dose detectadas não
+> geram alerta, por indicarem melhora.
 
 O contraste entre as Figuras 9 e 10 é a ilustração concreta do que a comparação de features
 da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
@@ -1194,7 +1194,7 @@ produzem números melhores do que a realidade sem levantar erro: a separação e
 teste (nenhum paciente aparece nos dois, nenhum paciente séptico entra no treino), a
 identidade entre o modelo salvo e o recarregado, a exigência de que embaralhar o
 `SepsisLabel` não altere nenhum alerta, a janela do cálculo de antecedência, a normalização
-de escala da FiO2 e o desmame que não deve alertar.
+de escala da FiO2 e a redução de dose que não deve alertar.
 
 ---
 
