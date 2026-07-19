@@ -1052,6 +1052,16 @@ como limitação medida.
 - **Menos da metade dos pacientes com sepse é avisada na janela** (111 de 446), consequência
   do limiar absoluto, que não garante alerta para todo paciente. Baixá-lo aumenta a
   cobertura ao custo de mais alarme falso.
+- **A agregação multivariada dilui o desvio de uma variável isolada.** O paciente
+  `p000188` (Figura 12) tem a frequência respiratória subindo de 16 para 33 ao longo da
+  internação — uma deterioração inequívoca. A normalização por paciente **captura** esse
+  movimento: o z-score mediano da `Resp` vai de −0,67 nas primeiras 40 horas para 4,89 no
+  bloco que antecede o início da sepse, com pico de 8,09. O alerta, porém, não dispara: o
+  IsolationForest avalia as 7 variáveis em conjunto, e um ponto extremo em um único eixo,
+  com os outros seis dentro da faixa, não se isola no espaço multivariado. O score mais
+  anômalo do paciente fica em −0,4423 contra um limiar de −0,4694 — a **0,027** de
+  disparar. O sinal existia e foi medido; perdeu-se na agregação.
+
 - **`EtCO2` tem 0% de cobertura no *training set A*** (7,6% no *set B*) — consta do schema
   e nunca é medida. É descartada automaticamente; mantida, entraria como constante.
 - **O `SepsisLabel` marca a janela em que a sepse é considerada instalada**, não "hora
@@ -1124,15 +1134,32 @@ rótulo é exibido apenas na seção de conferência — nunca entra na pontuaç
 > evento se aproxima. A dose prescrita foi monitorada (97 registros, entre 0,30 e 0,40) e
 > não apresentou escalonamento brusco: aqui quem avisa são os vitais.
 
+![Série temporal do paciente p001123](figures/monitor_p001123.png)
+
+> **Figura 10.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
+> antecede o início da sepse (linha roxa tracejada, hora 88) e as linhas vermelhas verticais
+> são as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
+> de oxigênio, estável em 0,30 desde a hora 26 — sem escalonamento, coerente com a saída do
+> comando.
+
 **Caso 2 — os sinais vitais silenciam e a prescrição detecta (`p000188`).**
 
 ![Monitoramento do paciente p000188](figures/screenshots/cli_anomaly_p000188.png)
 
-> **Figura 10.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
+> **Figura 11.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
 > nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
 > prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
 > primeiro deles **24 horas antes** do início. As duas reduções de dose detectadas não
 > geram alerta, por indicarem melhora.
+
+![Série temporal do paciente p000188](figures/monitor_p000188.png)
+
+> **Figura 12.** O mesmo paciente em série temporal. Não há nenhuma linha vermelha no painel
+> superior — o detector de vitais ficou em silêncio —, enquanto os dois triângulos do painel
+> inferior marcam os escalonamentos de dose nas horas 51 e 53, ambos dentro da janela. A
+> figura expõe algo que a saída de texto não mostra: a frequência respiratória (verde) sobe
+> de forma contínua ao longo da internação, uma deterioração visível que o alerta não
+> capturou. A seção 5.4 detalha por quê.
 
 O contraste entre as Figuras 9 e 10 é a ilustração concreta do que a comparação de features
 da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
@@ -1143,7 +1170,7 @@ alerta combine as modalidades em vez de depender de uma só (5.7).
 
 ![Monitoramento do sujeito 2](figures/screenshots/cli_anomaly_subject_2.png)
 
-> **Figura 11.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
+> **Figura 13.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
 > 157 delas (52,0%), e a conferência mostra por quê: as três atividades de marcha são
 > detectadas **integralmente** (100,0% cada), enquanto o repouso permanece quase todo em
 > silêncio — `LAYING` sem nenhum alerta, `SITTING` em 2,2% e `STANDING` em 3,7%. O recall
@@ -1158,7 +1185,7 @@ métricas que orienta o peso de cada modalidade:
 
 ![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
 
-> **Figura 12.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
+> **Figura 14.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
 > lado a lado com os respectivos tempos: movimentação (4,1 s), sinais vitais (39,2 s) e
 > prescrições (0,8 s) — o restante do tempo é a leitura dos 5.000 arquivos `.psv`. A saída
 > explicita a separação treino/teste dos vitais (3.187 pacientes sem sepse no treino contra
@@ -1260,7 +1287,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 13.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 15.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a

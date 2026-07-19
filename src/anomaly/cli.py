@@ -39,7 +39,8 @@ import time
 import pandas as pd
 
 from . import movement, prescriptions, vitals
-from .report import FIGURES_DIR, REPORT_PATH, build_report, write_report
+from .report import (FIGURES_DIR, REPORT_PATH, build_report, plot_monitor,
+                     write_report)
 
 DEFAULT_VITALS_DIR = "data/anomaly/challenge2019"
 DEFAULT_HAR_DIR = "data/anomaly/uci_har/UCI HAR Dataset"
@@ -171,7 +172,8 @@ def monitor(patient_id: str, data_dir: str) -> None:
               + (" ..." if len(horas) > 20 else ""))
 
     # ----------------------------------------------------------- prescrições
-    px = prescriptions.monitor_patient(serie)["summary"]
+    px_r = prescriptions.monitor_patient(serie)
+    px = px_r["summary"]
     print("\nPRESCRIÇÕES     dose de oxigênio (FiO2), regra de degrau")
     if not px["monitored"]:
         print(f"  Fora de monitoramento — {px['observations']} registros de dose "
@@ -202,6 +204,13 @@ def monitor(patient_id: str, data_dir: str) -> None:
             print("  Prescrição — escalonamentos fora da janela de 48 h.")
     else:
         print("  Paciente não desenvolveu sepse.")
+
+    # a figura usa a série já pontuada e com a dose anotada, para que os dois painéis
+    # compartilhem exatamente os mesmos instantes
+    fig = plot_monitor(px_r["data"], patient_id,
+                       str(FIGURES_DIR / f"monitor_{patient_id}.png"))
+    if fig:
+        print(f"\n  Figura: {fig}")
     print()
 
 

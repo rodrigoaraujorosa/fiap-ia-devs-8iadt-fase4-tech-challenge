@@ -111,6 +111,3 @@ htmlcov/
 
 # Modelos treinados (artefato de build; regerar com: python -m src.anomaly.cli --train)
 models/
-
-# Figuras do modo --monitor (geradas sob demanda, não entregáveis)
-reports/figures/monitor_*.png

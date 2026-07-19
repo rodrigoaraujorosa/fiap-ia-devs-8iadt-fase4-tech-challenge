@@ -38,6 +38,84 @@ def _img(path: str | None) -> str | None:
         return Path(path).as_posix()
 
 
+def plot_monitor(df: pd.DataFrame, patient: str, out_path: str,
+                 window: int = 48) -> str | None:
+    """
+    Figura do monitoramento de um paciente: sinais vitais e dose na mesma linha do tempo.
+
+    Dois painéis empilhados que **compartilham o eixo x**, porque a pergunta que a figura
+    responde é de posição: onde os alertas caem em relação ao início da sepse. Painéis
+    separados, com escalas de tempo independentes, não responderiam isso.
+
+    O ``df`` esperado é a série já pontuada pelo detector de vitais e passada pela regra
+    de dose — tem ``is_anomaly``, ``dose``, ``is_escalation`` e ``SepsisLabel``.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    sub = df[df["patient"] == patient] if "patient" in df.columns else df
+    if sub.empty:
+        return None
+
+    tem_dose = sub["dose"].notna().any() if "dose" in sub.columns else False
+    fig, eixos = plt.subplots(
+        2 if tem_dose else 1, 1, figsize=(11, 6.5 if tem_dose else 4.2),
+        sharex=True, gridspec_kw={"height_ratios": [2, 1]} if tem_dose else None)
+    eixos = eixos if tem_dose else [eixos]
+    ax_v = eixos[0]
+
+    # --- janela de aviso e início da sepse, desenhados antes para ficarem no fundo
+    onset = None
+    if sub["SepsisLabel"].max() == 1:
+        onset = int(sub.loc[sub["SepsisLabel"] == 1, "hour"].min())
+        for ax in eixos:
+            ax.axvspan(max(0, onset - window), onset, color="#f39c12", alpha=0.12,
+                       label=f"janela de {window} h" if ax is ax_v else None)
+            ax.axvline(onset, color="#8e44ad", linestyle="--", linewidth=1.8,
+                       label="início da sepse" if ax is ax_v else None)
+
+    # --- painel 1: sinais vitais
+    for v, cor in [("HR", "#2e86c1"), ("SBP", "#e67e22"),
+                   ("Resp", "#27ae60"), ("O2Sat", "#c0392b")]:
+        ax_v.plot(sub["hour"], sub[v], label=v, alpha=0.85, linewidth=1.2, color=cor)
+
+    alertas = sub[sub["is_anomaly"] == 1]
+    for i, h in enumerate(alertas["hour"]):
+        ax_v.axvline(h, color="#c0392b", alpha=0.55, linewidth=2.2,
+                     label="hora em alerta" if i == 0 else None)
+
+    ax_v.set_ylabel("valor medido")
+    titulo = f"Monitoramento do paciente {patient}"
+    if onset is not None:
+        titulo += f" — sepse na hora {onset}"
+    ax_v.set_title(titulo)
+    ax_v.legend(loc="upper left", fontsize=8, ncol=2)
+    if not tem_dose:
+        ax_v.set_xlabel("hora de internação")
+
+    # --- painel 2: dose prescrita
+    if tem_dose:
+        ax_d = eixos[1]
+        com_dose = sub.dropna(subset=["dose"])
+        ax_d.step(com_dose["hour"], com_dose["dose"], where="post",
+                  color="#2e86c1", linewidth=2, label="FiO2 — dose prescrita")
+        esc = sub[sub["is_escalation"] == 1]
+        if len(esc):
+            ax_d.scatter(esc["hour"], esc["dose"], color="#c0392b", zorder=5, s=70,
+                         marker="^", label="escalonamento de dose")
+        ax_d.set_xlabel("hora de internação")
+        ax_d.set_ylabel("FiO2")
+        ax_d.legend(loc="upper left", fontsize=8)
+
+    fig.tight_layout()
+    caminho = Path(out_path)
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(caminho, dpi=120)
+    plt.close(fig)
+    return str(caminho)
+
+
 def build_report(vitals: dict, movement: dict, prescriptions: dict,
                  comparison: pd.DataFrame, figures: dict[str, str]) -> str:
     """Monta o markdown do relatório a partir dos resultados das três subtarefas."""
