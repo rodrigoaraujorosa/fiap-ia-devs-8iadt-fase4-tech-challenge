@@ -1674,3 +1674,76 @@ da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles 
 datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
 automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
 o dataset (4.4).
+
+---
+
+## 11. Glossário
+
+Siglas e termos que aparecem ao longo do relatório. As variáveis clínicas mantêm o nome em
+inglês porque é assim que constam nos datasets e no código.
+
+### 11.1 Métricas de avaliação
+
+| Termo | Significado |
+|:--|:--|
+| **WER** | *Word Error Rate* — taxa de erro de palavra: (substituições + inserções + deleções) ÷ palavras da referência. Métrica central da Entrega 2 (4.4) |
+| **AUC** | Área sob a curva ROC. Equivale à probabilidade de o modelo pontuar um caso positivo acima de um negativo sorteado ao acaso. **0,5 é o acaso**; 1,0 é a separação perfeita |
+| **AUPRC** | Área sob a curva precisão-recall. Em bases desbalanceadas diz mais que a AUC, mas só tem sentido **comparada à prevalência** — que é o valor de um sorteio |
+| **Precisão** | Entre os casos sinalizados, a fração que era de fato positiva |
+| **Recall** | Entre os casos positivos, a fração que o detector sinalizou |
+| **F1** | Média harmônica de precisão e recall |
+| **Prevalência** | Fração de positivos na base. É a referência contra a qual a AUPRC deve ser lida |
+| **Falso alarme** | Fração dos casos negativos que o detector sinalizou por engano |
+| ***Lead time*** | Antecedência entre o alerta e o evento. Neste trabalho, só conta dentro de uma janela de 48 h antes do início da sepse (5.4) |
+| ***Ground-truth*** | Rótulo de referência do dataset, usado para **medir** o resultado. Nunca entra na detecção |
+
+### 11.2 Sinais clínicos e variáveis dos datasets
+
+| Sigla | Significado | Faixa usual (adulto) |
+|:--|:--|:--|
+| **HR** | *heart rate* — frequência cardíaca | 60–100 bpm |
+| **SBP** | *systolic blood pressure* — pressão arterial sistólica | 90–140 mmHg |
+| **DBP** | *diastolic blood pressure* — pressão arterial diastólica | 60–90 mmHg |
+| **MAP** | *mean arterial pressure* — pressão arterial média | 70–100 mmHg |
+| **Resp** | frequência respiratória | 12–20 irpm |
+| **O2Sat** | saturação periférica de oxigênio | ≥ 95% |
+| **Temp** | temperatura corporal | ~36,5–37,5 °C |
+| **EtCO2** | *end-tidal CO2* — gás carbônico ao fim da expiração. Consta do schema do Challenge 2019 mas **não é medida** no *training set A* (5.4) | 35–45 mmHg |
+| **FiO2** | *fraction of inspired oxygen* — fração inspirada de oxigênio. É **prescrita**, não medida, e por isso serve de série de doses (5.5) | 0,21 (ar ambiente) a 1,0 |
+| **UTI** | unidade de terapia intensiva | — |
+| **Sepse** | disfunção orgânica causada por resposta desregulada do organismo a uma infecção. É o desfecho usado como *ground-truth* na Entrega 3 | — |
+| **`SepsisLabel`** | coluna 0/1 do Challenge 2019 que marca, hora a hora, quando a sepse é considerada instalada | — |
+
+### 11.3 Técnicas e modelos
+
+| Termo | Significado |
+|:--|:--|
+| **OpenPose** | Estimador de pose humana a partir de imagem. Executado como binário externo, gera um JSON por frame (3.4) |
+| **BODY_25** | Arquitetura do OpenPose usada aqui: 25 pontos articulares (*keypoints*) 2D com confiança |
+| **IsolationForest** | Algoritmo não-supervisionado de detecção de anomalia. Isola pontos raros por partições aleatórias; quanto menos partições para isolar um ponto, mais anômalo |
+| **Contaminação** | Parâmetro do IsolationForest: fração das amostras que o modelo trata como anômalas. Neste trabalho, 0,03 no vídeo e 0,05 nas anomalias |
+| **MAD** | *Median Absolute Deviation* — mediana dos desvios absolutos em torno da mediana. Medida de dispersão **resistente a valores extremos**, ao contrário do desvio-padrão |
+| **Z-score robusto** | Desvio padronizado por mediana e MAD: (valor − mediana) ÷ (1,4826 × MAD). O fator 1,4826 torna a escala comparável à do desvio-padrão numa distribuição normal |
+| **Não-supervisionado** | O modelo aprende sem ver rótulos. Aqui, treina no **padrão de normalidade** e sinaliza o que se afasta dele |
+| **Diarização** | Separação de "quem falou quando" numa gravação com mais de um interlocutor (4.4) |
+| **`NEGATION`** | Traço devolvido pelo Comprehend Medical indicando que a entidade foi **negada** pelo falante ("não tenho febre"). Ver também `PERTAINS_TO_FAMILY` e `HYPOTHETICAL` (4.5) |
+| **`NEGATIVE`** | Rótulo de sentimento do Amazon Comprehend, sem relação com `NEGATION` (4.6) |
+
+### 11.4 Datasets
+
+| Nome | Modalidade | Conteúdo |
+|:--|:--|:--|
+| **REHAB24-6** | vídeo | Exercícios de reabilitação em RGB, com rótulo de execução correta/incorreta por repetição (3.2) |
+| **UCI HAR** | movimentação | *Human Activity Recognition* — 561 features de acelerômetro e giroscópio, 6 atividades, 30 sujeitos (5.2) |
+| **Challenge 2019** | sinais vitais | PhysioNet/CinC — 40.336 pacientes de UTI, séries horárias, com `SepsisLabel` (5.2) |
+| **KIMORE** | — | Dataset de reabilitação previsto no plano inicial, **descartado**: o servidor saiu do ar e os espelhos não traziam vídeo RGB (7.2) |
+
+### 11.5 Termos de infraestrutura
+
+| Sigla | Significado |
+|:--|:--|
+| **CLI** | *command-line interface* — interface de linha de comando; nesta entrega, o ponto de entrada de cada pipeline |
+| **VRAM** | Memória dedicada da placa de vídeo. Limita a resolução de rede do OpenPose (3.4) |
+| **CUDA** | Plataforma da NVIDIA para computação em GPU, exigida pelo OpenPose |
+| **S3** | *Amazon Simple Storage Service* — armazenamento de objetos. O Transcribe não aceita upload direto e lê o áudio de lá (6.1) |
+| **UTF-8 / UTF-16** | Codificações de texto. Dois casos do dataset de áudio estão em UTF-16 e, lidos como UTF-8, devolvem texto corrompido **sem levantar erro** (4.3) |
