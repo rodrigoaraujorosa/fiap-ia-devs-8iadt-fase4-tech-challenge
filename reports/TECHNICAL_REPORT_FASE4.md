@@ -585,21 +585,45 @@ O Transcribe **não aceita áudio na chamada**: o arquivo vai para o S3, inicia-
 assíncrono sobre a URI e busca-se o JSON do resultado. A diarização fica ligada
 (`MaxSpeakerLabels=2`), o que permite separar médico e paciente.
 
-**Resultado (RES0029, 6,7 min de consulta respiratória):**
+**Resultados (quatro consultas).** O WER é medido contra a transcrição humana do próprio
+dataset, por distância de edição em nível de palavra.
 
-| Métrica | Valor |
-|:--|:--:|
-| WER | **5,37%** |
-| Substituições / inserções / deleções | 20 / 16 / 6 |
-| Palavras na referência | 782 |
-| Turnos identificados | 65 (referência humana: 69) |
-| Tempo do job | 47 s |
+| Caso | Duração | Especialidade | WER | Sub / Ins / Del | Palavras ref. | Turnos (AWS / humano) | Job |
+|:--|--:|:--|--:|:--:|--:|:--:|--:|
+| RES0091 | 7,0 min | respiratório | **4,12%** | 12 / 6 / 18 | 873 | 79 / 79 | 93 s |
+| RES0029 | 6,7 min | respiratório | **5,37%** | 20 / 16 / 6 | 782 | 65 / 69 | 47 s |
+| MSK0018 | 8,6 min | musculoesquelético | **7,53%** | 48 / 14 / 9 | 943 | 73 / 86 | 77 s |
+| RES0062 | 17,8 min | respiratório | **10,79%** | 52 / 134 / 20 | 1.910 | 128 / 130 | 108 s |
 
-O WER é medido contra a transcrição humana do próprio dataset, por distância de edição em
-nível de palavra. **Hesitações ("um", "uh") são removidas dos dois lados**: o anotador
-humano as transcreveu, o Transcribe as omite, e contá-las mediria a convenção de anotação,
-não o reconhecimento. A diferença é grande e vale registrar — **5,37% sem hesitações
-contra 13,30% com elas**.
+**WER médio 6,95%** (mediana 6,45%, desvio 2,92%).
+
+**Hesitações ("um", "uh") são removidas dos dois lados**: o anotador humano as transcreveu,
+o Transcribe as omite, e contá-las mediria a convenção de anotação, não o reconhecimento. A
+diferença é grande e vale registrar — no RES0029, **5,37% sem hesitações contra 13,30% com
+elas**.
+
+**Sobre o RES0062, que destoa.** O caso mais longo tem o dobro do WER dos demais, quase
+inteiramente por **inserções**: 134, contra 6 a 16 nos outros. Investigando os trechos
+inseridos, verifica-se que são **fala real que a transcrição humana omitiu** — orações
+inteiras ("and that it's not, you know, a contraindication to your afib"), repetições ("in
+your, in your") e falsos começos ("I used to, I..."). A pasta do dataset chama-se *Clean
+Transcripts*: o anotador humano **limpou as disfluências**, e o Transcribe transcreveu
+literalmente.
+
+A densidade de palavras confirma a leitura:
+
+| Caso | Palavras/min (referência) | Palavras/min (AWS) | Diferença total |
+|:--|--:|--:|--:|
+| RES0029 | 116 | 118 | +10 |
+| RES0091 | 125 | 123 | −12 |
+| MSK0018 | 110 | 111 | +5 |
+| RES0062 | **107** | **114** | **+114** |
+
+Nos três casos curtos a diferença fica em ±12 palavras; no RES0062 chega a +114, e a
+densidade da referência cai enquanto a da AWS se mantém. **O WER mais alto reflete uma
+transcrição humana mais editada, não um reconhecimento pior.** É uma limitação do
+ground-truth como medida, não do serviço — e sugere que, em consultas longas, o WER contra
+transcrição "limpa" superestima o erro real.
 
 **O que o WER não mostra.** A métrica trata todas as palavras como iguais, mas errar
 `two`→`2` não tem o mesmo peso clínico que errar `chest pain`. Verificando termo a termo,
@@ -633,15 +657,45 @@ Ignorar os traços produziria um relatório listando como sintomas do paciente c
 ele negou ou que pertencem a um parente.
 
 **Validação entre as duas origens.** Como existem a transcrição humana e a automática para
-a mesma consulta, é possível responder o que o WER não responde: *os 5% de erro atrapalham
-a extração clínica?* Extraindo das duas, **7 dos 9 achados foram recuperados**
-(recall 0,778). A leitura literal, porém, subestima: os dois "perdidos" — `hurts` e
-`impact` — são variantes lexicais de achados que **foram** recuperados (`pain`, `painful`,
-`fell`, `fell off`). **Nenhum achado clinicamente distinto se perdeu.**
+a mesma consulta, é possível responder o que o WER não responde: *os erros de transcrição
+atrapalham a extração clínica?* Extraindo das duas origens nos quatro casos:
 
-Em sentido oposto, o serviço extraiu `head was fine` como achado positivo, quando o
-paciente afirmava justamente estar bem — falso positivo que fica registrado como
-limitação.
+| Caso | Entidades | Achados (humano) | Recuperados | Recall |
+|:--|--:|--:|--:|--:|
+| RES0091 | 33 | 6 | 5 | 0,833 |
+| RES0029 | 52 | 9 | 7 | 0,778 |
+| MSK0018 | 55 | 7 | 6 | 0,857 |
+| RES0062 | 94 | 14 | 11 | 0,786 |
+| **Total** | 234 | **36** | **29** | **0,806** |
+
+A recall mantém-se estável em torno de 0,8 mesmo no RES0062, cujo WER é o dobro dos demais
+— indício de que a extração clínica é mais robusta ao erro de transcrição do que a métrica
+de palavras sugere.
+
+**Os "não recuperados" são, em maioria, efeito de limiar.** Dos 7 achados ausentes na
+origem AWS, **4 estão presentes na extração, apenas com confiança abaixo do corte de
+0,70**:
+
+| Achado | Caso | Situação na extração da AWS |
+|:--|:--|:--|
+| `arm fracture` | RES0091 | presente, score 0,60 |
+| `drink` | RES0062 | presente, score 0,66 |
+| `haven't been able to smell` | RES0062 | presente, score 0,53 |
+| `hurts` | RES0029 | presente, score 0,53 |
+| `impact` | RES0029 | ausente (variante de `fell`, que foi recuperado) |
+| `shoulder's dropped` | MSK0018 | ausente |
+| `throat felt ok.` | RES0062 | ausente |
+
+Ou seja, a recall medida **mistura duas coisas**: a qualidade da transcrição e a
+sensibilidade ao limiar escolhido. Um corte mais baixo elevaria a recall e traria também
+mais ruído; o valor de 0,70 é uma escolha conservadora, não um ótimo calibrado.
+
+**Falsos positivos observados.** O serviço extrai como achado positivo expressões que
+descrevem **ausência de problema** — `head was fine` (RES0029), `throat felt ok.` e
+`healthy` (RES0062). São o oposto de um achado clínico, e o traço `NEGATION` não os captura
+porque a frase é afirmativa. É a limitação mais relevante encontrada, e o relatório de
+saída a mitiga em parte ao exibir o trecho de origem junto de cada achado, permitindo que a
+equipe descarte o item em um relance.
 
 ### 4.6 Análise de Sentimento (`comprehend.py`)
 
@@ -653,10 +707,22 @@ A análise é feita em dois níveis: o **tom geral do relato**, com as pontuaç�
 pelo tamanho de cada bloco de texto, e o **sentimento por turno de fala**, que localiza
 onde o relato é mais negativo.
 
-**Resultado (RES0029):** tom predominante **NEGATIVE**, com 0,95 na classe negativa. As
-três falas de maior carga negativa são clinicamente pertinentes — a piora recente ("it's
-been getting worse", 0,99), o mecanismo do trauma (a queda de bicicleta, 0,96) e a
-qualidade da dor ("someone is just stabbing me", 0,94).
+**Resultados.** Os quatro casos foram classificados como **NEGATIVE**, com a pontuação da
+classe negativa entre 0,75 e 0,97:
+
+| Caso | Sentimento | Classe negativa |
+|:--|:--|--:|
+| RES0062 | NEGATIVE | 0,75 |
+| RES0091 | NEGATIVE | 0,88 |
+| RES0029 | NEGATIVE | 0,95 |
+| MSK0018 | NEGATIVE | 0,97 |
+
+A uniformidade do rótulo entre casos e especialidades é, ela própria, o achado: **o
+indicador não discrimina** consultas dentro deste corpus. No RES0029, as três falas de
+maior carga negativa são clinicamente pertinentes — a piora recente ("it's been getting
+worse", 0,99), o mecanismo do trauma (a queda de bicicleta, 0,96) e a qualidade da dor
+("someone is just stabbing me", 0,94) —, o que sugere que a análise **por turno** é mais
+informativa que o rótulo agregado.
 
 > **Limitação do indicador.** O modelo de sentimento é de propósito geral, treinado
 > sobretudo em avaliações de produtos e redes sociais. Num relato de sintomas, o
