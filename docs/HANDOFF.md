@@ -141,11 +141,29 @@ pytest
 ## Próximos passos
 
 1. ~~Vídeo curto sem pessoa ao fundo para o demo~~ — **resolvido: PM_034.** Entrega 1 fechada.
-2. **Entrega 2:** concluída. Falta ampliar a amostra de transcrição (hoje 1 caso) e
-   fazer o merge da branch na `main`.
+2. ~~**Entrega 2**~~ — concluída: 4 casos processados, WER médio 6,95%. Falta o **merge da
+   branch `feature/entrega-2-audio` na `main`**.
 3. **Entrega 3:** baixar Challenge 2019 + UCI HAR, rodar e documentar; Synthea p/ prescrições.
-4. **Relatório técnico**: completar as seções **[Em desenvolvimento]**. Atenção: as seções
-   **4 e 6 ainda descrevem o pipeline Azure** — reescrever para AWS quando a Entrega 2
-   estiver rodando, com resultados reais em vez de promessas.
+4. **Relatório técnico**: completar as seções **[Em desenvolvimento]** (5.4 prescrições,
+   6.4 fluxo de alerta, 12 conclusão).
 5. **Vídeo demo** (YouTube/Vimeo, até 15 min). Orçamento acordado: 1min abertura, 3min30
    vídeo, 4min áudio, 2min30 anomalias, 2min nuvem/alerta, 1min conclusão, 1min folga.
+
+## Pendências de fechamento (fazer ao final, com tudo pronto)
+
+- [ ] **Glossário no relatório técnico.** Decisão do usuário: fazer no fim, quando todas as
+      entregas estiverem escritas, para o glossário nascer completo. Levantamento das siglas
+      que aparecem 2+ vezes e **nunca são explicadas** no texto:
+
+      WER, REHAB24-6, CLI, HAR, VRAM, CUDA, MAD, UTI, UTF-8/UTF-16,
+      NEGATION / NEGATIVE (traços e rótulos dos serviços AWS)
+
+      O **WER** é o mais crítico: aparece 10 vezes, é a métrica central da Entrega 2 e nunca
+      é expandido. Definição: *Word Error Rate*, taxa de erro de palavra —
+      (substituições + inserções + deleções) / palavras da referência.
+
+- [ ] **Poda do README raiz.** A seção "Configuração da AWS" ficou detalhada demais para um
+      README; parte dela cabe melhor no relatório técnico ou em `docs/`.
+
+- [ ] Revisar se os relatórios de saída em `reports/audio_*.md` devem ficar versionados ou
+      se apenas um exemplo basta.
