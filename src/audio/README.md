@@ -30,12 +30,15 @@ direto na chamada.
 
 | Módulo | Papel |
 |---|---|
+| `cli.py` | **único ponto de entrada**: roda as quatro etapas, ou os modos sem custo |
 | `consultations.py` | loader do dataset: lista casos, separa turnos por falante, isola a fala do paciente |
 | `transcribe.py` | upload ao S3, job do Transcribe, diarização e medição de WER contra a referência humana |
 | `comprehend.py` | entidades clínicas, sentimento e comparação entre as duas transcrições |
 | `report.py` | relatório bilíngue para a equipe médica |
-| `cli.py` | **pipeline fim-a-fim**: roda as quatro etapas em um comando |
 | `cache.py` | cache em disco dos resultados pagos, comum aos módulos |
+
+> `transcribe.py`, `comprehend.py` e `report.py` são **bibliotecas, sem CLI própria** —
+> mesma organização da Entrega 1, onde apenas `cli.py` e `app.py` são executáveis.
 
 ## Dataset: consultas médicas simuladas
 
@@ -70,30 +73,18 @@ python -m src.audio.cli --cases RES0091 RES0142 RES0094 --out reports/wer_consul
 python -m src.audio.cli --case RES0091 --dry-run
 ```
 
-### Etapa a etapa
+### Sem chamar a nuvem
 
 ```bash
-# estatísticas do dataset (não chama a AWS)
+# estatísticas do dataset, para escolher os casos
 python -m src.audio.consultations --root data/audio/consultas --summary
-
-# só as falas do paciente de um caso
 python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
 
-# transcrição (CUSTA — cacheia em reports/transcriptions/)
-python -m src.audio.transcribe --cases RES0029
+# recalcula o WER do que já está em cache
+python -m src.audio.cli --report --out reports/wer_consultations.csv
 
-# métricas do que já está em cache, sem tocar na AWS
-python -m src.audio.transcribe --report --out reports/wer_consultations.csv
-
-# entidades clínicas; --compare mede humano vs AWS
-python -m src.audio.comprehend --cases RES0029
-python -m src.audio.comprehend --cases RES0029 --compare
-
-# sentimento do relato (geral e por turno)
-python -m src.audio.comprehend --cases RES0029 --sentiment
-
-# relatório final para a equipe médica
-python -m src.audio.report --case RES0029
+# inspeciona as entidades já extraídas de um caso
+python -m src.audio.cli --show-entities RES0091
 ```
 
 ## Por que só a fala do paciente

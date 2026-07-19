@@ -15,20 +15,19 @@ relatório, em vez de uma captura de tela.
 Por isso o módulo *sempre* cacheia em ``reports/transcriptions/<case>.json`` e nunca
 reprocessa um caso já transcrito, a menos que se peça ``--force``.
 
-Uso:
-    python -m src.audio.transcribe --cases RES0001              # um caso
-    python -m src.audio.transcribe --cases RES0001 RES0010      # vários
-    python -m src.audio.transcribe --report                     # WER do que já foi transcrito
+Módulo de biblioteca — o ponto de entrada é ``src.audio.cli``:
+
+    python -m src.audio.cli --case RES0091          # pipeline completo
+    python -m src.audio.cli --report                # WER do que está em cache
 """
 from __future__ import annotations
 
-import argparse
 import json
 import re
 import time
 from pathlib import Path
 
-from ..common.config import ROOT_DIR, get_aws_config
+from ..common.config import ROOT_DIR
 from .consultations import audio_path, full_text, load_transcript
 
 CACHE_DIR = ROOT_DIR / "reports" / "transcriptions"
@@ -321,50 +320,3 @@ def process(
 
         results.append(evaluate(case, root, data, keep_fillers=keep_fillers))
     return results
-
-
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Transcrição de consultas com Amazon Transcribe.")
-    ap.add_argument("--root", default="data/audio/consultas", help="raiz do dataset")
-    ap.add_argument("--cases", nargs="+", help="casos a transcrever (ex.: RES0001)")
-    ap.add_argument("--force", action="store_true",
-                    help="reprocessa mesmo se já houver cache (custa dinheiro de novo)")
-    ap.add_argument("--keep-fillers", action="store_true",
-                    help="conta 'um', 'uh' etc. no WER (padrão: remove dos dois lados)")
-    ap.add_argument("--report", action="store_true",
-                    help="avalia tudo o que já está em cache, sem chamar a AWS")
-    ap.add_argument("--out", help="salva as métricas em CSV")
-    args = ap.parse_args()
-
-    cfg = get_aws_config()
-
-    if args.report:
-        cases = sorted(p.stem for p in CACHE_DIR.glob("*.json"))
-        if not cases:
-            print("nenhuma transcrição em cache — rode com --cases primeiro")
-            return
-    elif args.cases:
-        cases = args.cases
-    else:
-        ap.print_help()
-        return
-
-    if not args.report and (not cfg["region"] or not cfg["s3_bucket"]):
-        print("AWS não configurada. Rode: python -m src.common.config")
-        return
-
-    results = process(cases, args.root, cfg["s3_bucket"], cfg["region"],
-                      force=args.force, keep_fillers=args.keep_fillers)
-
-    import pandas as pd
-    df = pd.DataFrame(results)
-    print(f"\n{df.to_string(index=False)}")
-    if len(df) > 1:
-        print(f"\nWER médio: {df['wer'].mean():.3f}  (mediana {df['wer'].median():.3f})")
-    if args.out:
-        df.to_csv(args.out, index=False)
-        print(f"salvo em {args.out}")
-
-
-if __name__ == "__main__":
-    main()

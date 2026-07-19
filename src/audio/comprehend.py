@@ -20,19 +20,18 @@ WER sozinho não responde: os ~5% de erro de transcrição atrapalham a extraç�
 **Custo.** O Comprehend Medical cobra por caractere processado. Todo resultado é cacheado
 em ``reports/entities/`` e não se reprocessa sem ``--force``.
 
-Uso:
-    python -m src.audio.comprehend --cases RES0029            # extrai do texto do paciente
-    python -m src.audio.comprehend --cases RES0029 --compare  # humano vs AWS
-    python -m src.audio.comprehend --report                   # consolida o que está em cache
+Módulo de biblioteca — o ponto de entrada é ``src.audio.cli``:
+
+    python -m src.audio.cli --case RES0091          # pipeline completo
+    python -m src.audio.cli --show-entities RES0091 # inspeciona as entidades em cache
 """
 from __future__ import annotations
 
-import argparse
 import json
 import re
 from pathlib import Path
 
-from ..common.config import ROOT_DIR, get_aws_config
+from ..common.config import ROOT_DIR
 from .cache import cached_json
 from .consultations import patient_text
 from .transcribe import cache_path as transcript_cache_path
@@ -344,88 +343,3 @@ def _print_entities(case: str, entities: list[dict]) -> None:
             vistos.add(chave)
             marcas = "".join(f" [{TRAIT_LABELS_PT.get(t, t)}]" for t in e["traits"])
             print(f"  {e['score']:.2f}  {e['text']:28s} {e['type']}{marcas}")
-
-
-def main() -> None:
-    ap = argparse.ArgumentParser(
-        description="Extração de entidades clínicas com Amazon Comprehend Medical.")
-    ap.add_argument("--root", default="data/audio/consultas", help="raiz do dataset")
-    ap.add_argument("--cases", nargs="+", help="casos a processar (ex.: RES0029)")
-    ap.add_argument("--source", choices=("human", "aws"), default="human",
-                    help="origem do texto: transcrição humana ou do Transcribe")
-    ap.add_argument("--compare", action="store_true",
-                    help="extrai das duas origens e mede a recuperação dos achados")
-    ap.add_argument("--sentiment", action="store_true",
-                    help="analisa o sentimento do relato (Amazon Comprehend geral)")
-    ap.add_argument("--force", action="store_true",
-                    help="reprocessa mesmo com cache (custa dinheiro de novo)")
-    ap.add_argument("--report", action="store_true",
-                    help="consolida o que já está em cache, sem chamar a AWS")
-    ap.add_argument("--out", help="salva o resumo em CSV")
-    args = ap.parse_args()
-
-    cfg = get_aws_config()
-
-    if args.report:
-        cases = sorted({p.stem.split("__")[0] for p in CACHE_DIR.glob("*.json")})
-        if not cases:
-            print("nenhuma extração em cache — rode com --cases primeiro")
-            return
-        for case in cases:
-            for source in ("human", "aws"):
-                p = cache_path(case, source)
-                if p.exists():
-                    _print_entities(f"{case} ({source})",
-                                    json.loads(p.read_text(encoding="utf-8")))
-        return
-
-    if not args.cases:
-        ap.print_help()
-        return
-
-    if not cfg["region"]:
-        print("AWS não configurada. Rode: python -m src.common.config")
-        return
-
-    if args.sentiment:
-        for case in args.cases:
-            s = analyze_sentiment(case, args.root, cfg["region"], force=args.force)
-            rotulo = SENTIMENT_LABELS_PT.get(s["sentiment"], s["sentiment"])
-            print(f"\n=== {case}: tom do relato ===")
-            print(f"  predominante: {s['sentiment']} ({rotulo})")
-            for k, v in sorted(s["scores"].items(), key=lambda kv: -kv[1]):
-                print(f"    {k:9s} {v:.4f}")
-            if s.get("by_turn"):
-                piores = sorted(s["by_turn"], key=lambda t: -t["negative"])[:3]
-                print("\n  falas mais negativas:")
-                for t in piores:
-                    print(f"    [{t['negative']:.2f}] {t['text'][:90]}")
-        return
-
-    if args.compare:
-        rows = [compare_sources(c, args.root, cfg["region"], force=args.force)
-                for c in args.cases]
-        import pandas as pd
-        df = pd.DataFrame(rows)
-        print(df.drop(columns=["missed", "extra"]).to_string(index=False))
-        for r in rows:
-            if r["missed"]:
-                print(f"\n[{r['case']}] achados perdidos pela AWS: {', '.join(r['missed'])}")
-            if r["extra"]:
-                print(f"[{r['case']}] achados só na AWS: {', '.join(r['extra'])}")
-        if args.out:
-            df.drop(columns=["missed", "extra"]).to_csv(args.out, index=False)
-            print(f"\nsalvo em {args.out}")
-        return
-
-    for case in args.cases:
-        entities = extract(case, args.root, cfg["region"], source=args.source,
-                           force=args.force)
-        _print_entities(f"{case} ({args.source})", entities)
-        findings = clinical_findings(entities)
-        print(f"\nachados clínicos afirmados (score>=0.7, não negados): {len(findings)}")
-        print("  " + ", ".join(sorted({f['text'].lower() for f in findings})))
-
-
-if __name__ == "__main__":
-    main()

@@ -14,18 +14,18 @@ O relatório é deliberadamente conservador: separa o que o paciente **afirmou**
 que originou tudo — uma extração perfeita sobre uma transcrição ruim continua sendo
 informação ruim.
 
-Uso:
-    python -m src.audio.report --case RES0029
-    python -m src.audio.report --case RES0029 --no-translate     # sem chamar a AWS
+Módulo de biblioteca — o ponto de entrada é ``src.audio.cli``:
+
+    python -m src.audio.cli --case RES0091
+    python -m src.audio.cli --case RES0091 --no-translate   # sem chamar o Translate
 """
 from __future__ import annotations
 
-import argparse
 import json
 from datetime import datetime
 from pathlib import Path
 
-from ..common.config import ROOT_DIR, get_aws_config
+from ..common.config import ROOT_DIR
 from .comprehend import CATEGORY_LABELS_PT, TRAIT_LABELS_PT
 from .comprehend import SENTIMENT_LABELS_PT
 from .comprehend import cache_path as entities_cache_path
@@ -308,26 +308,3 @@ def build_report(
              "Comprehend (sentimento) e Amazon Translate (tradução). **Não substitui a "
              "avaliação de um profissional de saúde.**")
     return "\n".join(L)
-
-
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Relatório clínico bilíngue da análise de áudio.")
-    ap.add_argument("--root", default="data/audio/consultas", help="raiz do dataset")
-    ap.add_argument("--case", required=True, help="caso a reportar (ex.: RES0029)")
-    ap.add_argument("--no-translate", action="store_true",
-                    help="não chama o Amazon Translate (usa o cache ou o original)")
-    ap.add_argument("--out", help="arquivo de saída (padrão: reports/audio_<caso>.md)")
-    args = ap.parse_args()
-
-    cfg = get_aws_config()
-    md = build_report(args.case, args.root, cfg["region"],
-                      translate_enabled=not args.no_translate)
-
-    out = Path(args.out) if args.out else cache_path_for(args.case)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(md, encoding="utf-8")
-    print(f"relatório salvo em {out.relative_to(ROOT_DIR)}")
-
-
-if __name__ == "__main__":
-    main()

@@ -8,10 +8,18 @@ Roda as quatro etapas em um comando, na ordem em que dependem umas das outras:
     3. Comprehend          fala do paciente -> sentimento (geral e por turno)
     4. Relatório           tudo acima -> documento bilíngue para a equipe médica
 
+Este é o **único ponto de entrada** da entrega: ``transcribe.py``, ``comprehend.py`` e
+``report.py`` são módulos de biblioteca, sem CLI própria — mesma organização da Entrega 1,
+onde só ``cli.py`` e ``app.py`` são executáveis.
+
 Uso:
     python -m src.audio.cli --case RES0091
     python -m src.audio.cli --cases RES0091 RES0142 RES0094     # lote
     python -m src.audio.cli --case RES0091 --dry-run            # o que seria cobrado
+
+Modos que **não chamam a nuvem** (úteis para iterar sem custo):
+    python -m src.audio.cli --report                  # recalcula o WER do que está em cache
+    python -m src.audio.cli --show-entities RES0091   # inspeciona as entidades extraídas
 
 **Custo.** As etapas 1 a 3 e a tradução da 4 são pagas por volume. Nenhuma delas
 reprocessa um caso já em cache — para isso é preciso ``--force``, e o ``--dry-run``
@@ -117,11 +125,67 @@ def run_case(
     return resumo
 
 
+def _report_from_cache(root: str, out: str | None, keep_fillers: bool = False) -> None:
+    """
+    Recalcula as métricas de tudo o que já foi transcrito, **sem chamar a AWS**.
+
+    Permite iterar sobre a forma de medir (por exemplo, ligar e desligar a contagem de
+    hesitações) sem pagar de novo pela transcrição.
+    """
+    from .transcribe import CACHE_DIR as TRANSCRIPT_DIR
+
+    cases = sorted(p.stem for p in TRANSCRIPT_DIR.glob("*.json"))
+    if not cases:
+        print("nenhuma transcrição em cache — rode antes: python -m src.audio.cli --case <CASO>")
+        return
+
+    import pandas as pd
+    metricas = run_transcribe(cases, root, bucket="", region="", keep_fillers=keep_fillers)
+    df = pd.DataFrame(metricas)
+    print(df.to_string(index=False))
+    if len(df) > 1:
+        print(f"\nWER: média {df['wer'].mean():.2%} | mediana {df['wer'].median():.2%}"
+              f" | desvio {df['wer'].std():.2%}")
+    if out:
+        df.to_csv(out, index=False)
+        print(f"\nsalvo em {out}")
+
+
+def _show_entities(case: str) -> None:
+    """Lista as entidades já extraídas de um caso, agrupadas por categoria."""
+    import json
+
+    from .comprehend import CATEGORY_LABELS_PT, TRAIT_LABELS_PT
+
+    path = entities_cache_path(case, "human")
+    if not path.exists():
+        print(f"sem entidades para {case} — rode: python -m src.audio.cli --case {case}")
+        return
+
+    entities = json.loads(path.read_text(encoding="utf-8"))
+    print(f"{case}: {len(entities)} entidades\n")
+    por_categoria: dict[str, list[dict]] = {}
+    for e in entities:
+        por_categoria.setdefault(e["category"], []).append(e)
+
+    for cat, itens in sorted(por_categoria.items(), key=lambda kv: -len(kv[1])):
+        print(f"{cat} ({CATEGORY_LABELS_PT.get(cat, cat)}) — {len(itens)}")
+        vistos = set()
+        for e in sorted(itens, key=lambda x: -x["score"]):
+            chave = e["text"].lower()
+            if chave in vistos:
+                continue
+            vistos.add(chave)
+            marcas = "".join(f" [{TRAIT_LABELS_PT.get(t, t)}]" for t in e["traits"])
+            print(f"  {e['score']:.2f}  {e['text']:28s} {e['type']}{marcas}")
+        print()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(
         description="Pipeline fim-a-fim da análise de áudio (transcrição -> relatório).")
     ap.add_argument("--root", default="data/audio/consultas", help="raiz do dataset")
-    grupo = ap.add_mutually_exclusive_group(required=True)
+    grupo = ap.add_mutually_exclusive_group()
     grupo.add_argument("--case", help="um caso (ex.: RES0091)")
     grupo.add_argument("--cases", nargs="+", help="vários casos")
     ap.add_argument("--force", action="store_true",
@@ -134,11 +198,26 @@ def main() -> None:
                     help="conta hesitações no WER")
     ap.add_argument("--dry-run", action="store_true",
                     help="lista o que seria chamado na nuvem, sem executar nada")
+    ap.add_argument("--report", action="store_true",
+                    help="recalcula as métricas do que está em cache, sem chamar a AWS")
+    ap.add_argument("--show-entities", metavar="CASO",
+                    help="lista as entidades já extraídas de um caso (não chama a AWS)")
     ap.add_argument("--out", help="CSV com o resumo dos casos processados")
     args = ap.parse_args()
 
+    if not (args.case or args.cases or args.report or args.show_entities):
+        ap.error("informe --case, --cases, --report ou --show-entities")
+
     cases = args.cases or [args.case]
     cfg = get_aws_config()
+
+    if args.report:
+        _report_from_cache(args.root, args.out, keep_fillers=args.keep_fillers)
+        return
+
+    if args.show_entities:
+        _show_entities(args.show_entities)
+        return
 
     if args.dry_run:
         print("Etapas que fariam chamada paga:\n")
