@@ -1385,14 +1385,63 @@ registra cada chamada `DetectEntitiesV2`.
 
 ### 6.4 Fluxo de Alerta à Equipe Médica
 
-**[Em desenvolvimento]** — a camada de fusão entre as três modalidades e o disparo
-automático de alerta ainda não estão implementados. O desenho previsto consome o sinal de
-anomalia de cada pipeline (desvio postural, achado clínico, anomalia em sinal vital) e
-encaminha o alerta à equipe.
+O enunciado pede alerta automático em um ponto específico: no item 3, "gerar alertas
+automáticos para a equipe médica com base nas anomalias detectadas". O alerta é, portanto,
+consequência da **detecção de anomalias** — não uma camada de fusão entre as três
+modalidades, que o desafio não requer. As Entregas 1 e 2 produzem relatórios, e é esse o
+entregável delas.
 
-O relatório clínico bilíngue (4.7) já constitui a **saída legível** desse fluxo: reúne os
-achados, sua origem na fala do paciente e a confiabilidade da transcrição que os produziu.
-O que falta é a automação do disparo.
+```
+detecção          priorização              apresentação
+IsolationForest ─► fila de plantão ──────► painel (app.py)
+regra de degrau    (alerts.py)             CLI (--alerts)
+```
+
+**Detecção.** Cada subtarefa da Entrega 3 produz instantes sinalizados: horas de
+internação, para sinais vitais e dose prescrita; janelas de leitura, para movimentação
+(5.3 a 5.5).
+
+**Priorização.** `alerts.py` converte esses instantes em uma fila ordenada, atribuindo
+prioridade pela confiabilidade **medida** de cada modalidade e elevando a ALTA os
+pacientes em que duas séries independentes concordam (5.7). É aqui que o sistema evita o
+erro mais provável de um alerta multimodal: tratar um detector de AUC 0,555 como se
+valesse o mesmo que um de AUC 0,9999.
+
+**Apresentação.** A fila chega à equipe pelo painel de plantão, em interface web ou
+terminal, com a série do paciente a um clique (5.8). Cada alerta informa **o que**
+disparou, **quando** e **com que frequência**, porque um alerta que não diz isso obriga
+quem o recebe a reabrir o caso para descobrir.
+
+O fluxo roda **localmente**. Não é omissão de nuvem: a camada de alerta consome a saída do
+detector, que é local pelas razões da seção 6.2 — os dois serviços gerenciados dedicados a
+anomalia em séries temporais foram retirados do mercado. Enviar para a nuvem um sinal
+produzido localmente apenas para reimportá-lo não acrescentaria capacidade.
+
+**O que está implementado e o que uma operação real exigiria:**
+
+| Etapa | Neste trabalho | Em produção |
+|:--|:--|:--|
+| Aquisição | séries gravadas, lidas de arquivo | telemetria contínua dos monitores de leito |
+| Detecção | modelo treinado e persistido, aplicado a séries novas | o mesmo, reavaliado periodicamente |
+| Priorização | fila por confiabilidade medida e corroboração | idem, com histórico e reincidência |
+| Entrega | painel em tela | notificação ativa (e-mail, SMS, pager) além do painel |
+| Registro | nenhum | trilha de auditoria: quem viu, quando, o que fez |
+
+**Limitações declaradas.**
+
+- **Não é tempo real.** O desafio descreve alertar "em tempo real"; o sistema opera sobre
+  séries **já gravadas**, em lote. A diferença é de infraestrutura de aquisição, não de
+  método: o detector pontua uma hora de internação isoladamente e serviria a um fluxo
+  contínuo sem alteração — mas nada aqui foi exercitado contra telemetria ao vivo.
+- **A entrega é passiva.** O alerta aparece para quem abre o painel; não há notificação
+  que alcance a equipe fora dele. Um tópico do **Amazon SNS** seria o encaixe direto e
+  fecharia essa lacuna, mas não foi implementado.
+- **Não há estado entre execuções.** Cada execução recalcula a fila do zero; alertas não
+  são marcados como vistos, atendidos ou descartados. Numa operação real, essa ausência
+  faria o mesmo alerta reaparecer indefinidamente.
+- **Sinais vitais não disparam ação automática.** Com AUC 0,555 e menos da metade dos
+  pacientes avisados dentro da janela (5.4), a fila é explicitamente de **triagem para
+  revisão humana**. A ressalva aparece na própria tela, e não apenas neste relatório.
 
 ---
 
