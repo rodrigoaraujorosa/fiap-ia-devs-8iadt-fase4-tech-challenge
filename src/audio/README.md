@@ -97,6 +97,26 @@ Na transcrição humana a separação vem dos rótulos `D:`/`P:`; na da AWS, da 
 papel do paciente é identificado por dois sinais independentes — quem fala mais e quem
 *não* abre a consulta — e o código recusa-se a decidir se eles discordarem.
 
+## Onde ficam os artefatos
+
+```
+data/audio/consultas/Data/         # dataset (gitignored)
+  Audio Recordings/RES0001.mp3     #   áudio da consulta
+  Clean Transcripts/RES0001.txt    #   transcrição humana (ground-truth)
+
+reports/                           # resultados (versionados)
+  transcriptions/RES0001.json      #   resposta bruta do Transcribe
+  entities/RES0001__human.json     #   entidades da transcrição humana
+  entities/RES0001__aws.json       #   entidades da transcrição automática
+  entities/RES0001__sentiment.json #   sentimento (geral e por turno)
+  translations.json                #   cache do Translate, compartilhado entre casos
+  audio_RES0001.md                 #   relatório clínico bilíngue
+  wer_consultations.csv            #   métricas de transcrição de todos os casos
+```
+
+Os JSON brutos da AWS são versionados de propósito: permitem recalcular as métricas e
+auditar os números do relatório **sem credenciais e sem custo**.
+
 ## Controle de custo
 
 Transcribe, Comprehend Medical, Comprehend e Translate cobram por volume. Todo resultado é **cacheado**

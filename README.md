@@ -33,34 +33,54 @@ não são os mesmos pacientes nas 3 fontes).
 
 ```
 fiap-ia-devs-8iadt-fase4-tech-challenge/
-├── src/                      # código-fonte
-│   ├── common/               # config e utilitários compartilhados
-│   ├── video/                # Entrega 1 — análise de vídeo (OpenPose)
-│   │   ├── keypoints.py posture.py anomaly.py   # parser, ângulos, desvios
-│   │   ├── report.py overlay.py validate.py     # relatório, vídeo anotado, validação
-│   │   └── run_openpose.py cli.py               # OpenPose + pipeline fim-a-fim
-│   ├── audio/                # Entrega 2 — análise de áudio (AWS)
-│   │   ├── consultations.py transcribe.py       # dataset, Transcribe + WER
-│   │   ├── comprehend.py report.py              # entidades, sentimento, relatório
-│   │   └── cli.py cache.py                      # pipeline fim-a-fim + cache
-│   └── anomaly/              # Entrega 3 — detecção de anomalias
-│       ├── load_challenge2019.py   # loader + baseline (sinais vitais)
-│       └── load_uci_har.py         # loader + baseline (movimentação)
-├── data/                     # datasets baixados localmente (não versionado)
-│   ├── video/  audio/  anomaly/
-├── docs/                     # guia de datasets e setup do OpenPose
-│   ├── datasets_README.md
-│   └── openpose_setup.md
-├── reports/                  # relatório técnico e figuras geradas
-│   └── figures/
-├── tests/                    # testes automatizados
-├── requirements.txt          # pisos de versão
-├── requirements-lock.txt     # versões exatas, para auditar os resultados
+├── src/
+│   ├── common/config.py             # caminhos, credenciais AWS e verificação do ambiente
+│   ├── video/                       # Entrega 1 — análise de vídeo (OpenPose, local)
+│   │   ├── run_openpose.py          #   invoca o binário do OpenPose
+│   │   ├── keypoints.py             #   parser BODY_25 + seleção da pessoa principal
+│   │   ├── posture.py anomaly.py    #   ângulos articulares; desvios (z-score ∪ IsolationForest)
+│   │   ├── validate.py report.py    #   validação contra o ground-truth; relatório + gráfico
+│   │   ├── overlay.py               #   vídeo anotado com esqueleto e desvios
+│   │   ├── cli.py                   #   pipeline fim-a-fim
+│   │   └── app.py                   #   app web de demonstração (Gradio)
+│   ├── audio/                       # Entrega 2 — análise de áudio (AWS)
+│   │   ├── consultations.py         #   loader do dataset; separa médico/paciente
+│   │   ├── transcribe.py            #   S3 + Amazon Transcribe + medição de WER
+│   │   ├── comprehend.py            #   Comprehend Medical (entidades) e Comprehend (sentimento)
+│   │   ├── report.py                #   relatório clínico bilíngue (Amazon Translate)
+│   │   ├── cache.py                 #   cache dos resultados pagos
+│   │   └── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
+│   └── anomaly/                     # Entrega 3 — detecção de anomalias (local)
+│       ├── load_challenge2019.py    #   loader + baseline (sinais vitais)
+│       └── load_uci_har.py          #   loader + baseline (movimentação)
+├── data/                            # datasets baixados localmente (NÃO versionado)
+│   ├── video/rehab24-6/             #   REHAB24-6 (vídeos + Segmentation.csv)
+│   ├── audio/consultas/             #   consultas médicas simuladas
+│   └── anomaly/                     #   Challenge 2019 e UCI HAR
+├── reports/                         # resultados e relatório técnico
+│   ├── TECHNICAL_REPORT_FASE4.md    #   o relatório da fase
+│   ├── relatorio_PM_*.md            #   relatórios de desvio postural (Entrega 1)
+│   ├── validacao_PM_*.csv           #   validação por repetição (Entrega 1)
+│   ├── audio_RES*.md audio_MSK*.md  #   relatórios clínicos bilíngues (Entrega 2)
+│   ├── wer_consultations.csv        #   métricas de transcrição (Entrega 2)
+│   ├── transcriptions/ entities/    #   respostas brutas da AWS (cache, versionado)
+│   ├── translations.json            #   cache do Amazon Translate
+│   └── figures/                     #   gráficos gerados + screenshots/ do relatório
+├── docs/
+│   ├── datasets_README.md           # download e schema de cada dataset
+│   └── openpose_setup.md            # instalação do binário do OpenPose
+├── tests/test_video.py              # testes com keypoints sintéticos (sem OpenPose nem AWS)
+├── requirements.txt                 # pisos de versão
+├── requirements-lock.txt            # versões exatas, para auditar os resultados
+├── .env.example                     # modelo de configuração da AWS (sem segredos)
 ├── pyproject.toml
-├── .env.example              # modelo de configuração da AWS (sem segredos)
-├── LICENSE                   # MIT (código); datasets têm licença própria
+├── LICENSE                          # MIT (código); datasets têm licença própria
 └── README.md
 ```
+
+> Os JSON brutos devolvidos pela AWS ficam **versionados** em `reports/transcriptions/` e
+> `reports/entities/`. Isso permite recalcular as métricas da Entrega 2 — e auditar os
+> números do relatório — **sem credenciais da AWS e sem custo**.
 
 ---
 
