@@ -13,8 +13,9 @@
 
 ---
 
-> **Documento vivo.** As seções marcadas com **[Em desenvolvimento]** serão completadas
-> conforme as entregas avançam. Este relatório acompanha o estado atual da implementação.
+> As três entregas técnicas estão implementadas e validadas contra o *ground-truth* de
+> cada dataset. Os números apresentados foram medidos nas execuções descritas, e as
+> limitações encontradas estão declaradas nas respectivas seções.
 
 ---
 
@@ -1657,39 +1658,84 @@ o dataset (4.4).
 | GPU local fraca (MX330, 2 GB) | OpenPose lento (~1,2 s/frame) | Subamostragem (`--frame-step`) |
 | Datasets de modalidades distintas | Não há paciente comum entre vídeo, áudio e vitais | Prática acadêmica padrão; documentado |
 | Serviços gerenciados de anomalia descontinuados (Azure Anomaly Detector e Amazon Lookout for Metrics) | Sem opção gerenciada direta para séries clínicas | Detecção local (IsolationForest); avaliar CloudWatch |
-| Fusão multimodal e alerta automático ausentes | As três modalidades não convergem num alerta único | Implementar a camada de fusão (6.4) |
+| Alerta em lote, não em tempo real | O cenário descreve alerta contínuo; o sistema opera sobre séries já gravadas | Aquisição por telemetria; o detector pontua uma hora isolada e serviria a fluxo contínuo (6.4) |
+| Entrega passiva do alerta | Só alcança quem abre o painel; nada notifica a equipe fora dele | Tópico Amazon SNS (e-mail/SMS) além do painel (6.4) |
+| Sem estado entre execuções | Alertas não são marcados como vistos ou atendidos, e reaparecem a cada execução | Persistir a fila com trilha de auditoria (6.4) |
 | Detecção não-supervisionada | Limiares definidos empiricamente | Calibração com os rótulos disponíveis |
 | Referência = mediana global do vídeo | Em movimentos de grande amplitude (agachamento), a execução correta também se afasta da mediana e a separação cai para 1,4x (3.8) | Referência por fase do movimento em vez de mediana única |
 | Sensibilidade às condições de captura | Em condições adversas (pouca luz, meio-perfil, pessoa ao fundo), a margem cai de 10,5x para 2,8x, por falsos positivos em execuções corretas (3.8) | Rastreamento de identidade entre frames; máscara da região de interesse; normalização por iluminação |
 
 ### 11.2 Trabalhos Futuros
 
-1. Implementar a camada de fusão multimodal e o disparo automático de alerta (6.4)
-2. Adotar uma referência **por fase do movimento** (em vez da mediana global) para recuperar
+1. Adotar uma referência **por fase do movimento** (em vez da mediana global) para recuperar
    a separação em exercícios de grande amplitude — a limitação mais clara medida em 3.8
-3. Implementar a camada de fusão e o fluxo de alerta em nuvem
-4. Calibrar os limiares de anomalia com os *ground-truths* disponíveis
-5. Processar mais vídeos/exercícios do REHAB24-6 para robustez (hoje: 3 experimentos,
+2. Notificar a equipe fora do painel (Amazon SNS) e persistir o estado dos alertas (6.4)
+3. Calibrar os limiares de anomalia com os *ground-truths* disponíveis
+4. Processar mais vídeos/exercícios do REHAB24-6 para robustez (hoje: 3 experimentos,
    2 exercícios, 2 sujeitos)
-6. **Isolar os fatores de degradação** com pares de vídeos que variem uma variável por vez
+5. **Isolar os fatores de degradação** com pares de vídeos que variem uma variável por vez
    (iluminação, orientação da câmera, presença de terceiros) — o REHAB24-6 tem metadados
    para montar esse desenho, que a comparação atual (3.3) não permite
-7. Avaliar modelos temporais (LSTM/autoencoder) para as séries de sinais vitais
+6. Avaliar modelos temporais (LSTM/autoencoder) para as séries de sinais vitais
 
 ---
 
 ## 12. Conclusão
 
-**[Em desenvolvimento — a consolidar ao final das três entregas.]**
+As três entregas técnicas foram implementadas e **validadas contra o ground-truth
+disponível em cada dataset**, e não apenas executadas. Essa foi a decisão metodológica que
+organizou o trabalho: sempre que a fonte trazia um rótulo — execução correta/incorreta no
+REHAB24-6, transcrição humana nas consultas, `SepsisLabel` no Challenge 2019, atividade
+real no UCI HAR —, ele foi usado para **medir** o resultado, nunca para produzi-lo.
 
-Até o momento, a Entrega 1 (Análise de Vídeo) está implementada e validada: o pipeline
-OpenPose → ângulos posturais → detecção de desvios → relatório e vídeo anotado foi executado
-sobre o vídeo PM_008 do REHAB24-6 (agachamentos), e a validação contra os rótulos de execução
-mostrou taxa média de desvio de **0,614 nas repetições incorretas contra 0,430 nas corretas**
-— separação consistente na direção esperada, com os desvios mais severos coincidindo com as
-repetições rotuladas como incorretas. A Entrega 3 (Detecção de Anomalias) possui baseline
-funcional (IsolationForest) para sinais vitais e movimentação. A Entrega 2 (Análise de Áudio)
-e a camada de integração em nuvem estão em desenvolvimento.
+| Entrega | Resultado principal | Ground-truth |
+|:--|:--|:--|
+| 1 — Vídeo (OpenPose) | separação correta/incorreta em 3 experimentos, de 1,4x a 10,5x, com parâmetros fixos | rótulos de execução do REHAB24-6 |
+| 2 — Áudio (AWS) | WER médio **6,95%**; recall de achados clínicos **0,806** | transcrição humana revisada |
+| 3 — Anomalias | movimentação F1 **0,973**; vitais AUC 0,555 com lead mediano de 30 h; dose escalonada dobra a taxa de sepse | `SepsisLabel` e atividade real |
+
+**O achado que atravessa o trabalho** é a distância entre esses números. O mesmo baseline
+não-supervisionado produz um detector quase perfeito para movimentação (AUC 0,9999) e um
+pouco acima do acaso para sinais vitais (AUC 0,555). A explicação não é de implementação —
+o modelo, o `random_state` e a contaminação são os mesmos — mas da natureza dos problemas:
+marcha e repouso são estados fisicamente distintos, medidos por sensores de cobertura quase
+total, enquanto deterioração clínica é um processo lento e contínuo ao qual o rótulo impõe
+um corte binário, observado por variáveis esparsas e de reação tardia. A verificação
+adicional feita em 5.4 sustenta essa leitura: marcadores de laboratório discriminam sepse
+melhor que os sinais vitais, apesar de cobrirem uma fração muito menor das horas.
+
+A consequência de projeto é que **o sistema não trata as três modalidades como
+equivalentes**. A fila de alerta pondera cada uma pela confiabilidade medida (5.7): a
+movimentação é precisa o bastante para alerta automático; os sinais vitais são
+explicitamente triagem para revisão humana, e a ressalva aparece na tela de quem decide, não
+apenas neste documento. Reportar somente a subtarefa mais favorável teria produzido uma
+impressão falsa da confiabilidade do monitoramento.
+
+**Três decisões foram impostas por indisponibilidade**, e não por preferência técnica —
+todas documentadas com a verificação que as motivou:
+
+- o **KIMORE** saiu do ar e os espelhos não traziam vídeo RGB, o que levou ao REHAB24-6 (7.2);
+- não havia cota no **Azure for Students**, o que levou a Entrega 2 para a AWS, com
+  equivalência direta de serviços (4.2);
+- os dois serviços gerenciados de anomalia em séries temporais foram **retirados do
+  mercado** — o Azure Anomaly Detector não aceita novos recursos desde 2023 e o Amazon
+  Lookout for Metrics encerrou o suporte em outubro de 2025 —, o que manteve a Entrega 3
+  local (6.2).
+
+A ausência de fonte pública aberta de prescrições levou a uma quarta adaptação: a subtarefa
+usa a `FiO2` como série de doses, por ser o único campo do dataset que é **prescrito** em
+vez de medido. É uma *proxy*, e está declarada como tal (5.5).
+
+**O que o trabalho não demonstra.** O alerta opera em lote, sobre séries já gravadas, e não
+em tempo real como o cenário descreve; a entrega é passiva, limitada a quem abre o painel;
+e não há registro de quais alertas foram vistos ou atendidos (6.4). Além disso, os três
+datasets descrevem **populações distintas** — não existe paciente comum entre vídeo, áudio e
+sinais vitais —, de modo que a integração demonstrada é de *pipeline*, não de prontuário. As
+demais limitações medidas estão na seção 11.
+
+O resultado é um protótipo que cobre as três modalidades exigidas, mede o próprio
+desempenho em cada uma e é explícito sobre onde esse desempenho não sustenta uso clínico
+autônomo.
 
 ---
 
