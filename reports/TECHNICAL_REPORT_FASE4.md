@@ -1159,10 +1159,11 @@ métricas que orienta o peso de cada modalidade:
 ![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
 
 > **Figura 12.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
-> lado a lado com os respectivos tempos: movimentação (3,8 s), sinais vitais (39,9 s) e
-> prescrições (1,0 s). A saída explicita a separação treino/teste dos vitais — 3.187
-> pacientes sem sepse no treino contra 1.813 retidos — e inclui a comparação entre vitais e
-> marcadores de laboratório discutida em 5.4.
+> lado a lado com os respectivos tempos: movimentação (4,1 s), sinais vitais (39,2 s) e
+> prescrições (0,8 s) — o restante do tempo é a leitura dos 5.000 arquivos `.psv`. A saída
+> explicita a separação treino/teste dos vitais (3.187 pacientes sem sepse no treino contra
+> 1.813 retidos) e inclui a comparação entre vitais e marcadores de laboratório discutida
+> em 5.4.
 
 Os resultados sugerem **pesos distintos por modalidade**, e não um limiar comum:
 
