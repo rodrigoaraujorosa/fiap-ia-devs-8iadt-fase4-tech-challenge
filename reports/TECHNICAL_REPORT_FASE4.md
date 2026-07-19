@@ -1740,3 +1740,61 @@ inglês porque é assim que constam nos datasets e no código.
 | **CUDA** | Plataforma da NVIDIA para computação em GPU, exigida pelo OpenPose |
 | **S3** | *Amazon Simple Storage Service* — armazenamento de objetos. O Transcribe não aceita upload direto e lê o áudio de lá (6.1) |
 | **UTF-8 / UTF-16** | Codificações de texto. Dois casos do dataset de áudio estão em UTF-16 e, lidos como UTF-8, devolvem texto corrompido **sem levantar erro** (4.3) |
+
+---
+
+## 12. Nota de Transparência sobre o Uso de IA
+
+O desenvolvimento deste trabalho contou com apoio de ferramenta de IA generativa, segundo a
+metodologia **20/60/20** adotada pelo grupo:
+
+| Etapa | Peso | O que envolve |
+|:--|:--:|:--|
+| **Especificação** | 20% | Definição do escopo, escolha dos datasets, desenho da validação e critérios de aceite |
+| **Geração assistida** | 60% | Implementação dos módulos, testes e redação técnica, com a IA como par de programação |
+| **Revisão e teste** | 20% | Leitura crítica do código e dos números, execução das medições e verificação dos resultados |
+
+**Ferramenta:** Claude Code (Anthropic), modelo Claude Opus 4.8, executado localmente sobre
+o repositório.
+
+### 12.1 O que permaneceu decisão humana
+
+A especificação e a revisão — os dois blocos de 20% — concentram as decisões que definiram
+o trabalho, e nenhuma delas foi delegada:
+
+- **Escolha dos datasets** e o recorte de casos analisados em cada entrega.
+- **Critério de validação.** A decisão de medir cada entrega contra um *ground-truth*
+  independente, em vez de apenas exibir resultados, é o eixo metodológico do trabalho
+  (1.3) e foi um requisito posto pelo grupo.
+- **Escopo do alerta.** A leitura de que o enunciado pede alerta automático apenas no item
+  3, e não uma camada de fusão entre as três modalidades, corrigiu um desenho mais amplo
+  que havia sido proposto (6.4).
+- **Desenho do detector de anomalias.** A exigência de separar treino de inferência —
+  treinar numa coorte de normalidade, persistir o modelo e aplicá-lo a pacientes retidos —
+  veio da revisão, e substituiu uma implementação que ajustava o modelo sobre os mesmos
+  dados que avaliava (5.4).
+- **Terminologia clínica.** Termos imprecisos foram corrigidos na revisão, como a troca de
+  "desmame" — que na clínica designa um protocolo específico — por "redução de dose", que é
+  o que o detector de fato mede (5.5).
+
+### 12.2 Como os resultados foram verificados
+
+Nenhum número deste relatório foi produzido por inferência da ferramenta: todos vêm de
+execuções registradas.
+
+- **34 testes automatizados** (`pytest`), 9 da Entrega 1 e 25 da Entrega 3, que não exigem
+  os datasets baixados nem credenciais de nuvem (10.5). Boa parte deles fixa decisões que,
+  se revertidas, produziriam números melhores do que a realidade sem levantar erro — como a
+  janela do cálculo de antecedência e a exigência de que embaralhar o `SepsisLabel` não
+  altere nenhum alerta.
+- **Medição contra *ground-truth*** em cada entrega: rótulos de execução do REHAB24-6,
+  transcrição humana revisada nas consultas, `SepsisLabel` e atividade real na detecção de
+  anomalias.
+- **Reprodutibilidade fixada** por `random_state = 42` em todos os modelos e por
+  `requirements-lock.txt` com as versões exatas do ambiente que produziu os números.
+- **Figuras e capturas de tela** geradas pelas próprias execuções descritas, com as
+  legendas conferidas contra o que aparece em cada imagem.
+
+As limitações encontradas estão declaradas nas seções correspondentes, incluindo aquelas em
+que o resultado ficou aquém do esperado — como o desempenho dos sinais vitais, pouco acima
+do acaso (5.4), e o alerta operar em lote e não em tempo real (6.4).
