@@ -62,9 +62,17 @@ Desenvolver um sistema que:
 
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços | Estado |
 |:--|:--|:--|:--|:--|:--|
-| 1 | Análise de Vídeo | Detectar desvios posturais em vídeos de reabilitação | REHAB24-6 (RGB + rótulos correto/incorreto) | OpenPose (BODY_25), IsolationForest, z-score robusto | Implementada e validada |
-| 2 | Análise de Áudio | Transcrever a fala e extrair os achados clínicos relatados | Consultas médicas simuladas | Amazon Transcribe, Comprehend Medical, Translate | Implementada |
-| 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR, Synthea | IsolationForest (baseline) | Baseline implementado |
+| 1 | Análise de Vídeo | Detectar desvios posturais em vídeos de reabilitação | REHAB24-6 (RGB + rótulos correto/incorreto) | OpenPose (BODY_25), IsolationForest, z-score robusto | **Implementada e validada** (3 vídeos, contra os rótulos de execução) |
+| 2 | Análise de Áudio | Transcrever a fala, extrair achados clínicos e analisar o sentimento | Consultas médicas simuladas (transcrição humana como referência) | Amazon Transcribe, Comprehend Medical, Comprehend, Translate | **Implementada e validada** (4 consultas, contra a transcrição humana) |
+| 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR, Synthea | IsolationForest (baseline) | Baseline implementado, **ainda não executado com dados reais** |
+
+> **Critério de "validada".** Uma entrega é considerada validada quando seus resultados
+> são **medidos contra um ground-truth independente**, e não apenas exibidos. Na Entrega 1,
+> os desvios posturais são cruzados com os rótulos de execução correta/incorreta do
+> REHAB24-6 (3.8); na Entrega 2, a transcrição automática é medida contra a transcrição
+> humana revisada do dataset (WER, 4.4) e a extração clínica é comparada entre as duas
+> origens (recall, 4.5). A Entrega 3 dispõe de ground-truth (`SepsisLabel` e os rótulos de
+> atividade), mas ainda não foi executada com os dados reais.
 
 ### 1.4 Datasets Utilizados
 
