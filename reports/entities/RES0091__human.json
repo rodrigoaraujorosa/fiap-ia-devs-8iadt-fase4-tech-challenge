@@ -1,0 +1,371 @@
+[
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 22,
+  "end": 32
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 28,
+  "end": 32
+ },
+ {
+  "text": "stuffy nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 54,
+  "end": 65
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 61,
+  "end": 65
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 89,
+  "end": 99
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 95,
+  "end": 99
+ },
+ {
+  "text": "past week and a half",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 108,
+  "end": 128
+ },
+ {
+  "text": "stuffy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 264,
+  "end": 270
+ },
+ {
+  "text": "two weeks ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 277,
+  "end": 290
+ },
+ {
+  "text": "week and a half ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 313,
+  "end": 332
+ },
+ {
+  "text": "coughing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 371,
+  "end": 379
+ },
+ {
+  "text": "it's clear",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 389,
+  "end": 399
+ },
+ {
+  "text": "nasal",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 521,
+  "end": 526
+ },
+ {
+  "text": "nasal decongestion",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 521,
+  "end": 539
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 568,
+  "end": 578
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 574,
+  "end": 578
+ },
+ {
+  "text": "dizziness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 593,
+  "end": 602
+ },
+ {
+  "text": "headache",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 635,
+  "end": 643
+ },
+ {
+  "text": "fluid",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 689,
+  "end": 694
+ },
+ {
+  "text": "something backed up",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 698,
+  "end": 717
+ },
+ {
+  "text": "sinuses",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 726,
+  "end": 733
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1483,
+  "traits": [],
+  "negated": false,
+  "begin": 817,
+  "end": 819
+ },
+ {
+  "text": "healthy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1021,
+  "end": 1028
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2897,
+  "traits": [],
+  "negated": false,
+  "begin": 1040,
+  "end": 1042
+ },
+ {
+  "text": "allergies",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALLERGIES",
+  "score": 0.7172,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 1053,
+  "end": 1062
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.145,
+  "traits": [],
+  "negated": false,
+  "begin": 1071,
+  "end": 1073
+ },
+ {
+  "text": "vitamins",
+  "category": "MEDICATION",
+  "type": "GENERIC_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 1096,
+  "end": 1104
+ },
+ {
+  "text": "arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8617,
+  "traits": [],
+  "negated": false,
+  "begin": 1115,
+  "end": 1118
+ },
+ {
+  "text": "arm fracture",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8216,
+  "traits": [
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 1115,
+  "end": 1127
+ },
+ {
+  "text": "wine",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 1221,
+  "end": 1225
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2494,
+  "traits": [],
+  "negated": false,
+  "begin": 1238,
+  "end": 1240
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1271,
+  "end": 1281
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 1277,
+  "end": 1281
+ }
+]

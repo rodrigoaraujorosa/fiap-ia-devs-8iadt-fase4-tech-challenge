@@ -33,6 +33,7 @@ import re
 from pathlib import Path
 
 from ..common.config import ROOT_DIR, get_aws_config
+from .cache import cached_json
 from .consultations import patient_text
 from .transcribe import cache_path as transcript_cache_path
 from .transcribe import patient_text_from_aws
@@ -139,6 +140,17 @@ def clinical_findings(entities: list[dict], min_score: float = 0.7) -> list[dict
     Descarta: entidades abaixo do limiar de confiança, as **negadas** (o paciente disse
     que *não* tem), as hipotéticas e as que se referem a familiares — nenhuma delas é um
     achado do paciente no momento da consulta.
+
+    Duas limitações conhecidas deste filtro:
+
+    - **O limiar cria efeito de degrau.** No RES0091, "arm fracture" foi extraída das duas
+      transcrições, mas com 0,82 na humana e 0,60 na da AWS; só a primeira passa. A
+      comparação entre origens (:func:`compare_sources`) mede, portanto, uma mistura de
+      qualidade de transcrição e sensibilidade ao corte.
+    - **Não há distinção entre passado e presente.** O Comprehend Medical marca família e
+      hipótese, mas não histórico: "I had an arm fracture when I was younger" entra como
+      achado atual. Separar isso exigiria analisar o tempo verbal ou cruzar com as
+      entidades de ``TIME_EXPRESSION``.
     """
     out = []
     for e in entities:
@@ -237,24 +249,21 @@ def sentiment_by_turn(turns: list[dict], region: str, max_turns: int = 25) -> li
 def analyze_sentiment(case: str, root: str | Path, region: str,
                       force: bool = False) -> dict:
     """Sentimento do relato do paciente (geral e por turno), com cache."""
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    path = sentiment_cache_path(case)
-    if path.exists() and not force:
-        return json.loads(path.read_text(encoding="utf-8"))
+    def _compute() -> dict:
+        from .consultations import load_transcript
 
-    from .consultations import load_transcript
+        text = patient_text(root, case)
+        if not text.strip():
+            raise ValueError(f"texto vazio para {case}")
 
-    text = patient_text(root, case)
-    if not text.strip():
-        raise ValueError(f"texto vazio para {case}")
+        df = load_transcript(root, case)
+        turns = df[df["speaker"] == "patient"].to_dict("records")
 
-    df = load_transcript(root, case)
-    turns = df[df["speaker"] == "patient"].to_dict("records")
+        result = detect_sentiment(text, region)
+        result["by_turn"] = sentiment_by_turn(turns, region)
+        return result
 
-    result = detect_sentiment(text, region)
-    result["by_turn"] = sentiment_by_turn(turns, region)
-    path.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
-    return result
+    return cached_json(sentiment_cache_path(case), _compute, force=force, indent=1)
 
 
 def extract(case: str, root: str | Path, region: str, source: str = "human",
@@ -267,29 +276,27 @@ def extract(case: str, root: str | Path, region: str, source: str = "human",
     do paciente contra consulta inteira inflaria a origem AWS com as perguntas do médico,
     que não são achados do paciente.
     """
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    path = cache_path(case, source)
-    if path.exists() and not force:
-        return json.loads(path.read_text(encoding="utf-8"))
+    # A leitura do texto fica DENTRO da função de cálculo: para ``source='aws'`` ela
+    # depende da transcrição em cache, e um caso já extraído não deve falhar só porque
+    # a transcrição foi apagada depois.
+    def _compute() -> list[dict]:
+        if source == "human":
+            text = patient_text(root, case)
+        elif source == "aws":
+            tpath = transcript_cache_path(case)
+            if not tpath.exists():
+                raise FileNotFoundError(
+                    f"sem transcrição da AWS para {case} — rode: "
+                    f"python -m src.audio.transcribe --cases {case}")
+            text = patient_text_from_aws(json.loads(tpath.read_text(encoding="utf-8")))
+        else:
+            raise ValueError(f"source inválido: {source}")
 
-    if source == "human":
-        text = patient_text(root, case)
-    elif source == "aws":
-        tpath = transcript_cache_path(case)
-        if not tpath.exists():
-            raise FileNotFoundError(
-                f"sem transcrição da AWS para {case} — rode: "
-                f"python -m src.audio.transcribe --cases {case}")
-        text = patient_text_from_aws(json.loads(tpath.read_text(encoding="utf-8")))
-    else:
-        raise ValueError(f"source inválido: {source}")
+        if not text.strip():
+            raise ValueError(f"texto vazio para {case} (source={source})")
+        return simplify(detect_entities(text, region))
 
-    if not text.strip():
-        raise ValueError(f"texto vazio para {case} (source={source})")
-
-    entities = simplify(detect_entities(text, region))
-    path.write_text(json.dumps(entities, ensure_ascii=False, indent=1), encoding="utf-8")
-    return entities
+    return cached_json(cache_path(case, source), _compute, force=force, indent=1)
 
 
 def compare_sources(case: str, root: str | Path, region: str, force: bool = False) -> dict:

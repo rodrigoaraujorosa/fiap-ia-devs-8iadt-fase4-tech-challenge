@@ -75,11 +75,12 @@ python -m src.video.app            # http://localhost:7860
 python -m src.audio.consultations --root data/audio/consultas --summary
 python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
 
-# Transcrição (CUSTA DINHEIRO — cacheia em reports/transcriptions/)
-python -m src.audio.transcribe --cases RES0029
-python -m src.audio.transcribe --report --out reports/wer_consultations.csv  # só do cache
+# Pipeline completo (CUSTA DINHEIRO — cacheia tudo em reports/)
+python -m src.audio.cli --case RES0091
+python -m src.audio.cli --case RES0091 --dry-run   # o que seria cobrado, sem executar
 
-# Entidades clínicas, sentimento e relatório final
+# Etapas isoladas, para depurar
+python -m src.audio.transcribe --report            # métricas só do cache
 python -m src.audio.comprehend --cases RES0029 --compare
 python -m src.audio.comprehend --cases RES0029 --sentiment
 python -m src.audio.report --case RES0029

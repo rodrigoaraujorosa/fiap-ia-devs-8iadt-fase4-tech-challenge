@@ -34,6 +34,8 @@ direto na chamada.
 | `transcribe.py` | upload ao S3, job do Transcribe, diarização e medição de WER contra a referência humana |
 | `comprehend.py` | entidades clínicas, sentimento e comparação entre as duas transcrições |
 | `report.py` | relatório bilíngue para a equipe médica |
+| `cli.py` | **pipeline fim-a-fim**: roda as quatro etapas em um comando |
+| `cache.py` | cache em disco dos resultados pagos, comum aos módulos |
 
 ## Dataset: consultas médicas simuladas
 
@@ -54,6 +56,21 @@ apenas exibir o resultado.
 > loader detecta a codificação pelo BOM.
 
 ## Uso
+
+### Tudo de uma vez
+
+```bash
+# pipeline completo: transcrição -> entidades -> sentimento -> relatório
+python -m src.audio.cli --case RES0091
+
+# vários casos, com estatística do WER ao final
+python -m src.audio.cli --cases RES0091 RES0142 RES0094 --out reports/wer_consultations.csv
+
+# o que seria cobrado, sem executar nada
+python -m src.audio.cli --case RES0091 --dry-run
+```
+
+### Etapa a etapa
 
 ```bash
 # estatísticas do dataset (não chama a AWS)

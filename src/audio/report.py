@@ -84,6 +84,11 @@ def translate(texts: list[str], region: str, enabled: bool = True) -> dict[str, 
     return {t: cache.get(t, t) for t in texts}
 
 
+def cache_path_for(case: str) -> Path:
+    """Caminho padrão do relatório de um caso (usado também pelo `cli.py`)."""
+    return ROOT_DIR / "reports" / f"audio_{case}.md"
+
+
 def _shorten(text: str, limit: int = 220) -> str:
     """
     Encurta um trecho **sem cortar palavra pela metade**.
@@ -318,7 +323,7 @@ def main() -> None:
     md = build_report(args.case, args.root, cfg["region"],
                       translate_enabled=not args.no_translate)
 
-    out = Path(args.out) if args.out else ROOT_DIR / "reports" / f"audio_{args.case}.md"
+    out = Path(args.out) if args.out else cache_path_for(args.case)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md, encoding="utf-8")
     print(f"relatório salvo em {out.relative_to(ROOT_DIR)}")
