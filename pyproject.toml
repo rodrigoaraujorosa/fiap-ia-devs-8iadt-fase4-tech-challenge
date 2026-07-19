@@ -23,3 +23,6 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+# sem isto o pytest insere apenas tests/ no sys.path e "import src" falha quando o
+# pacote não está instalado em modo editável no .venv
+pythonpath = ["."]
