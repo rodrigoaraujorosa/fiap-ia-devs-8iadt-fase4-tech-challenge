@@ -70,9 +70,11 @@ def translate(texts: list[str], region: str, enabled: bool = True) -> dict[str, 
     missing = [t for t in dict.fromkeys(texts) if t and t not in cache]
     if missing:
         import boto3
+        # >>> CHAMADA AWS: cliente do Amazon Translate
         client = boto3.client("translate", region_name=region)
         for text in missing:
             try:
+                # >>> CHAMADA AWS: Amazon Translate / TranslateText — versão em pt-BR
                 r = client.translate_text(Text=text, SourceLanguageCode="en",
                                           TargetLanguageCode="pt")
                 cache[text] = r["TranslatedText"]

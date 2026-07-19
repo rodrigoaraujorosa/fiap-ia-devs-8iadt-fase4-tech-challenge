@@ -88,6 +88,7 @@ def check_aws(verbose: bool = True) -> bool:
         return False
 
     try:
+        # >>> CHAMADA AWS: AWS STS / GetCallerIdentity — a credencial é válida?
         ident = boto3.client("sts", region_name=cfg["region"]).get_caller_identity()
         _diz(f"  autenticação (STS) : OK (conta ...{ident['Account'][-4:]})")
     except (ClientError, BotoCoreError) as e:
@@ -96,6 +97,7 @@ def check_aws(verbose: bool = True) -> bool:
         return False
 
     try:
+        # >>> CHAMADA AWS: Amazon S3 / HeadBucket — o bucket existe e é acessível?
         boto3.client("s3", region_name=cfg["region"]).head_bucket(Bucket=cfg["s3_bucket"])
         _diz("  bucket S3          : acessível")
     except ClientError as e:

@@ -1,0 +1,102 @@
+{
+ "sentiment": "NEGATIVE",
+ "scores": {
+  "Positive": 0.0036,
+  "Negative": 0.9713,
+  "Neutral": 0.0229,
+  "Mixed": 0.0023
+ },
+ "chunks": 1,
+ "by_turn": [
+  {
+   "order": 2,
+   "text": "I just came in because of I just got into like this uh, incident while I was playing rugby. I kind of got tackled and then fell onto my right shoulder. Um, and after I got up, I haven't, I've just been, this just happened a couple hours ago actually and uh, I've just been in intense pain in my right shoulder and I can't seem to move it at all.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9273
+  },
+  {
+   "order": 6,
+   "text": "It's, it's constant. It hasn't gone away at all.",
+   "sentiment": "POSITIVE",
+   "negative": 0.1456
+  },
+  {
+   "order": 8,
+   "text": "I don't know, like probably like 8 or, 8 or 9.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0085
+  },
+  {
+   "order": 10,
+   "text": "It's, it's sharp. Like if I try to move it at all, it's like a sharp pain.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.7444
+  },
+  {
+   "order": 14,
+   "text": "I could move my fingers and hand and elbow, but um, elbow a little bit, but like uh, yeah, I can't move my shoulder whatsoever.",
+   "sentiment": "MIXED",
+   "negative": 0.3179
+  },
+  {
+   "order": 18,
+   "text": "Um, in that area, I don't know if it's weakness or pain, but I just can't move it up and I, I, I do feel some like numbness just above my shoulder. No tingling though.",
+   "sentiment": "MIXED",
+   "negative": 0.0718
+  },
+  {
+   "order": 42,
+   "text": "Um, um not anything that I've tried that's made it better. Worse is probably just if I try to move it at all.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.951
+  },
+  {
+   "order": 44,
+   "text": "Uh, mostly towards my shoulder, um, kind of down towards my upper arm as well.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0039
+  },
+  {
+   "order": 46,
+   "text": "No. Yeah, otherwise I'm healthy. I've never been to the doctor much.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0035
+  },
+  {
+   "order": 61,
+   "text": "Uh no, just, just with friends sometimes on the weekends, but not really.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0792
+  },
+  {
+   "order": 63,
+   "text": "Uh, I live just outside of town with my parents in a house.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0004
+  },
+  {
+   "order": 69,
+   "text": "Um, I don't think I see any redness or swelling, but um, my right shoulder and my arm just seems a little bit lower than my left one.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0472
+  },
+  {
+   "order": 73,
+   "text": "Um, deformity, I, I do feel like kind of uh, like my shoulder's dropped and like there's just kind of this uh, little, like divots, where like the shoulder should be.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.8744
+  },
+  {
+   "order": 79,
+   "text": "No, I, I can't. I can't move it at all.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9646
+  },
+  {
+   "order": 85,
+   "text": "Uh, no, I think that's, uh, that's great.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0002
+  }
+ ]
+}

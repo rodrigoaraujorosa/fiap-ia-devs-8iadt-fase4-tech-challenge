@@ -107,7 +107,10 @@ def wer(reference: list[str], hypothesis: list[str]) -> dict:
 # ----- AWS -----
 
 def _clients(region: str):
+    # O boto3 é importado aqui dentro, e não no topo do módulo, para que os módulos possam
+    # ser importados e testados sem credencial da AWS configurada.
     import boto3
+    # >>> CHAMADA AWS: clientes do Amazon S3 e do Amazon Transcribe
     return boto3.client("s3", region_name=region), boto3.client("transcribe", region_name=region)
 
 
@@ -118,10 +121,12 @@ def upload_to_s3(case: str, root: str | Path, bucket: str, region: str) -> str:
     s3, _ = _clients(region)
     key = f"{S3_PREFIX}/{case}.mp3"
     try:
-        s3.head_object(Bucket=bucket, Key=key)   # já enviado numa execução anterior
+        # >>> CHAMADA AWS: Amazon S3 / HeadObject — já enviado numa execução anterior?
+        s3.head_object(Bucket=bucket, Key=key)
     except ClientError as e:
         if e.response["Error"]["Code"] not in ("404", "NoSuchKey", "NotFound"):
             raise
+        # >>> CHAMADA AWS: Amazon S3 / PutObject — envia o áudio da consulta
         s3.upload_file(str(audio_path(root, case)), bucket, key)
     return f"s3://{bucket}/{key}"
 
@@ -152,6 +157,7 @@ def transcribe_case(
     uri = upload_to_s3(case, root, bucket, region)
     job_name = f"consultation-{case}-{int(time.time())}"
 
+    # >>> CHAMADA AWS: Amazon Transcribe / StartTranscriptionJob — inicia a transcrição
     tr.start_transcription_job(
         TranscriptionJobName=job_name,
         Media={"MediaFileUri": uri},
@@ -162,6 +168,7 @@ def transcribe_case(
 
     t0 = time.perf_counter()
     while True:
+        # >>> CHAMADA AWS: Amazon Transcribe / GetTranscriptionJob — polling até concluir
         job = tr.get_transcription_job(TranscriptionJobName=job_name)["TranscriptionJob"]
         status = job["TranscriptionJobStatus"]
         if status in ("COMPLETED", "FAILED"):

@@ -100,11 +100,13 @@ def detect_entities(text: str, region: str) -> list[dict]:
     """
     import boto3
 
+    # >>> CHAMADA AWS: cliente do Amazon Comprehend Medical
     client = boto3.client("comprehendmedical", region_name=region)
     entities: list[dict] = []
     offset = 0
 
     for chunk in _split_text(text):
+        # >>> CHAMADA AWS: Comprehend Medical / DetectEntitiesV2 — entidades clínicas
         response = client.detect_entities_v2(Text=chunk)
         for e in response.get("Entities", []):
             e["BeginOffset"] += offset
@@ -198,12 +200,14 @@ def detect_sentiment(text: str, region: str) -> dict:
     """
     import boto3
 
+    # >>> CHAMADA AWS: cliente do Amazon Comprehend (serviço geral, não o Medical)
     client = boto3.client("comprehend", region_name=region)
     chunks = _split_text(text, max_bytes=SENTIMENT_MAX_BYTES)
 
     total = 0
     acc = {"Positive": 0.0, "Negative": 0.0, "Neutral": 0.0, "Mixed": 0.0}
     for chunk in chunks:
+        # >>> CHAMADA AWS: Amazon Comprehend / DetectSentiment — tom geral do relato
         r = client.detect_sentiment(Text=chunk, LanguageCode="en")
         peso = len(chunk)
         total += peso
@@ -230,6 +234,7 @@ def sentiment_by_turn(turns: list[dict], region: str, max_turns: int = 25) -> li
         return []
 
     client = boto3.client("comprehend", region_name=region)
+    # >>> CHAMADA AWS: Amazon Comprehend / BatchDetectSentiment — sentimento por turno
     r = client.batch_detect_sentiment(
         TextList=[t["text"][:SENTIMENT_MAX_BYTES] for t in uteis], LanguageCode="en")
 
