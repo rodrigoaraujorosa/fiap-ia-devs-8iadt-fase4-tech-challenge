@@ -28,6 +28,7 @@ import time
 from pathlib import Path
 
 from ..common.config import ROOT_DIR
+from .cache import cached_json, is_cached
 from .consultations import audio_path, full_text, load_transcript
 
 CACHE_DIR = ROOT_DIR / "reports" / "transcriptions"
@@ -305,25 +306,36 @@ def process(
     region: str,
     force: bool = False,
     keep_fillers: bool = False,
+    log=print,
+    status=None,
 ) -> list[dict]:
-    """Transcreve (ou reaproveita do cache) e avalia cada caso."""
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    """
+    Transcreve (ou reaproveita do cache) e avalia cada caso.
+
+    ``log`` e ``status`` são injetados para que o chamador decida como exibir. O
+    ``cli.py`` passa ``tqdm.write`` e ``set_description``: escrever com ``print`` direto
+    enquanto uma barra de progresso está ativa embaralha as linhas, porque a barra se
+    redesenha na mesma posição.
+    """
     results = []
 
     for case in cases:
-        cache = cache_path(case)
-        if cache.exists() and not force:
-            print(f"[{case}] reaproveitando transcrição em cache")
-            data = json.loads(cache.read_text(encoding="utf-8"))
+        path = cache_path(case)
+        if is_cached(path) and not force:
+            log(f"    [{case}] transcrição reaproveitada do cache")
         else:
-            print(f"[{case}] enviando ao S3 e iniciando o job...")
-            data = transcribe_case(
-                case, root, bucket, region,
-                progress=lambda c, s, t: print(f"[{c}] {s} — {t:.0f}s", end="\r"),
-            )
-            cache.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-            print(f"[{case}] concluído em {data['_meta']['seconds']:.0f}s"
-                  f" — salvo em {cache.relative_to(ROOT_DIR)}")
+            log(f"    [{case}] enviando ao S3 e iniciando o job...")
 
+        def _progresso(c: str, s: str, t: float) -> None:
+            if status:
+                status(f"{c} · {s.lower()} há {t:.0f}s")
+            else:
+                print(f"[{c}] {s} — {t:.0f}s", end="\r")
+
+        data = cached_json(
+            path,
+            lambda c=case: transcribe_case(c, root, bucket, region, progress=_progresso),
+            force=force,
+        )
         results.append(evaluate(case, root, data, keep_fillers=keep_fillers))
     return results

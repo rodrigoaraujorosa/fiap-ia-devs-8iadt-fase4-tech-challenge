@@ -30,6 +30,8 @@ from __future__ import annotations
 import argparse
 import time
 
+from tqdm import tqdm
+
 from ..common.config import get_aws_config
 from ..video.report import fmt_dur
 from .cache import is_cached, require_aws
@@ -66,62 +68,82 @@ def run_case(
     translate_enabled: bool = True,
     keep_fillers: bool = False,
 ) -> dict:
-    """Executa as quatro etapas para um caso e devolve um resumo."""
+    """
+    Executa as quatro etapas para um caso e devolve um resumo.
+
+    A barra conta **etapas concluídas**, que é o que se pode medir de fato. Não há barra
+    dentro da transcrição porque a API do Transcribe informa apenas ``IN_PROGRESS`` ou
+    ``COMPLETED``, sem percentual — uma barra ali teria de inventar o total, e os tempos
+    observados desmentem qualquer estimativa por duração do áudio (6,7 min de áudio
+    levaram 47 s; 7,0 min levaram 93 s). Na espera mostra-se o tempo decorrido, que é
+    informação verdadeira.
+    """
     timings: dict[str, float] = {}
     resumo: dict = {"case": case}
+    barra = tqdm(total=4, unit="etapa",
+                 bar_format="  {desc} |{bar}| {n_fmt}/{total_fmt} etapas [{elapsed}]")
 
     # 1. Transcrição
-    print(f"\n[1/4] {case} — transcrição (Amazon Transcribe)")
+    barra.set_description(f"{case} · transcrevendo")
     t0 = time.perf_counter()
     metricas = run_transcribe([case], root, bucket, region, force=force,
-                              keep_fillers=keep_fillers)
+                              keep_fillers=keep_fillers,
+                              log=barra.write, status=barra.set_description)
     timings["1. Transcrição"] = time.perf_counter() - t0
+    barra.update(1)
     if metricas:
         m = metricas[0]
         resumo["wer"] = m["wer"]
-        print(f"      WER {m['wer']:.2%} | {m['reference_words']} palavras de referência"
-              f" | {m['aws_turns']} turnos identificados")
+        barra.write(f"    [1/4] Amazon Transcribe    WER {m['wer']:.2%}"
+                    f" | {m['reference_words']} palavras | {m['aws_turns']} turnos")
 
     # 2. Entidades clínicas
-    print(f"\n[2/4] {case} — entidades clínicas (Comprehend Medical)")
+    barra.set_description(f"{case} · extraindo entidades")
     t0 = time.perf_counter()
     if compare:
         c = compare_sources(case, root, region, force=force)
         resumo.update({"achados": c["human_findings"], "recall": c["recall"]})
-        print(f"      {c['human_entities']} entidades | {c['human_findings']} achados"
-              f" | recall humano→AWS {c['recall']:.1%}")
+        barra.write(f"    [2/4] Comprehend Medical  {c['human_entities']} entidades"
+                    f" | {c['human_findings']} achados"
+                    f" | recall humano→AWS {c['recall']:.1%}")
         if c["missed"]:
-            print(f"      não recuperados pela AWS: {', '.join(c['missed'])}")
+            barra.write(f"          não recuperados pela AWS: {', '.join(c['missed'])}")
     else:
         ents = extract(case, root, region, source="human", force=force)
         resumo["achados"] = len(ents)
-        print(f"      {len(ents)} entidades extraídas")
+        barra.write(f"    [2/4] Comprehend Medical  {len(ents)} entidades extraídas")
     timings["2. Entidades"] = time.perf_counter() - t0
+    barra.update(1)
 
     # 3. Sentimento
-    print(f"\n[3/4] {case} — sentimento (Amazon Comprehend)")
+    barra.set_description(f"{case} · analisando sentimento")
     t0 = time.perf_counter()
     s = analyze_sentiment(case, root, region, force=force)
     resumo["sentimento"] = s["sentiment"]
     timings["3. Sentimento"] = time.perf_counter() - t0
-    print(f"      {s['sentiment']} ({s['scores'].get('Negative', 0):.0%} negativo)"
-          f" | {len(s.get('by_turn', []))} turnos analisados")
+    barra.update(1)
+    barra.write(f"    [3/4] Amazon Comprehend   {s['sentiment']}"
+                f" ({s['scores'].get('Negative', 0):.0%} negativo)"
+                f" | {len(s.get('by_turn', []))} turnos")
 
     # 4. Relatório
-    print(f"\n[4/4] {case} — relatório clínico bilíngue")
+    barra.set_description(f"{case} · gerando relatório")
     t0 = time.perf_counter()
     md = build_report(case, root, region, translate_enabled=translate_enabled)
     out = report_path_for(case)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md, encoding="utf-8")
     timings["4. Relatório"] = time.perf_counter() - t0
+    barra.update(1)
     resumo["relatorio"] = str(out)
-    print(f"      salvo em {out}")
+    barra.write(f"    [4/4] Amazon Translate    relatório em {out.name}")
+    barra.set_description(f"{case} · concluído")
+    barra.close()
 
     timings["Total"] = sum(v for k, v in timings.items() if k != "Total")
-    print("\n      tempo por etapa:")
+    print("    tempo por etapa:")
     for etapa, seg in timings.items():
-        print(f"        {etapa:16s} {fmt_dur(seg)}")
+        print(f"      {etapa:16s} {fmt_dur(seg)}")
     return resumo
 
 
