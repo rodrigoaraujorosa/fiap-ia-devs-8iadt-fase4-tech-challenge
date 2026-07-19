@@ -1097,7 +1097,7 @@ dois datasets não descrevem os mesmos indivíduos (5.2), o monitoramento tem do
 
 ```bash
 python -m src.anomaly.cli --train                 # treina e salva os dois detectores
-python -m src.anomaly.cli --monitor p000188       # vitais + prescrições de um paciente
+python -m src.anomaly.cli --monitor p001123       # vitais + prescrições de um paciente
 python -m src.anomaly.cli --monitor-subject 2     # movimentação de um sujeito
 ```
 
@@ -1105,24 +1105,66 @@ O primeiro reúne as duas subtarefas do Challenge 2019, que descrevem o mesmo pa
 segundo cobre a movimentação. Em ambos, o modelo não viu o indivíduo durante o treino, e o
 rótulo é exibido apenas na seção de conferência — nunca entra na pontuação.
 
-**Exemplo — paciente `p000188`.** A saída ilustra o funcionamento complementar das duas
-subtarefas de UTI:
+![Treino dos dois detectores](figures/screenshots/cli_anomaly_train.png)
 
-| Subtarefa | Resultado |
-|:--|:--|
-| Sinais vitais | nenhum alerta em 84 horas |
-| Prescrições | 2 escalonamentos, nas horas 51 e 53 |
-| Conferência | sepse a partir da hora 75 |
+> **Figura 8.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
+> de normalidade: 3.187 pacientes sem sepse (117.947 horas) para os sinais vitais e 4.067
+> amostras de repouso para a movimentação. A saída informa o que foi retido para teste —
+> 1.813 pacientes e 9 sujeitos, estes últimos identificados um a um — e o limiar de alerta
+> aprendido (−0,4694), que é guardado junto com o modelo. Das 8 colunas de sinais vitais,
+> 7 entram no modelo: a `EtCO2` é descartada por não ter cobertura (5.4).
 
-Os sinais vitais permaneceram em silêncio durante toda a internação, enquanto o
-escalonamento da dose ocorreu **24 horas antes** do início registrado. O caso é uma
-ilustração concreta do que a comparação de features da seção 5.4 indicou de forma agregada:
-a alteração dos vitais é tardia, e outras séries do mesmo paciente avisam antes.
+**Caso 1 — os sinais vitais detectam (`p001123`).**
+
+![Monitoramento do paciente p001123](figures/screenshots/cli_anomaly_p001123.png)
+
+> **Figura 9.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
+> (5,2%) — 46, 55, 63, 66 e 86 — e a conferência mostra sepse registrada a partir da hora
+> 88, ou seja, **42 horas de antecedência**. Note que os alertas se adensam à medida que o
+> evento se aproxima. A dose prescrita foi monitorada (97 registros, entre 0,30 e 0,40) e
+> não apresentou escalonamento brusco: aqui quem avisa são os vitais.
+
+**Caso 2 — os sinais vitais silenciam e a prescrição detecta (`p000188`).**
+
+![Monitoramento do paciente p000188](figures/screenshots/cli_anomaly_p000188.png)
+
+> **Figura 10.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
+> nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
+> prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
+> primeiro deles **24 horas antes** do início. Os dois desmames detectados não geram alerta,
+> por serem sinal de melhora.
+
+O contraste entre as Figuras 9 e 10 é a ilustração concreta do que a comparação de features
+da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
+séries do mesmo paciente podem avisar antes. É também o argumento para que a camada de
+alerta combine as modalidades em vez de depender de uma só (5.7).
+
+**Movimentação.**
+
+![Monitoramento do sujeito 2](figures/screenshots/cli_anomaly_subject_2.png)
+
+> **Figura 11.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
+> 157 delas (52,0%), e a conferência mostra por quê: as três atividades de marcha são
+> detectadas **integralmente** (100,0% cada), enquanto o repouso permanece quase todo em
+> silêncio — `LAYING` sem nenhum alerta, `SITTING` em 2,2% e `STANDING` em 3,7%. O recall
+> sobre marcha é de 100,0% com 2,0% de falso alarme no repouso, coerente com os números
+> agregados da seção 5.3.
 
 ### 5.7 Geração de Alertas
 
-Os instantes sinalizados alimentam a camada de alerta descrita na Seção 6. Os resultados
-das três subtarefas sugerem **pesos distintos por modalidade**, e não um limiar comum:
+Os instantes sinalizados alimentam a camada de alerta descrita na Seção 6. A execução
+completa das três subtarefas produz, além do relatório para a equipe médica, o conjunto de
+métricas que orienta o peso de cada modalidade:
+
+![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
+
+> **Figura 12.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
+> lado a lado com os respectivos tempos: movimentação (3,8 s), sinais vitais (39,9 s) e
+> prescrições (1,0 s). A saída explicita a separação treino/teste dos vitais — 3.187
+> pacientes sem sepse no treino contra 1.813 retidos — e inclui a comparação entre vitais e
+> marcadores de laboratório discutida em 5.4.
+
+Os resultados sugerem **pesos distintos por modalidade**, e não um limiar comum:
 
 - **Movimentação** (AUC 0,9999) — a separação entre marcha e repouso é praticamente
   completa, com falso alarme conhecido e ajustável. Precisão suficiente para alerta
@@ -1217,7 +1259,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 8.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 13.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
