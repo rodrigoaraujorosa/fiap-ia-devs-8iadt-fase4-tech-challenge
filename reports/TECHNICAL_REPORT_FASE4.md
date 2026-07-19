@@ -1214,15 +1214,76 @@ O ponto relevante para o sistema é que **um mesmo baseline não-supervisionado 
 qualidade muito diferente conforme a modalidade**. Reportar apenas a subtarefa mais
 favorável daria uma impressão falsa da confiabilidade do monitoramento como um todo.
 
-### 5.8 Testes
+**A fila de plantão (`alerts.py`).** É a camada que transforma anomalia em alerta
+acionável: varre a coorte retida e ordena os pacientes por prioridade.
 
-`tests/test_anomaly.py` cobre a entrega com 18 testes sobre séries sintéticas, sem exigir
+| Prioridade | Condição |
+|:--|:--|
+| ALTA | sinais vitais **e** dose prescrita alteraram |
+| MEDIA | apenas uma das duas séries alterou |
+
+A regra de prioridade máxima é a **corroboração**: são medições independentes, e a
+concordância entre elas carrega informação que nenhuma traz sozinha. Dentro da mesma
+prioridade, ordena-se pelo alerta mais recente.
+
+A fila expõe também a **taxa de alerta** (horas sinalizadas sobre horas de internação),
+porque a ordenação sozinha não distingue o evento agudo do paciente cronicamente fora do
+padrão. Na coorte de 1.000 pacientes há casos em alerta 86% da internação: são pacientes
+para os quais o detector perde valor discriminante, e que sem essa coluna ocupariam o topo
+da fila com a mesma aparência de quem disparou três vezes em cem horas. O sistema **não**
+os rebaixa automaticamente — expõe o número para a decisão humana, coerente com o papel de
+triagem descrito acima.
+
+### 5.8 Interface Web de Demonstração (`app.py`)
+
+A fila de alertas também é exposta em uma app web local (Gradio,
+`python -m src.anomaly.app`, porta 7861 — ao lado da porta 7860 da Entrega 1, para que as
+duas fiquem abertas na demonstração). Como na Entrega 1, a app **não reimplementa nada**:
+chama `alerts.score_cohort`, `alerts.build_queue` e `report.plot_monitor`, as mesmas
+funções que o CLI usa. O equivalente em terminal é `python -m src.anomaly.cli --alerts`.
+
+A diferença está no gesto que a interface permite. No terminal, ver a fila e abrir um
+paciente são dois comandos desconectados; na app, **clicar numa linha abre a série daquele
+paciente** — que é o gesto do plantonista ao decidir se um alerta merece atenção. A coorte
+é pontuada uma vez e mantida em memória, de modo que abrir cada paciente é imediato; sem
+isso, cada clique custaria a releitura dos arquivos.
+
+Abaixo da fila há uma **legenda** com as siglas (`HR`, `SBP`, `Resp`, `O2Sat`, `FiO2`) e
+suas faixas usuais de adulto. O público da tela é a equipe clínica, e sem as faixas de
+referência o gráfico não se lê de relance — ver a frequência respiratória subir de 16 para
+33 só significa alguma coisa para quem sabe que o usual é 12 a 20.
+
+![Painel de plantão com o paciente p000795 aberto](figures/screenshots/gradio_anomaly_alerts.png)
+
+> **Figura 15.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
+> de plantão: 132 pacientes com alerta entre os 363 retidos (21 de prioridade ALTA, 111
+> MEDIA), ordenados por prioridade e, dentro dela, pelo alerta mais recente. A coluna
+> **Taxa** é o que distingue o evento agudo do paciente cronicamente fora do padrão —
+> compare o `p000754` (86% da internação em alerta) com o `p000795` (12%). À direita, a
+> série do paciente selecionado: as faixas vermelhas são as horas em alerta, a faixa
+> laranja é a janela de 48 h que antecede o início da sepse (linha roxa, hora 128) e os
+> triângulos do painel inferior marcam os escalonamentos de dose. No `p000795` as duas
+> séries convergem — a dose escalona na hora 93 e os sinais vitais passam a alertar a
+> partir da hora 94, ambos dentro da janela. Abaixo do gráfico, a leitura do caso e a
+> conferência contra o `SepsisLabel`, que **não** participa da detecção.
+
+Os controles são dois: o tamanho da coorte (200 a 5.000 pacientes) e quais prioridades
+exibir. O filtro de prioridade não repontua nada — opera sobre a fila já em memória.
+
+### 5.9 Testes
+
+`tests/test_anomaly.py` cobre a entrega com 25 testes sobre séries sintéticas, sem exigir
 os datasets baixados. Além do caminho feliz, os testes fixam as decisões que, se revertidas,
 produzem números melhores do que a realidade sem levantar erro: a separação entre treino e
 teste (nenhum paciente aparece nos dois, nenhum paciente séptico entra no treino), a
 identidade entre o modelo salvo e o recarregado, a exigência de que embaralhar o
 `SepsisLabel` não altere nenhum alerta, a janela do cálculo de antecedência, a normalização
 de escala da FiO2 e a redução de dose que não deve alertar.
+
+A fila de plantão tem testes próprios: a regra de corroboração, a identificação da origem
+do alerta, a ordenação por prioridade, o cálculo da taxa que separa o caso agudo do
+crônico, e a exigência de que a ressalva "não constituem diagnóstico" apareça na tela — não
+basta estar no relatório, precisa estar diante de quem decide.
 
 ---
 
@@ -1287,7 +1348,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 15.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 16.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
@@ -1507,7 +1568,7 @@ O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 pytest -q
 ```
 
-São **27 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 18
+São **34 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 25
 da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles exige os
 datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
 automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
