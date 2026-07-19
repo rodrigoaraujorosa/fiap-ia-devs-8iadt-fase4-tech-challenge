@@ -30,6 +30,31 @@ DEFAULT_LIMIT = 1000
 # A porta 7860 é do app da Entrega 1; os dois podem ficar abertos lado a lado na demo.
 PORT = 7861
 
+# As siglas são as do dataset (nomes em inglês das variáveis do Challenge 2019) e
+# aparecem tanto na fila quanto no gráfico. Sem a legenda, o painel só é legível para
+# quem já as conhece — e o público do painel é a equipe médica, não quem escreveu o
+# código. As faixas de referência estão aqui para tornar o gráfico interpretável de
+# relance; são valores usuais de adulto, não critério clínico do sistema.
+LEGENDA = """
+**Legenda**
+
+| Sigla | Significado | Faixa usual (adulto) |
+|---|---|---|
+| `HR` | frequência cardíaca | 60–100 bpm |
+| `SBP` | pressão arterial sistólica | 90–140 mmHg |
+| `Resp` | frequência respiratória | 12–20 irpm |
+| `O2Sat` | saturação de oxigênio | ≥ 95% |
+| `FiO2` | fração inspirada de oxigênio — **dose prescrita** | 0,21 (ar ambiente) a 1,0 |
+
+**Sepse** — disfunção orgânica causada por uma resposta desregulada do organismo a uma
+infecção. É o desfecho que serve de *ground-truth* neste trabalho: o dataset marca, hora
+a hora, quando o quadro é considerado instalado. O detector **não** usa esse rótulo; ele
+aparece apenas na conferência, para medir se o alerta veio antes.
+
+**Colunas da fila** — `Vitais` e `Dose` são contagens de alertas; `Taxa` é a fração da
+internação em alerta pelos sinais vitais; `Origem` indica qual série disparou.
+"""
+
 COLUNAS = {
     "priority": "Prior.",
     "patient": "Paciente",
@@ -164,6 +189,7 @@ def build_demo() -> gr.Blocks:
                 gr.Markdown("**Fila de plantão** — clique numa linha para abrir o paciente.")
                 tabela = gr.Dataframe(interactive=False, wrap=True,
                                       label="Alertas ativos")
+                gr.Markdown(LEGENDA)
             with gr.Column(scale=2):
                 gr.Markdown("**Série temporal do paciente** — a faixa laranja é a janela "
                             "de 48 h que antecede o início da sepse; as faixas "
