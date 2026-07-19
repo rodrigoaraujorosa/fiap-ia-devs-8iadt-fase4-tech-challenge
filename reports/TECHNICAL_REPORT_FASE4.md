@@ -1137,8 +1137,8 @@ rótulo é exibido apenas na seção de conferência — nunca entra na pontuaç
 ![Série temporal do paciente p001123](figures/monitor_p001123.png)
 
 > **Figura 10.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
-> antecede o início da sepse (linha roxa tracejada, hora 88) e as linhas vermelhas verticais
-> são as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
+> antecede o início da sepse (linha roxa tracejada, hora 88) e as faixas vermelhas marcam
+> as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
 > de oxigênio, estável em 0,30 desde a hora 26 — sem escalonamento, coerente com a saída do
 > comando.
 
@@ -1154,7 +1154,7 @@ rótulo é exibido apenas na seção de conferência — nunca entra na pontuaç
 
 ![Série temporal do paciente p000188](figures/monitor_p000188.png)
 
-> **Figura 12.** O mesmo paciente em série temporal. Não há nenhuma linha vermelha no painel
+> **Figura 12.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
 > superior — o detector de vitais ficou em silêncio —, enquanto os dois triângulos do painel
 > inferior marcam os escalonamentos de dose nas horas 51 e 53, ambos dentro da janela. A
 > figura expõe algo que a saída de texto não mostra: a frequência respiratória (verde) sobe

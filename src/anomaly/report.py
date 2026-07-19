@@ -80,10 +80,19 @@ def plot_monitor(df: pd.DataFrame, patient: str, out_path: str,
                    ("Resp", "#27ae60"), ("O2Sat", "#c0392b")]:
         ax_v.plot(sub["hour"], sub[v], label=v, alpha=0.85, linewidth=1.2, color=cor)
 
-    alertas = sub[sub["is_anomaly"] == 1]
-    for i, h in enumerate(alertas["hour"]):
-        ax_v.axvline(h, color="#c0392b", alpha=0.55, linewidth=2.2,
-                     label="hora em alerta" if i == 0 else None)
+    # Horas consecutivas viram uma faixa. Desenhar uma linha por hora funciona quando há
+    # poucos alertas, mas um paciente com 197 horas sinalizadas em 258 vira um bloco
+    # vermelho sólido — a figura deixa de informar onde os alertas estão.
+    horas_alerta = sorted(sub.loc[sub["is_anomaly"] == 1, "hour"].tolist())
+    faixas: list[tuple[int, int]] = []
+    for h in horas_alerta:
+        if faixas and h == faixas[-1][1] + 1:
+            faixas[-1] = (faixas[-1][0], h)
+        else:
+            faixas.append((h, h))
+    for i, (ini, fim) in enumerate(faixas):
+        ax_v.axvspan(ini - 0.5, fim + 0.5, color="#c0392b", alpha=0.30,
+                     label="horas em alerta" if i == 0 else None)
 
     ax_v.set_ylabel("valor medido")
     titulo = f"Monitoramento do paciente {patient}"

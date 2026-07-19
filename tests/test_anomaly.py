@@ -281,7 +281,8 @@ def _linha(paciente, vitais, doses, horas=100):
         "patient": paciente, "priority": prioridade,
         "vitals_alerts": vitais, "last_vitals_hour": 50 if vitais else None,
         "escalations": doses, "last_escalation_hour": 40 if doses else None,
-        "hours_monitored": horas, "source": origem,
+        "hours_monitored": horas, "alert_rate": vitais / horas if horas else 0.0,
+        "source": origem,
     }
 
 
@@ -324,3 +325,39 @@ def test_painel_avisa_que_vitais_nao_sao_diagnostico():
     texto = alerts.render(pd.DataFrame([_linha("pA", 1, 1)]))
     assert "não constituem diagnóstico" in texto.lower()
     assert "triagem" in texto.lower()
+
+
+def test_taxa_de_alerta_distingue_agudo_de_cronico(tmp_path):
+    """
+    A taxa é o que separa o evento agudo do paciente cronicamente fora do padrão.
+
+    Sem ela, um paciente em alerta 76% da internação ocupa o topo da fila com a mesma
+    aparência de quem disparou 3 vezes em 100 horas — e o primeiro não é acionável.
+    """
+    agudo = _linha("agudo", vitais=3, doses=1, horas=100)
+    cronico = _linha("cronico", vitais=76, doses=1, horas=100)
+    assert agudo["alert_rate"] < 0.10
+    assert cronico["alert_rate"] > 0.50
+    texto = alerts.render(pd.DataFrame([agudo, cronico]))
+    assert "3%" in texto and "76%" in texto
+
+
+def test_grafico_agrupa_horas_consecutivas_em_faixas(tmp_path):
+    """
+    Horas de alerta consecutivas viram uma faixa só.
+
+    Uma linha por hora funciona com poucos alertas, mas um paciente com 197 horas
+    sinalizadas em 258 vira um bloco vermelho sólido e a figura deixa de informar onde
+    os alertas estão.
+    """
+    from src.anomaly.report import plot_monitor
+
+    df = vitals.prepare(_patient("p1", 60, onset=50))
+    df["is_anomaly"] = 0
+    df.loc[df.hour.isin([10, 11, 12, 30, 45, 46]), "is_anomaly"] = 1
+    df["dose"] = 0.4
+    df["is_escalation"] = 0
+
+    saida = plot_monitor(df, "p1", str(tmp_path / "fig.png"))
+    assert saida and pathlib.Path(saida).exists()
+    assert pathlib.Path(saida).stat().st_size > 0

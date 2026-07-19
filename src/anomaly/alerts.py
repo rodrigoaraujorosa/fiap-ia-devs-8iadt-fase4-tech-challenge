@@ -45,6 +45,7 @@ class Alerta:
     escalations: int
     last_escalation_hour: int | None
     hours_monitored: int
+    alert_rate: float
     source: str
 
 
@@ -65,22 +66,27 @@ def _prioridade(n_vitais: int, n_escal: int) -> tuple[str, str]:
     return BAIXA, "—"
 
 
-def scan(data_dir: str, limit: int | None = 300,
-         detector: vitals.VitalsDetector | None = None) -> pd.DataFrame:
+def score_cohort(data_dir: str, limit: int | None = 300,
+                 detector: vitals.VitalsDetector | None = None) -> pd.DataFrame:
     """
-    Varre uma coorte e devolve a fila de plantão.
+    Pontua a coorte retida e anota a dose, devolvendo a série completa.
 
-    Pontua **apenas os pacientes retidos** — os que não participaram do treino. Rodar o
+    Usa **apenas os pacientes retidos** — os que não participaram do treino. Rodar o
     painel sobre a coorte de treino mostraria o modelo reconhecendo o que memorizou, não
     o que ele faria num plantão real.
+
+    É separado de ``build_queue`` porque a leitura dos ``.psv`` domina o tempo (cerca de
+    11 s para 1.000 pacientes): a interface pontua uma vez e reaproveita a série ao
+    abrir cada paciente da fila.
     """
     det = detector or vitals.load()
     raw = vitals.load_dataset(data_dir, limit=limit)
     _, teste = vitals.split_cohorts(vitals.prepare(raw))
+    return prescriptions.detect(prescriptions.build_series(det.score(teste)))
 
-    pontuado = det.score(teste)
-    com_dose = prescriptions.detect(prescriptions.build_series(pontuado))
 
+def build_queue(com_dose: pd.DataFrame) -> pd.DataFrame:
+    """Monta a fila de plantão a partir da série já pontuada."""
     linhas: list[Alerta] = []
     for pid, g in com_dose.groupby("patient"):
         alertas_v = g.loc[g["is_anomaly"] == 1, "hour"]
@@ -96,6 +102,9 @@ def scan(data_dir: str, limit: int | None = 300,
             escalations=int(len(escal)),
             last_escalation_hour=int(escal.max()) if len(escal) else None,
             hours_monitored=int(len(g)),
+            # fração da internação em alerta — distingue o evento agudo do paciente
+            # cronicamente fora do padrão, que alerta quase sempre e não é acionável
+            alert_rate=float(len(alertas_v) / len(g)) if len(g) else 0.0,
             source=origem,
         ))
 
@@ -108,6 +117,12 @@ def scan(data_dir: str, limit: int | None = 300,
     return (df.sort_values(["_ordem", "_recente"], ascending=[True, False])
               .drop(columns=["_ordem", "_recente"])
               .reset_index(drop=True))
+
+
+def scan(data_dir: str, limit: int | None = 300,
+         detector: vitals.VitalsDetector | None = None) -> pd.DataFrame:
+    """Varre uma coorte e devolve a fila de plantão (pontua e monta em um passo)."""
+    return build_queue(score_cohort(data_dir, limit=limit, detector=detector))
 
 
 def render(df: pd.DataFrame, top: int = 15) -> str:
@@ -125,7 +140,7 @@ def render(df: pd.DataFrame, top: int = 15) -> str:
              f"(ALTA {contagem.get(ALTA, 0)} · MEDIA {contagem.get(MEDIA, 0)})")
     L.append("")
     L.append(f"{'PRIOR.':<7} {'PACIENTE':<10} {'INTERN.':>8} {'VITAIS':>7} "
-             f"{'DOSE':>5} {'ÚLTIMO':>7}  ORIGEM")
+             f"{'TAXA':>6} {'DOSE':>5} {'ÚLTIMO':>7}  ORIGEM")
     L.append("-" * 78)
 
     for _, r in df.head(top).iterrows():
@@ -134,7 +149,7 @@ def render(df: pd.DataFrame, top: int = 15) -> str:
         ult = f"h{int(max(horas))}" if horas else "—"
         L.append(f"{r.priority:<7} {r.patient:<10} "
                  f"{str(r.hours_monitored) + ' h':>8} {r.vitals_alerts:>7} "
-                 f"{r.escalations:>5} {ult:>7}  {r.source}")
+                 f"{r.alert_rate:>5.0%} {r.escalations:>5} {ult:>7}  {r.source}")
 
     if len(df) > top:
         L.append(f"... e mais {len(df) - top} paciente(s)")
@@ -142,6 +157,8 @@ def render(df: pd.DataFrame, top: int = 15) -> str:
     L += ["", "-" * 78,
           "Prioridade derivada da confiabilidade medida de cada modalidade (§5.7):",
           "  movimentação AUC 0,9999 -> automático | vitais AUC 0,555 -> revisão humana",
+          "TAXA alta (>50%) indica paciente cronicamente fora do padrão, e não",
+          "evento agudo — o alerta tem pouco valor discriminante nesses casos.",
           "Sinais vitais NÃO constituem diagnóstico: a fila é de triagem.",
           ""]
     return "\n".join(L)
