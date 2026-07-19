@@ -992,54 +992,41 @@ a leitura do início de uma marcha, enquanto deitado e sentado são posturas est
 
 ### 5.4 Sinais Vitais (`vitals.py`)
 
-O detector opera sobre os 8 sinais vitais horários, com duas decisões de modelagem que
-determinam o resultado.
+O detector opera sobre os 8 sinais vitais horários, com três decisões de modelagem.
 
 **Normalização contra a linha de base do próprio paciente.** Um IsolationForest ajustado
 sobre os valores brutos aprende "o que é raro na população", e não "o que mudou neste
-paciente" — que é a pergunta do alerta de leito. Cada série é convertida em desvio robusto
-(z-score por mediana e MAD) contra as primeiras 8 horas daquele paciente, a mesma técnica
-usada na Entrega 1 (3.7). Sem isso, o detector sinaliza sobretudo pacientes cronicamente
-fora da faixa, não pacientes que estão piorando.
+paciente" — que é a pergunta do alerta de leito. Cada série vira desvio robusto (z-score
+por mediana e MAD) contra as primeiras 8 horas daquele paciente, a mesma técnica da
+Entrega 1 (3.7).
 
-**Coorte de treino restrita à normalidade.** A separação entre treino e teste é feita
-**por paciente**, nunca por hora, e o treino recebe apenas pacientes que nunca
-desenvolveram sepse. Manter pacientes sépticos no treino ensinaria ao modelo que a
-deterioração faz parte do padrão normal. O conjunto de teste reúne os pacientes com sepse
-e os pacientes sem sepse retidos, para que a avaliação tenha as duas classes.
+**Coorte de treino restrita à normalidade.** A separação treino/teste é feita **por
+paciente**, e o treino recebe apenas pacientes que nunca desenvolveram sepse — mantê-los
+ensinaria ao modelo que a deterioração faz parte do padrão normal.
 
-**Limiar absoluto.** O corte de alerta é o percentil 5 dos *scores* da coorte de treino,
-fixado no momento do treino e guardado junto com o modelo. A alternativa — sinalizar as 5%
-piores horas *de cada paciente* — foi implementada e descartada: com corte percentual
-individual, todo paciente recebe alertas por construção, inclusive o paciente estável, e a
-taxa deixa de ser comparável entre pacientes. Com limiar absoluto, um paciente dentro do
-padrão pode passar a internação inteira sem alerta, que é o comportamento correto.
+**Limiar absoluto.** O corte é o percentil 5 dos *scores* do treino, guardado junto com o
+modelo. A alternativa — sinalizar as 5% piores horas *de cada paciente* — foi implementada
+e descartada: com corte individual, todo paciente recebe alertas por construção, inclusive
+o estável, e a taxa deixa de ser comparável entre pacientes.
 
-**Resultados quantitativos.** Sobre uma amostra de 5.000 pacientes — 3.187 sem sepse no
-treino (117.947 horas) e 1.813 retidos para teste (76.888 horas, 446 com sepse):
+**Resultados quantitativos.** Sobre 5.000 pacientes — 3.187 sem sepse no treino, 1.813
+retidos para teste (76.888 horas, 446 com sepse):
 
 | Métrica | Valor |
 |:--|:--:|
 | AUC | 0,555 |
 | AUPRC | 0,068 (prevalência horária 0,056) |
-| Pacientes com sepse que receberam algum alerta | 156 de 446 |
 | Avisados na janela de 48 h que antecede o início | 111 de 446 |
 | Antecedência mediana do aviso | 30 horas |
 
-O desempenho hora a hora é **fraco**: a AUC fica pouco acima do acaso, e a AUPRC supera a
-prevalência por margem estreita. A leitura honesta é que os sinais vitais isolados não
-separam bem a hora de sepse da hora estável. O valor prático aparece no nível do paciente:
-quando o alerta ocorre dentro da janela, ocorre com antecedência clinicamente útil.
+O desempenho hora a hora é **fraco** — a AUC fica pouco acima do acaso. Os sinais vitais
+isolados não separam bem a hora de sepse da hora estável; o valor prático aparece no nível
+do paciente, quando o alerta ocorre com antecedência útil. Só contam alertas nas 48 horas
+anteriores ao início: medir a partir do primeiro alerta da internação inteira produziria
+"antecedências" de centenas de horas para eventos sem relação com o alerta.
 
-**A janela de 48 horas não é um detalhe de apresentação.** Medir a antecedência a partir do
-primeiro alerta da internação inteira infla o número sem significado clínico — há paciente
-com sepse na hora 248 e alertas nas primeiras 60 horas, o que produziria uma "antecedência"
-de 239 horas para um evento sem relação com o alerta. Só contam alertas nas 48 horas
-anteriores ao início registrado.
-
-**Onde está o sinal: vitais e marcadores de laboratório.** Para verificar se o desempenho
-fraco vem do método ou das variáveis, o mesmo modelo foi aplicado a três conjuntos de
-features:
+**Onde está o sinal.** Para verificar se o desempenho fraco vem do método ou das
+variáveis, o mesmo modelo foi aplicado a três conjuntos de features:
 
 | Conjunto | Nº features | AUC | AUPRC |
 |:--|:--:|:--:|:--:|
@@ -1047,84 +1034,54 @@ features:
 | Marcadores de laboratório | 8 | 0,628 | 0,034 |
 | Vitais + laboratório | 15 | 0,628 | 0,035 |
 
-Os marcadores de laboratório (`Lactate`, `WBC`, `Creatinine`, `Platelets`, `BUN`, `pH`,
-`HCO3`, `FiO2`) discriminam melhor que os sinais vitais **apesar de terem cobertura muito
-menor** — de 4% a 14% das horas, contra 83% a 91% dos vitais. O resultado é coerente com a
-prática clínica: lactato e leucócitos são marcadores diretos de sepse, enquanto a alteração
-dos sinais vitais é tardia. A entrega mantém os vitais como objeto, conforme o escopo do
-desafio, e registra a comparação como limitação medida da modalidade.
-
-> **O que este resultado não demonstra.** A comparação mede o poder discriminante de cada
-> conjunto de variáveis sob o mesmo modelo não-supervisionado, não o teto do problema. Um
-> modelo supervisionado, com contexto temporal mais longo e imputação específica para
-> exames esparsos, alcançaria desempenho superior aos três — a literatura do próprio
-> Challenge 2019 reporta AUC bem mais alta com abordagens supervisionadas. O que se pode
-> afirmar é que, mantidos fixos o modelo e o pré-processamento, o sinal de sepse está mais
-> nos exames do que nos vitais.
+Os marcadores de laboratório discriminam melhor **apesar de terem cobertura muito menor**
+— de 4% a 14% das horas, contra 83% a 91% dos vitais. É coerente com a prática clínica:
+lactato e leucócitos são marcadores diretos de sepse, enquanto a alteração dos vitais é
+tardia. A entrega mantém os vitais como objeto, conforme o escopo, e registra a comparação
+como limitação medida.
 
 **Limitações medidas.**
 
-- **Menos da metade dos pacientes com sepse é avisada dentro da janela** (111 de 446). É a
-  consequência direta do limiar absoluto, que não garante alerta para todo paciente.
-  Baixá-lo aumenta a cobertura ao custo de mais alarme falso; a escolha do ponto de
-  operação depende do volume de alertas que a equipe consegue absorver.
-- **`EtCO2` tem 0% de cobertura no *training set A*** — a coluna consta do schema oficial e
-  nunca é medida (no *set B* a cobertura é de 7,6%). É descartada automaticamente; mantida,
-  entraria no modelo como constante e diluiria a distância entre as amostras.
-- **Acrescentar tendência e volatilidade não melhorou o resultado.** A hipótese de que
-  janelas móveis de 6 horas carregariam o sinal de deterioração foi testada e descartada: a
-  AUC caiu de 0,559 para 0,533 numa amostra de 300 pacientes.
-- **O `SepsisLabel` marca a janela em que a sepse é considerada instalada**, e não "hora
-  anormal". Um alerta fora dessa janela não é necessariamente falso — pode ser
-  instabilidade real que não evoluiu para sepse. A precisão hora a hora é, portanto,
+- **Menos da metade dos pacientes com sepse é avisada na janela** (111 de 446), consequência
+  do limiar absoluto, que não garante alerta para todo paciente. Baixá-lo aumenta a
+  cobertura ao custo de mais alarme falso.
+- **`EtCO2` tem 0% de cobertura no *training set A*** (7,6% no *set B*) — consta do schema
+  e nunca é medida. É descartada automaticamente; mantida, entraria como constante.
+- **O `SepsisLabel` marca a janela em que a sepse é considerada instalada**, não "hora
+  anormal": um alerta fora dela não é necessariamente falso. A precisão hora a hora é
   conservadora por construção.
 
 ### 5.5 Evolução de Prescrições (`prescriptions.py`)
 
-Não existe fonte pública aberta e granular de prescrições hospitalares: a base de
-referência é o MIMIC-IV, que exige credenciamento. As duas saídas viáveis eram gerar dados
-sintéticos com o **Synthea** ou derivar a série de uma variável de intervenção já presente
-no Challenge 2019.
+Não existe fonte pública aberta e granular de prescrições hospitalares — a referência é o
+MIMIC-IV, que exige credenciamento. A subtarefa usa, no lugar, a **`FiO2`** (fração
+inspirada de oxigênio) do próprio Challenge 2019: ao contrário dos demais campos, que são
+*medições* do paciente, a FiO2 é um valor **prescrito e titulado pela equipe**, e sua série
+ao longo das horas é uma série de doses. A alternativa era gerar dados sintéticos com o
+Synthea, que exige Java JDK e geração local e demanda a mesma ressalva.
 
-**Decisão: variável derivada, usando a `FiO2`** (fração inspirada de oxigênio). Ao
-contrário dos demais campos do dataset, que são *medições* do paciente, a FiO2 é um valor
-**prescrito e titulado pela equipe** — a série ao longo das horas é uma série de doses, que
-é o objeto da subtarefa. A alternativa sintética seria mais fiel ao enunciado, mas exige
-Java JDK e geração local, e ambas demandam a mesma ressalva: nenhuma é prescrição real de
-paciente real. A variável derivada mantém uma única fonte de dados na entrega e preserva o
-mesmo *ground-truth*.
-
-**Detecção.** Anomalia é um degrau de 0,15 ou mais entre coletas consecutivas — cerca de
-dois níveis de suporte, numa escala que vai de 0,21 (ar ambiente) a 1,0. Apenas
-**aumentos** alertam: reduzir a FiO2 é desmame, sinal de melhora, e sinalizá-lo encheria o
-alerta de falsos positivos benignos. Entre duas coletas, a prescrição vigente é a última
-informada, então o preenchimento para a frente não é imputação estatística — é o valor que
-estava valendo.
-
-> **Armadilha de escala.** O dataset mistura duas notações para a FiO2: parte dos registros
-> usa percentual (21 a 100) e parte usa fração (0,21 a 1,0). Sem normalizar, todo registro
-> em percentual seria lido como um degrau gigantesco. O loader converte tudo para fração
-> antes de medir a variação.
+**Detecção.** Anomalia é um degrau de 0,15 ou mais entre coletas consecutivas, numa escala
+que vai de 0,21 (ar ambiente) a 1,0. Apenas **aumentos** alertam: reduzir a FiO2 é desmame,
+sinal de melhora. O dataset mistura duas notações — percentual (21 a 100) e fração (0,21 a
+1,0) — e o loader converte tudo para fração antes de medir a variação.
 
 **Resultados quantitativos.** Sobre os mesmos 5.000 pacientes, dos quais 2.942 têm ao menos
-três registros de dose (cobertura da FiO2: 14,2% das horas):
+três registros de dose (cobertura da FiO2: 14,2% das horas), foram detectados 963
+escalonamentos e 2.374 desmames:
 
-| Grupo | Pacientes | Desenvolveram sepse |
-|:--|:--:|:--:|
-| Escalonaram a dose | — | 17,9% |
-| Não escalonaram | — | 10,5% |
+| Grupo | Desenvolveram sepse |
+|:--|:--:|
+| Escalonaram a dose | 17,9% |
+| Não escalonaram | 10,5% |
 
-Foram detectados 963 escalonamentos e 2.374 desmames. O sinal é modesto mas consistente:
-escalonar a oferta de oxigênio **quase dobra** a probabilidade de o paciente desenvolver
-sepse. A análise se restringe aos pacientes com dose registrada — quem nunca teve FiO2
-medida não está sob suporte de oxigênio, e incluí-lo como "sem alerta" mediria a cobertura
-do dataset, não a qualidade do detector.
+O sinal é modesto mas consistente: escalonar a oferta de oxigênio **quase dobra** a
+probabilidade de o paciente desenvolver sepse.
 
 > **É uma proxy de prescrição, não a prescrição de prontuário.** O escalonamento de
 > oxigênio é uma decisão terapêutica real e registrada, mas cobre um único eixo do que uma
-> base de prescrições traria: não há classe de medicamento, posologia, via de administração
-> nem interações. A subtarefa demonstra o método de detecção sobre série de doses; a
-> generalização para prescrição farmacológica depende de fonte que o projeto não teve.
+> base de prescrições traria: não há classe de medicamento, posologia nem interações. A
+> subtarefa demonstra o método sobre série de doses; a generalização para prescrição
+> farmacológica depende de fonte que o projeto não teve.
 
 ### 5.6 Monitoramento de um Indivíduo (`cli.py`)
 
