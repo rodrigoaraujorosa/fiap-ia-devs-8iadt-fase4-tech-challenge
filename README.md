@@ -24,7 +24,7 @@ não são os mesmos pacientes nas 3 fontes).
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços |
 |---|---------|----------|---------|--------------------|
 | 1 | 🎥 **Análise de Vídeo** | Detectar movimentos/eventos fora do padrão em vídeos clínicos | REHAB24-6 (reabilitação, RGB + rótulos correto/incorreto) | OpenPose (BODY_25) |
-| 2 | 🎙️ **Análise de Áudio** | Detectar alterações vocais/respiratórias (fadiga, disartria) | Coswara | Azure Speech-to-Text · Azure Text Analytics · biomarcadores acústicos |
+| 2 | 🎙️ **Análise de Áudio** | Transcrever consultas, extrair achados clínicos e analisar o sentimento do relato | Consultas médicas simuladas (figshare) | Amazon Transcribe · Comprehend Medical · Comprehend · Translate |
 | 3 | 📈 **Detecção de Anomalias** | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019 · UCI HAR · Synthea | IsolationForest (baseline) |
 
 ---
@@ -72,14 +72,126 @@ source .venv/bin/activate
 
 # 2. Instalar dependências
 pip install -r requirements.txt
+#   Para reproduzir exatamente os números do relatório, use o lock:
+#   pip install -r requirements-lock.txt
 
-# 3. (Entrega 2) Configurar credenciais Azure
+# 3. (Entrega 2) Configurar a AWS — ver a seção "Configuração da AWS" abaixo
 cp .env.example .env
-#   e preencha AZURE_SPEECH_KEY / AZURE_LANGUAGE_KEY ...
 ```
+
+> ⚠️ **Ative o ambiente virtual antes de qualquer comando deste README.** Todos os
+> `python -m src...` assumem o `.venv` ativo. Rodar com o Python do sistema pode até
+> funcionar, mas usa outras versões das bibliotecas — foi o que aconteceu durante o
+> desenvolvimento, e o `scikit-learn` chegou a divergir em uma versão menor entre os dois
+> ambientes. Para conferir qual interpretador está ativo:
+>
+> ```bash
+> python -c "import sys; print(sys.prefix)"   # deve apontar para .../.venv
+> ```
 
 📥 As instruções de **download de cada dataset** estão em
 [`docs/datasets_README.md`](docs/datasets_README.md).
+
+---
+
+## ☁️ Configuração da AWS (necessária para a Entrega 2)
+
+A Entrega 2 usa **serviços gerenciados em nuvem** e, por isso, **não roda sem uma conta
+AWS própria**. As Entregas 1 e 3 são inteiramente locais e não precisam de nada disto.
+
+> 💡 O plano original usava Azure Cognitive Services. A troca para AWS está justificada no
+> [relatório técnico](reports/TECHNICAL_REPORT_FASE4.md); o **Amazon Comprehend Medical**
+> acabou sendo um encaixe melhor, por devolver entidades clínicas já tipadas.
+
+### 1️⃣ Conta e permissões
+
+Crie uma conta em [aws.amazon.com](https://aws.amazon.com/) e um usuário IAM com acesso
+programático. As permissões mínimas são:
+
+| Serviço | Para quê | Ações necessárias |
+|---|---|---|
+| **Amazon S3** | o Transcribe **não aceita upload direto** — o áudio precisa estar no S3 | `s3:PutObject`, `s3:GetObject`, `s3:ListBucket` |
+| **Amazon Transcribe** | transcrever a fala das consultas | `transcribe:StartTranscriptionJob`, `transcribe:GetTranscriptionJob` |
+| **Amazon Comprehend Medical** | extrair entidades clínicas da transcrição | `comprehendmedical:DetectEntitiesV2` |
+| **Amazon Comprehend** | analisar o sentimento do relato | `comprehend:DetectSentiment`, `comprehend:BatchDetectSentiment` |
+
+As políticas gerenciadas `AmazonS3FullAccess`, `AmazonTranscribeFullAccess` e
+`ComprehendMedicalFullAccess` cobrem tudo — são mais amplas que o necessário, aceitável
+para um trabalho acadêmico, **não** para produção.
+
+> 💰 **Custo.** Transcribe e Comprehend Medical são pagos por volume processado e têm
+> camada gratuita nos primeiros meses. O recorte usado aqui é pequeno (poucas consultas),
+> mas **confira os preços e as cotas vigentes na sua conta antes de processar em lote** —
+> as 272 consultas somam ~54 h de áudio.
+
+### 2️⃣ Região
+
+Use **`us-east-1`**. O Comprehend Medical **não existe em todas as regiões** — em
+particular, confirme antes de escolher `sa-east-1` (São Paulo). O comando de verificação
+do passo 5 checa isso.
+
+### 3️⃣ Credenciais
+
+Instale a [AWS CLI](https://aws.amazon.com/cli/) e rode:
+
+```bash
+aws configure
+# AWS Access Key ID     : (do seu usuário IAM)
+# AWS Secret Access Key : (idem)
+# Default region name   : us-east-1
+# Default output format : json
+```
+
+Isso grava as chaves em `~/.aws/credentials`, de onde o `boto3` as lê automaticamente.
+
+> 🔒 **Não coloque chaves no `.env`.** Ele guarda apenas região e nome do bucket. Manter o
+> segredo em um só lugar (`~/.aws/credentials`, fora do repositório) reduz a chance de
+> vazamento. O `.env` é gitignored, mas o hábito de duplicar segredo é o que vaza.
+
+### 4️⃣ Bucket S3
+
+```bash
+aws s3 mb s3://SEU-BUCKET --region us-east-1
+aws s3 ls                                    # confirme o NOME COMPLETO
+```
+
+> ⚠️ **Atenção ao nome.** Se você criar o bucket pelo console, a AWS pode acrescentar um
+> sufixo com o id da conta e a região — `meu-bucket` vira
+> `meu-bucket-123456789012-us-east-1-xx`. Use sempre o nome como aparece em `aws s3 ls`,
+> senão o Transcribe falha com `NoSuchBucket` só na hora de rodar.
+
+Preencha o `.env` (copiado de [`.env.example`](.env.example)):
+
+```bash
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=seu-bucket-completo-aqui
+```
+
+### 5️⃣ Verificação
+
+```bash
+python -m src.common.config
+```
+
+O comando confere, em ordem, as variáveis do `.env`, a credencial, a autenticação (via
+`sts:GetCallerIdentity`), o acesso ao bucket e a existência dos endpoints do Transcribe e
+do Comprehend Medical na região. Sai com código `0` se estiver tudo pronto e aponta o
+passo que falhou caso contrário:
+
+```
+Verificação do ambiente AWS
+  região             : us-east-1
+  bucket             : seu-bucket-completo-aqui
+  credencial         : encontrada
+  autenticação (STS) : OK (conta ...1234)
+  bucket S3          : acessível
+  Transcribe         : disponível em us-east-1
+  Comprehend Medical : disponível em us-east-1
+
+ambiente pronto.
+```
+
+Nenhuma credencial é impressa; do identificador da conta aparecem só os 4 últimos dígitos.
 
 ---
 
@@ -123,7 +235,7 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 | Modalidade | Dataset | Acesso | Link |
 |------------|---------|--------|------|
 | Vídeo | REHAB24-6 (reabilitação física, RGB) | Aberto (Zenodo, ~2,7 GB) | https://zenodo.org/records/13305826 |
-| Áudio | Coswara | Open-access | https://github.com/iiscleap/Coswara-Data |
+| Áudio | Consultas médicas simuladas | Aberto (CC0) | https://doi.org/10.6084/m9.figshare.16550013.v1 |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | https://physionet.org/content/challenge-2019/1.0.0/ |
 | Movimentação | UCI HAR | Aberto (~60 MB) | https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones |
 | Prescrições | Synthea (sintético) | Aberto | https://github.com/synthetichealth/synthea |

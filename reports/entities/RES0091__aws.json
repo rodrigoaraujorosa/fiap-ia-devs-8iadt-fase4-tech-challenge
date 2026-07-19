@@ -1,0 +1,1608 @@
+[
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4743,
+  "traits": [],
+  "negated": false,
+  "begin": 0,
+  "end": 2
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.7319,
+  "traits": [],
+  "negated": false,
+  "begin": 35,
+  "end": 37
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 56,
+  "end": 66
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 62,
+  "end": 66
+ },
+ {
+  "text": "stuffy nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8617,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 89,
+  "end": 100
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 96,
+  "end": 100
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 124,
+  "end": 134
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 130,
+  "end": 134
+ },
+ {
+  "text": "past week and a half",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 143,
+  "end": 163
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1239,
+  "traits": [],
+  "negated": false,
+  "begin": 317,
+  "end": 319
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5725,
+  "traits": [],
+  "negated": false,
+  "begin": 341,
+  "end": 343
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4229,
+  "traits": [],
+  "negated": false,
+  "begin": 345,
+  "end": 347
+ },
+ {
+  "text": "stuffy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 406,
+  "end": 412
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4402,
+  "traits": [],
+  "negated": false,
+  "begin": 414,
+  "end": 416
+ },
+ {
+  "text": "stuffy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7614,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 437,
+  "end": 443
+ },
+ {
+  "text": "two weeks ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 450,
+  "end": 463
+ },
+ {
+  "text": "two weeks ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 450,
+  "end": 463
+ },
+ {
+  "text": "Two weeks ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 465,
+  "end": 478
+ },
+ {
+  "text": "Two weeks ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 465,
+  "end": 478
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5107,
+  "traits": [],
+  "negated": false,
+  "begin": 484,
+  "end": 486
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 525,
+  "end": 535
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 531,
+  "end": 535
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4286,
+  "traits": [],
+  "negated": false,
+  "begin": 543,
+  "end": 545
+ },
+ {
+  "text": "week and a half ago",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 562,
+  "end": 581
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 601,
+  "end": 609
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 622,
+  "end": 630
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3306,
+  "traits": [],
+  "negated": false,
+  "begin": 652,
+  "end": 654
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3059,
+  "traits": [],
+  "negated": false,
+  "begin": 695,
+  "end": 697
+ },
+ {
+  "text": "coughing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 715,
+  "end": 723
+ },
+ {
+  "text": "coughing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 732,
+  "end": 740
+ },
+ {
+  "text": "coughing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 745,
+  "end": 753
+ },
+ {
+  "text": "fevers",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 763,
+  "end": 769
+ },
+ {
+  "text": "chills",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 773,
+  "end": 779
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1573,
+  "traits": [],
+  "negated": false,
+  "begin": 802,
+  "end": 804
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8617,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 820,
+  "end": 830
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 826,
+  "end": 830
+ },
+ {
+  "text": "discharge",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 876,
+  "end": 885
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1785,
+  "traits": [],
+  "negated": false,
+  "begin": 919,
+  "end": 921
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.238,
+  "traits": [],
+  "negated": false,
+  "begin": 940,
+  "end": 942
+ },
+ {
+  "text": "coughed up any blood",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 944,
+  "end": 964
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.58,
+  "traits": [],
+  "negated": false,
+  "begin": 973,
+  "end": 975
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1017,
+  "end": 1025
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.144,
+  "traits": [],
+  "negated": false,
+  "begin": 1068,
+  "end": 1070
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1176,
+  "end": 1184
+ },
+ {
+  "text": "medications",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.7614,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 1207,
+  "end": 1218
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2031,
+  "traits": [],
+  "negated": false,
+  "begin": 1220,
+  "end": 1222
+ },
+ {
+  "text": "nasal",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 1290,
+  "end": 1295
+ },
+ {
+  "text": "nasal decongestants",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 1290,
+  "end": 1309
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1344,
+  "end": 1354
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 1350,
+  "end": 1354
+ },
+ {
+  "text": "uh yeah",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "PROFESSION",
+  "score": 0.0905,
+  "traits": [],
+  "negated": false,
+  "begin": 1415,
+  "end": 1422
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1405,
+  "traits": [],
+  "negated": false,
+  "begin": 1524,
+  "end": 1526
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1553,
+  "end": 1561
+ },
+ {
+  "text": "shortness of breath",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1582,
+  "end": 1601
+ },
+ {
+  "text": "chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8617,
+  "traits": [],
+  "negated": false,
+  "begin": 1603,
+  "end": 1608
+ },
+ {
+  "text": "chest pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1603,
+  "end": 1613
+ },
+ {
+  "text": "dizziness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1627,
+  "end": 1636
+ },
+ {
+  "text": "dizziness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1661,
+  "end": 1670
+ },
+ {
+  "text": "headache",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1703,
+  "end": 1711
+ },
+ {
+  "text": "fluid",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1756,
+  "end": 1761
+ },
+ {
+  "text": "something backed up",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1765,
+  "end": 1784
+ },
+ {
+  "text": "sinuses",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 1793,
+  "end": 1800
+ },
+ {
+  "text": "pressure in your face",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1838,
+  "end": 1859
+ },
+ {
+  "text": "face",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 1855,
+  "end": 1859
+ },
+ {
+  "text": "past uh couple of weeks to a month",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 1912,
+  "end": 1946
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4015,
+  "traits": [],
+  "negated": false,
+  "begin": 1948,
+  "end": 1950
+ },
+ {
+  "text": "sick",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1985,
+  "end": 1989
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.7948,
+  "traits": [],
+  "negated": false,
+  "begin": 2054,
+  "end": 2056
+ },
+ {
+  "text": "loss of loss of sense",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2093,
+  "end": 2114
+ },
+ {
+  "text": "loss of loss of sense of taste or smell",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2093,
+  "end": 2132
+ },
+ {
+  "text": "nausea",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2150,
+  "end": 2156
+ },
+ {
+  "text": "vomiting",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2160,
+  "end": 2168
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4346,
+  "traits": [],
+  "negated": false,
+  "begin": 2170,
+  "end": 2172
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3303,
+  "traits": [],
+  "negated": false,
+  "begin": 2180,
+  "end": 2182
+ },
+ {
+  "text": "night sweats",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2188,
+  "end": 2200
+ },
+ {
+  "text": "fatigue",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2216,
+  "end": 2223
+ },
+ {
+  "text": "feel tired",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2232,
+  "end": 2242
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2888,
+  "traits": [],
+  "negated": false,
+  "begin": 2381,
+  "end": 2383
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.7791,
+  "traits": [],
+  "negated": false,
+  "begin": 2385,
+  "end": 2387
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2988,
+  "traits": [],
+  "negated": false,
+  "begin": 2648,
+  "end": 2650
+ },
+ {
+  "text": "changes in your sleep or appetite",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2675,
+  "end": 2708
+ },
+ {
+  "text": "changes in your bowel movement",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2741,
+  "end": 2771
+ },
+ {
+  "text": "bowel",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 2757,
+  "end": 2762
+ },
+ {
+  "text": "bowel movement",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2757,
+  "end": 2771
+ },
+ {
+  "text": "diarrhea",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2777,
+  "end": 2785
+ },
+ {
+  "text": "constipation",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2789,
+  "end": 2801
+ },
+ {
+  "text": "urinary",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 2811,
+  "end": 2818
+ },
+ {
+  "text": "urinary trouble",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2811,
+  "end": 2826
+ },
+ {
+  "text": "weight loss",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2841,
+  "end": 2852
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2841,
+  "traits": [],
+  "negated": false,
+  "begin": 2862,
+  "end": 2864
+ },
+ {
+  "text": "asthma",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 2943,
+  "end": 2949
+ },
+ {
+  "text": "healthy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2982,
+  "end": 2989
+ },
+ {
+  "text": "allergies",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALLERGIES",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3009,
+  "end": 3018
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1707,
+  "traits": [],
+  "negated": false,
+  "begin": 3037,
+  "end": 3039
+ },
+ {
+  "text": "allergies",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALLERGIES",
+  "score": 0.7614,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3050,
+  "end": 3059
+ },
+ {
+  "text": "medications",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3096,
+  "end": 3107
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4891,
+  "traits": [],
+  "negated": false,
+  "begin": 3109,
+  "end": 3111
+ },
+ {
+  "text": "vitamins",
+  "category": "MEDICATION",
+  "type": "GENERIC_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3135,
+  "end": 3143
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5275,
+  "traits": [],
+  "negated": false,
+  "begin": 3149,
+  "end": 3151
+ },
+ {
+  "text": "hospitalizations",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3157,
+  "end": 3173
+ },
+ {
+  "text": "surgeries",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.7614,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3177,
+  "end": 3186
+ },
+ {
+  "text": "in the past",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_PROCEDURE_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 3187,
+  "end": 3198
+ },
+ {
+  "text": "arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 3209,
+  "end": 3212
+ },
+ {
+  "text": "arm fracture",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 3209,
+  "end": 3221
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4832,
+  "traits": [],
+  "negated": false,
+  "begin": 3261,
+  "end": 3263
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2638,
+  "traits": [],
+  "negated": false,
+  "begin": 3313,
+  "end": 3315
+ },
+ {
+  "text": "cigarettes",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3351,
+  "end": 3361
+ },
+ {
+  "text": "smoked",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3383,
+  "end": 3389
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1627,
+  "traits": [],
+  "negated": false,
+  "begin": 3407,
+  "end": 3409
+ },
+ {
+  "text": "recreational drugs",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.7172,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3415,
+  "end": 3433
+ },
+ {
+  "text": "marijuana",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.795,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3439,
+  "end": 3448
+ },
+ {
+  "text": "alcohol",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 3475,
+  "end": 3482
+ },
+ {
+  "text": "wine",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 3531,
+  "end": 3535
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.734,
+  "traits": [],
+  "negated": false,
+  "begin": 3651,
+  "end": 3653
+ },
+ {
+  "text": "runny nose",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3684,
+  "end": 3694
+ },
+ {
+  "text": "nose",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 3690,
+  "end": 3694
+ },
+ {
+  "text": "more than 1.5 weeks",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 3742,
+  "end": 3761
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3833,
+  "end": 3841
+ },
+ {
+  "text": "cough",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3890,
+  "end": 3895
+ },
+ {
+  "text": "sputum",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3945,
+  "end": 3951
+ },
+ {
+  "text": "fevers",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3975,
+  "end": 3981
+ },
+ {
+  "text": "cold",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 4038,
+  "end": 4042
+ },
+ {
+  "text": "viral um infection",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 4073,
+  "end": 4091
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.0749,
+  "traits": [],
+  "negated": false,
+  "begin": 4093,
+  "end": 4095
+ },
+ {
+  "text": "getting some rest",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4158,
+  "end": 4175
+ },
+ {
+  "text": "hydrating well",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 4184,
+  "end": 4198
+ },
+ {
+  "text": "medications",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4238,
+  "end": 4249
+ },
+ {
+  "text": "Tylenol Cold",
+  "category": "MEDICATION",
+  "type": "BRAND_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4255,
+  "end": 4267
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.0912,
+  "traits": [],
+  "negated": false,
+  "begin": 4390,
+  "end": 4392
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4083,
+  "traits": [],
+  "negated": false,
+  "begin": 4394,
+  "end": 4396
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 4398,
+  "end": 4406
+ },
+ {
+  "text": "COVID",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "HYPOTHETICAL",
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 4418,
+  "end": 4423
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4269,
+  "traits": [],
+  "negated": false,
+  "begin": 4453,
+  "end": 4455
+ },
+ {
+  "text": "COVID swab",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TEST_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4476,
+  "end": 4486
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2835,
+  "traits": [],
+  "negated": false,
+  "begin": 4506,
+  "end": 4508
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1865,
+  "traits": [],
+  "negated": false,
+  "begin": 4523,
+  "end": 4525
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4412,
+  "traits": [],
+  "negated": false,
+  "begin": 4561,
+  "end": 4563
+ },
+ {
+  "text": "test",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TEST_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 4584,
+  "end": 4588
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.56,
+  "traits": [],
+  "negated": false,
+  "begin": 4590,
+  "end": 4592
+ },
+ {
+  "text": "staying, uh, isolated",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4612,
+  "end": 4633
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.6654,
+  "traits": [],
+  "negated": false,
+  "begin": 4621,
+  "end": 4623
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.7165,
+  "traits": [],
+  "negated": false,
+  "begin": 4635,
+  "end": 4637
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5871,
+  "traits": [],
+  "negated": false,
+  "begin": 4649,
+  "end": 4651
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5274,
+  "traits": [],
+  "negated": false,
+  "begin": 4661,
+  "end": 4663
+ }
+]

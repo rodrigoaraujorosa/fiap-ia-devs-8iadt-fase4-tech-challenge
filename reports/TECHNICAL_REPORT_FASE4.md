@@ -28,7 +28,7 @@ alertas automáticos para a equipe médica.
 
 A solução integra três entregas técnicas independentes, unidas pelo cenário clínico:
 análise de vídeo de sessões de reabilitação (estimação de pose e detecção de desvios
-posturais), análise de áudio de consultas (transcrição e biomarcadores vocais) e detecção
+posturais), análise de áudio de consultas (transcrição e extração de achados clínicos) e detecção
 de anomalias em sinais vitais, prescrições e padrões de movimentação.
 
 > **AVISO — Uso exclusivamente acadêmico.** Este sistema não deve ser utilizado para
@@ -42,12 +42,12 @@ Desenvolver um sistema que:
 
 1. Processe vídeos clínicos e detecte movimentos/eventos fora do padrão esperado (análise
    postural com OpenPose), gerando relatórios automáticos de desvios
-2. Processe áudios de consultas, transcreva a fala (Azure Speech-to-Text) e identifique
-   termos críticos e sentimento (Azure Text Analytics), além de biomarcadores acústicos
+2. Processe áudios de consultas, transcreva a fala (Amazon Transcribe) e identifique
+   termos críticos e achados clínicos (Amazon Comprehend Medical)
 3. Aplique técnicas de detecção de anomalias em séries temporais de sinais vitais,
    evolução de prescrições e padrões de movimentação
-4. Integre os serviços gerenciados em nuvem (Azure Cognitive Services) e produza um fluxo
-   de alerta à equipe médica
+4. Integre serviços gerenciados em nuvem (AWS — ver 4.2 sobre a troca de provedor) e
+   produza um fluxo de alerta à equipe médica
 
 ### 1.2 Entregáveis do Projeto
 
@@ -63,7 +63,7 @@ Desenvolver um sistema que:
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços | Estado |
 |:--|:--|:--|:--|:--|:--|
 | 1 | Análise de Vídeo | Detectar desvios posturais em vídeos de reabilitação | REHAB24-6 (RGB + rótulos correto/incorreto) | OpenPose (BODY_25), IsolationForest, z-score robusto | Implementada e validada |
-| 2 | Análise de Áudio | Detectar alterações vocais/respiratórias | Coswara | Azure Speech-to-Text, Azure Text Analytics, librosa | [Em desenvolvimento] |
+| 2 | Análise de Áudio | Transcrever a fala e extrair os achados clínicos relatados | Consultas médicas simuladas | Amazon Transcribe, Comprehend Medical, Translate | Implementada |
 | 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR, Synthea | IsolationForest (baseline) | Baseline implementado |
 
 ### 1.4 Datasets Utilizados
@@ -71,7 +71,7 @@ Desenvolver um sistema que:
 | Modalidade | Dataset | Acesso | Observação |
 |:--|:--|:--|:--|
 | Vídeo | REHAB24-6 | Aberto (Zenodo, ~2,7 GB) | RGB + rótulos de execução correta/incorreta |
-| Áudio | Coswara | Open-access (não-comercial) | Respiração, tosse, vogais, dígitos + metadados |
+| Áudio | Consultas médicas simuladas | Aberto (figshare, CC0) | 272 consultas com áudio e transcrição humana |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | 40.336 pacientes de UTI, séries horárias |
 | Movimentação | UCI HAR | Aberto (~60 MB) | 561 features (acelerômetro + giroscópio), 6 atividades |
 | Prescrições | Synthea (sintético) | Aberto | Gerador de registros clínicos sintéticos |
@@ -87,8 +87,8 @@ interpretável que pode disparar um alerta à equipe médica.
 ```
 [Vídeo: reabilitação]  ── OpenPose ──► keypoints ──► ângulos ──► desvios ─┐
                                                                           │
-[Áudio: consulta]  ── Azure Speech ──► transcrição ──► termos/sentimento ─┤
-                     └─ librosa ──► biomarcadores acústicos               ├─► fusão / alerta
+[Áudio: consulta]  ── Transcribe ──► transcrição ──► Comprehend Medical ─┤
+                                                                          ├─► fusão / alerta
                                                                           │    à equipe médica
 [Sinais vitais / movimentação / prescrições]  ── IsolationForest ────────┘
 ```
@@ -98,7 +98,7 @@ interpretável que pode disparar um alerta à equipe médica.
 | Modalidade | Entrada | Processamento | Saída |
 |:--|:--|:--|:--|
 | Vídeo | vídeo RGB (.mp4) | OpenPose (BODY_25) → ângulos articulares → detecção de desvios | relatório + vídeo anotado |
-| Áudio | áudio de consulta (.wav) | Azure Speech-to-Text + Text Analytics + biomarcadores | transcrição + termos críticos + alterações vocais |
+| Áudio | consulta (.mp3) | Amazon Transcribe + Comprehend Medical | transcrição + achados clínicos tipados |
 | Anomalias | séries temporais (.psv/.txt/.csv) | IsolationForest + z-score | frames/horas anômalas + alertas |
 
 ### 2.2 Princípio de Projeto: Desacoplamento
@@ -512,33 +512,320 @@ anomalias injetadas e a renderização do overlay.
 
 ---
 
-## 4. Entrega 2 — Análise de Áudio (Azure Cognitive Services)
-
-**[Em desenvolvimento]**
+## 4. Entrega 2 — Análise de Áudio (AWS)
 
 ### 4.1 Visão Geral
 
-Processar áudios de consultas médicas para detectar alterações vocais/respiratórias
-(cansaço, dificuldades respiratórias, disartria), transcrever a fala e identificar termos
-críticos e sentimento.
+O pipeline de áudio processa gravações de consultas médicas, transcreve a fala e extrai
+os achados clínicos mencionados pelo paciente, produzindo um relatório para a equipe
+médica.
 
-### 4.2 Dataset: Coswara
+```
+                                        ┌─► Comprehend Medical ──► achados clínicos ─┐
+consulta (.mp3) ──► S3 ──► Transcribe ──┤                                            ├─► relatório
+                          (diarização)  └─► Comprehend ──────────► sentimento ───────┘   bilíngue
+```
 
-Conjunto open-access com 2.635 indivíduos e 9 categorias de som (respiração rápida/lenta,
-tosse profunda/rasa, vogais sustentadas, dígitos falados) e metadados de sintomas e
-comorbidades — bom encaixe para "dificuldades respiratórias e cansaço".
+### 4.2 Troca de Provedor: Azure → AWS
 
-### 4.3 Pipeline Previsto
+O enunciado sugere Azure Cognitive Services. O grupo não dispunha de cota no Azure for
+Students e a instituição liberou o uso da **AWS**, para onde o pipeline foi migrado. A
+equivalência é direta e, num ponto, favorável:
 
-1. **Azure Speech-to-Text** — transcrição da fala.
-2. **Azure Text Analytics (Azure AI Language)** — sentimento, key phrases e *Text Analytics
-   for Health* (extração de entidades médicas: sintomas, diagnósticos, medicações).
-3. **Biomarcadores acústicos (librosa)** — jitter, shimmer, F0, MFCC sobre o áudio bruto.
+| Função | Azure (previsto) | AWS (implementado) |
+|:--|:--|:--|
+| Transcrição | Azure AI Speech | **Amazon Transcribe** |
+| Entidades clínicas | Text Analytics for Health | **Amazon Comprehend Medical** |
+| Sentimento | Text Analytics | **Amazon Comprehend** (serviço geral) |
+| Tradução | — | **Amazon Translate** |
 
-### 4.4 Credenciais
+A divisão entre os serviços difere: o Azure Text Analytics reunia sentimento, frases-chave
+e entidades de saúde num único serviço, enquanto a AWS separa o **Comprehend Medical**
+(entidades clínicas) do **Comprehend** geral (sentimento). São dois clientes distintos, e o
+Comprehend Medical **não possui operação de sentimento** — verificado na própria API.
 
-As chaves da Azure são carregadas via `.env` (modelo em `.env.example`) por
-`src/common/config.py`, sem versionar segredos.
+O Comprehend Medical devolve as entidades já **tipadas e qualificadas por traços**
+(`NEGATION`, `PERTAINS_TO_FAMILY`, `HYPOTHETICAL`), o que carrega para o serviço parte da
+lógica clínica que, de outro modo, teria de ser implementada localmente.
+
+### 4.3 Dataset: Consultas Médicas Simuladas
+
+*A dataset of simulated patient-physician medical interviews with a focus on respiratory
+cases* (figshare, DOI 10.6084/m9.figshare.16550013.v1, licença CC0).
+
+| Item | Descrição |
+|:--|:--|
+| Conteúdo | 272 consultas em formato OSCE, com áudio e transcrição humana revisada |
+| Áudio | MP3 16 kHz mono, 11-15 min por consulta |
+| Especialidades | 213 respiratórias (78,3%), 46 musculoesqueléticas, 13 outras |
+| Rótulos de fala | turnos marcados `D:` (médico) e `P:` (paciente) |
+| Licença | CC0 (domínio público) |
+
+**Justificativa da escolha.** O dataset atende às duas exigências do enunciado para a
+modalidade: é **áudio de consulta médica** e traz **fala clínica espontânea**, em que o
+paciente descreve sintomas em linguagem natural — matéria-prima do Comprehend Medical.
+A concentração em casos respiratórios (78,3%) dialoga diretamente com o sintoma-alvo do
+desafio, "dificuldades respiratórias e cansaço".
+
+A **transcrição humana revisada** é o que permite medir o erro do Transcribe (4.4) em vez
+de apenas exibir seu resultado.
+
+> **Nota sobre a contagem.** O artigo do dataset informa 214 casos respiratórios (78,7%);
+> a contagem sobre os arquivos efetivamente distribuídos resulta em **213**. Este
+> relatório usa o número medido.
+
+> **Armadilha de codificação.** Dois dos 213 casos respiratórios (`RES0002` e `RES0054`)
+> estão em UTF-16, enquanto o restante está em UTF-8. Ler todos como UTF-8 não levanta
+> exceção — devolve texto corrompido, e o caso aparece silenciosamente com zero turnos de
+> fala. O loader detecta a codificação pelo BOM.
+
+### 4.4 Transcrição (`transcribe.py`)
+
+O Transcribe **não aceita áudio na chamada**: o arquivo vai para o S3, inicia-se um job
+assíncrono sobre a URI e busca-se o JSON do resultado. A diarização fica ligada
+(`MaxSpeakerLabels=2`), o que permite separar médico e paciente.
+
+**Resultados (quatro consultas).** O WER é medido contra a transcrição humana do próprio
+dataset, por distância de edição em nível de palavra.
+
+| Caso | Duração | Especialidade | WER | Sub / Ins / Del | Palavras ref. | Turnos (AWS / humano) | Job |
+|:--|--:|:--|--:|:--:|--:|:--:|--:|
+| RES0091 | 7,0 min | respiratório | **4,12%** | 12 / 6 / 18 | 873 | 79 / 79 | 93 s |
+| RES0029 | 6,7 min | respiratório | **5,37%** | 20 / 16 / 6 | 782 | 65 / 69 | 47 s |
+| MSK0018 | 8,6 min | musculoesquelético | **7,53%** | 48 / 14 / 9 | 943 | 73 / 86 | 77 s |
+| RES0062 | 17,8 min | respiratório | **10,79%** | 52 / 134 / 20 | 1.910 | 128 / 130 | 108 s |
+
+**WER médio 6,95%** (mediana 6,45%, desvio 2,92%).
+
+**Hesitações ("um", "uh") são removidas dos dois lados**: o anotador humano as transcreveu,
+o Transcribe as omite, e contá-las mediria a convenção de anotação, não o reconhecimento. A
+diferença é grande e vale registrar — no RES0029, **5,37% sem hesitações contra 13,30% com
+elas**.
+
+**Sobre o RES0062, que destoa.** O caso mais longo tem o dobro do WER dos demais, quase
+inteiramente por **inserções**: 134, contra 6 a 16 nos outros. Investigando os trechos
+inseridos, verifica-se que são **fala real que a transcrição humana omitiu** — orações
+inteiras ("and that it's not, you know, a contraindication to your afib"), repetições ("in
+your, in your") e falsos começos ("I used to, I..."). A pasta do dataset chama-se *Clean
+Transcripts*: o anotador humano **limpou as disfluências**, e o Transcribe transcreveu
+literalmente.
+
+A densidade de palavras confirma a leitura:
+
+| Caso | Palavras/min (referência) | Palavras/min (AWS) | Diferença total |
+|:--|--:|--:|--:|
+| RES0029 | 116 | 118 | +10 |
+| RES0091 | 125 | 123 | −12 |
+| MSK0018 | 110 | 111 | +5 |
+| RES0062 | **107** | **114** | **+114** |
+
+Nos três casos curtos a diferença fica em ±12 palavras; no RES0062 chega a +114, e a
+densidade da referência cai enquanto a da AWS se mantém. **O WER mais alto reflete uma
+transcrição humana mais editada, não um reconhecimento pior.** É uma limitação do
+ground-truth como medida, não do serviço — e sugere que, em consultas longas, o WER contra
+transcrição "limpa" superestima o erro real.
+
+**O que o WER não mostra.** A métrica trata todas as palavras como iguais, mas errar
+`two`→`2` não tem o mesmo peso clínico que errar `chest pain`. Verificando termo a termo,
+os **15 termos clínicos da consulta aparecem com contagem idêntica** nas duas transcrições
+— `chest` 5/5, `pain` 10/10, `breath` 5/5, além de `cough`, `fever`, `headache`,
+`dizziness`, `stabbing`, `nausea`, `vomiting`, `chills`. Nenhum ausente. Os erros
+concentram-se em convenções de escrita (`i'd`→`i would`, `nope`→`no`) e em palavras
+funcionais repetidas em trechos com hesitação.
+
+### 4.5 Extração de Entidades Clínicas (`comprehend.py`)
+
+O Comprehend Medical recebe **apenas a fala do paciente** e devolve entidades tipadas. A
+restrição é essencial: as perguntas do médico ("any fever?", "do you have a cough?")
+contêm termos clínicos, mas são hipóteses sendo investigadas, não achados do paciente.
+
+Na origem humana, a separação vem dos rótulos `D:`/`P:` do dataset; na origem AWS, da
+diarização do Transcribe. O papel do paciente é identificado por dois sinais independentes
+— quem fala mais e quem *não* abre a consulta — e o código recusa-se a decidir se eles
+discordarem, porque trocar os papéis inverteria todo o relatório.
+
+**Resultado (RES0029):** 52 entidades, entre elas:
+
+| Entidade | Traço | Leitura clínica |
+|:--|:--|:--|
+| `cough`, `infections` | NEGATION | o paciente **negou** |
+| `diabetes` | PERTAINS_TO_FAMILY | ocorre em **familiar** |
+| `alcohol`, `drugs`, `marijuana` | NEGATION | negativas de uso |
+| `left side of my chest` | (anatomia) | localização do sintoma |
+
+Ignorar os traços produziria um relatório listando como sintomas do paciente coisas que
+ele negou ou que pertencem a um parente.
+
+**Validação entre as duas origens.** Como existem a transcrição humana e a automática para
+a mesma consulta, é possível responder o que o WER não responde: *os erros de transcrição
+atrapalham a extração clínica?* Extraindo das duas origens nos quatro casos:
+
+| Caso | Entidades | Achados (humano) | Recuperados | Recall |
+|:--|--:|--:|--:|--:|
+| RES0091 | 33 | 6 | 5 | 0,833 |
+| RES0029 | 52 | 9 | 7 | 0,778 |
+| MSK0018 | 55 | 7 | 6 | 0,857 |
+| RES0062 | 94 | 14 | 11 | 0,786 |
+| **Total** | 234 | **36** | **29** | **0,806** |
+
+A recall mantém-se estável em torno de 0,8 mesmo no RES0062, cujo WER é o dobro dos demais
+— indício de que a extração clínica é mais robusta ao erro de transcrição do que a métrica
+de palavras sugere.
+
+**Os "não recuperados" são, em maioria, efeito de limiar.** Dos 7 achados ausentes na
+origem AWS, **4 estão presentes na extração, apenas com confiança abaixo do corte de
+0,70**:
+
+| Achado | Caso | Situação na extração da AWS |
+|:--|:--|:--|
+| `arm fracture` | RES0091 | presente, score 0,60 |
+| `drink` | RES0062 | presente, score 0,66 |
+| `haven't been able to smell` | RES0062 | presente, score 0,53 |
+| `hurts` | RES0029 | presente, score 0,53 |
+| `impact` | RES0029 | ausente (variante de `fell`, que foi recuperado) |
+| `shoulder's dropped` | MSK0018 | ausente |
+| `throat felt ok.` | RES0062 | ausente |
+
+Ou seja, a recall medida **mistura duas coisas**: a qualidade da transcrição e a
+sensibilidade ao limiar escolhido. Um corte mais baixo elevaria a recall e traria também
+mais ruído; o valor de 0,70 é uma escolha conservadora, não um ótimo calibrado.
+
+**Falsos positivos observados.** O serviço extrai como achado positivo expressões que
+descrevem **ausência de problema** — `head was fine` (RES0029), `throat felt ok.` e
+`healthy` (RES0062). São o oposto de um achado clínico, e o traço `NEGATION` não os captura
+porque a frase é afirmativa. É a limitação mais relevante encontrada, e o relatório de
+saída a mitiga em parte ao exibir o trecho de origem junto de cada achado, permitindo que a
+equipe descarte o item em um relance.
+
+### 4.6 Análise de Sentimento (`comprehend.py`)
+
+O enunciado pede a identificação de "termos críticos **e sentimentos**". Os termos vêm do
+Comprehend Medical (4.5); o sentimento vem do **Amazon Comprehend** geral, aplicado à fala
+do paciente.
+
+A análise é feita em dois níveis: o **tom geral do relato**, com as pontuações ponderadas
+pelo tamanho de cada bloco de texto, e o **sentimento por turno de fala**, que localiza
+onde o relato é mais negativo.
+
+**Resultados.** Os quatro casos foram classificados como **NEGATIVE**, com a pontuação da
+classe negativa entre 0,75 e 0,97:
+
+| Caso | Sentimento | Classe negativa |
+|:--|:--|--:|
+| RES0062 | NEGATIVE | 0,75 |
+| RES0091 | NEGATIVE | 0,88 |
+| RES0029 | NEGATIVE | 0,95 |
+| MSK0018 | NEGATIVE | 0,97 |
+
+A uniformidade do rótulo entre casos e especialidades é, ela própria, o achado: **o
+indicador não discrimina** consultas dentro deste corpus. No RES0029, as três falas de
+maior carga negativa são clinicamente pertinentes — a piora recente ("it's been getting
+worse", 0,99), o mecanismo do trauma (a queda de bicicleta, 0,96) e a qualidade da dor
+("someone is just stabbing me", 0,94) —, o que sugere que a análise **por turno** é mais
+informativa que o rótulo agregado.
+
+> **Limitação do indicador.** O modelo de sentimento é de propósito geral, treinado
+> sobretudo em avaliações de produtos e redes sociais. Num relato de sintomas, o
+> vocabulário de dor e desconforto é intrinsecamente negativo, de modo que **um resultado
+> negativo é o esperado numa consulta e, isoladamente, informa pouco**. O indicador ganha
+> sentido na **comparação** — entre casos, ou no acompanhamento do mesmo paciente ao longo
+> do tempo. Trata-se do sentimento **do texto**, não de uma aferição do estado emocional do
+> paciente, e o relatório de saída traz essa ressalva junto do resultado.
+
+### 4.7 Relatório Clínico Bilíngue (`report.py`)
+
+O relatório destina-se à equipe médica e é **bilíngue por necessidade**: o áudio-fonte é em
+inglês, e traduzir sem mostrar o original impediria a conferência contra a gravação.
+Cada termo e cada trecho aparecem no original seguido da tradução (Amazon Translate, com
+cache por trecho).
+
+Estrutura: achados relatados → sintomas negados → história familiar → trechos de apoio →
+qualidade da transcrição. Cada achado vem acompanhado da **frase que o originou**, porque
+`pain` isolado não informa se é torácica, intensa ou momentânea.
+
+Três ajustes de **segurança clínica** foram necessários após ler a primeira saída como
+leitor médico:
+
+1. **Termos afirmados e negados na mesma consulta.** `pain` aparecia nas duas tabelas — o
+   paciente tem dor torácica (queixa principal) e negou dor em outro local. Listar "dor:
+   negada" ao lado da queixa principal poderia levar ao seu descarte. Havendo conflito, o
+   achado afirmado prevalece e um aviso nomeia os termos ambíguos para verificação.
+2. **História familiar entre os achados do paciente.** `diabetes` aparecia como achado
+   próprio; o filtro excluía hipotéticos, mas não `PERTAINS_TO_FAMILY`.
+3. **Tradução ambígua.** `drugs` era traduzido como "medicamentos", enquanto o tipo é
+   `REC_DRUG_USE`; a tabela de negações passou a exibir o tipo.
+
+O relatório informa também o **WER da transcrição que originou os achados**: extração
+perfeita sobre transcrição ruim continua sendo informação ruim, e a equipe precisa desse
+contexto para calibrar a confiança.
+
+### 4.8 Ferramenta de Linha de Comando (`cli.py`)
+
+O `cli.py` é o **único ponto de entrada** da entrega: executa as quatro etapas na ordem em
+que dependem umas das outras e grava o relatório final. Os demais módulos
+(`transcribe.py`, `comprehend.py`, `report.py`) são bibliotecas sem interface de linha de
+comando — mesma organização da Entrega 1, onde apenas `cli.py` e `app.py` são executáveis.
+
+```bash
+python -m src.audio.cli --case RES0062
+```
+
+**Parâmetros.**
+
+| Parâmetro | Padrão | Função |
+|:--|:--|:--|
+| `--case` / `--cases` | — | um caso ou vários (mutuamente exclusivos) |
+| `--root` | `data/audio/consultas` | raiz do dataset |
+| `--force` | desligado | reprocessa mesmo com cache — **cobra novamente** |
+| `--no-compare` | desligado | não extrai entidades da transcrição da AWS (metade do custo da etapa 2) |
+| `--no-translate` | desligado | gera o relatório sem chamar o Amazon Translate |
+| `--keep-fillers` | desligado | conta hesitações no WER |
+| `--dry-run` | desligado | lista o que faria chamada paga, sem executar |
+| `--report` | — | recalcula as métricas do cache, **sem chamar a AWS** |
+| `--show-entities` | — | lista as entidades já extraídas de um caso |
+| `--out` | — | CSV com o resumo dos casos |
+
+**Saída.** Cada etapa concluída informa o **serviço AWS** que a executou e o resultado
+obtido; ao final vêm os tempos por etapa no formato `mm:ss.mi`, o mesmo da Entrega 1.
+
+![Execução do CLI sobre a consulta RES0062](figures/screenshots/cli_audio_RES0062.png)
+
+> **Figura 6.** Pipeline completo sobre o RES0062 (17,8 min de consulta). As quatro etapas
+> nomeiam o serviço que as executou — Transcribe, Comprehend Medical, Comprehend e
+> Translate —, e a barra de progresso conta etapas concluídas. A transcrição domina o
+> tempo (01:56 de 02:18 totais), o que é esperado: é a única etapa que processa o áudio
+> inteiro. Note que os achados não recuperados pela extração sobre a transcrição
+> automática aparecem nomeados na própria saída, sem exigir consulta ao relatório.
+
+A barra de progresso conta **etapas concluídas**, e não percentual dentro da transcrição:
+a API do Transcribe informa apenas `IN_PROGRESS` ou `COMPLETED`, sem progresso parcial.
+Estimar o total pela duração do áudio também não se sustenta — 6,7 min de áudio levaram
+47 s e 7,0 min levaram 93 s. Durante a espera, exibe-se o tempo decorrido, que é
+informação verdadeira. Isso difere da Entrega 1, onde o `tqdm` tem sinal real: o OpenPose
+escreve um JSON por frame, e basta contá-los.
+
+**Modo de consolidação.** O `--report` recalcula as métricas de todos os casos já
+transcritos sem tocar na AWS, produzindo a estatística agregada usada em 4.4:
+
+![Consolidação das métricas dos quatro casos](figures/screenshots/cli_audio_consultations.png)
+
+> **Figura 7.** Modo `--report`: as quatro transcrições são lidas do cache (nenhuma chamada
+> paga é feita) e as métricas, recalculadas. Permite iterar sobre a forma de medir — por
+> exemplo, ligar e desligar a contagem de hesitações — sem pagar novamente pela
+> transcrição. É também a origem do `wer_consultations.csv` versionado no repositório.
+
+### 4.9 Controle de Custo e Credenciais
+
+Transcribe, Comprehend Medical e Translate cobram por volume processado. Todo resultado é
+**cacheado em disco** (`reports/transcriptions/`, `reports/entities/`,
+`reports/translations.json`) e nenhum caso é reprocessado sem `--force`. O modo `--report`
+recalcula métricas a partir do cache **sem tocar na AWS**, permitindo iterar sobre a
+métrica sem custo. Os JSON brutos da AWS são versionados, de forma que os resultados podem
+ser auditados sem credenciais.
+
+As credenciais ficam em `~/.aws/credentials` (via `aws configure`); o `.env` guarda apenas
+região e nome do bucket, sem segredos. O comando `python -m src.common.config` verifica o
+ambiente antes de qualquer chamada paga.
 
 ---
 
@@ -590,25 +877,89 @@ desenvolvimento]**
 
 ---
 
-## 6. Integração em Nuvem (Azure) e Fluxo de Alerta
+## 6. Integração em Nuvem (AWS) e Fluxo de Alerta
 
-**[Em desenvolvimento]**
+O enunciado exige integração com serviços gerenciados em nuvem. O projeto usa **três
+serviços da AWS**, todos na Entrega 2, com o processamento das demais modalidades
+executado localmente.
 
-O enunciado exige integração com serviços gerenciados em nuvem (Azure Cognitive Services).
-O mapeamento realista por modalidade:
+### 6.1 Serviços Utilizados
 
-| Modalidade | Serviço Azure | Papel | Estado |
-|:--|:--|:--|:--|
-| Áudio | Azure AI Speech (Speech-to-Text) | Transcrição | Obrigatório |
-| Áudio | Azure AI Language (Text Analytics / Health) | Termos críticos + sentimento | Obrigatório |
-| Vídeo | — (OpenPose local) | Azure não faz pose clínica | Local |
-| Anomalias | — (IsolationForest local) | Ver nota abaixo | Local |
-| Fusão/alerta | Azure Functions / Communication Services (ou Logic Apps) | Orquestração + alerta à equipe | A definir |
+| Serviço | Papel | Estado |
+|:--|:--|:--|
+| **Amazon S3** | armazenamento do áudio — o Transcribe não aceita upload direto | Em uso |
+| **Amazon Transcribe** | transcrição da fala, com diarização de 2 falantes | Em uso |
+| **Amazon Comprehend Medical** | extração de entidades clínicas tipadas (`DetectEntitiesV2`) | Em uso |
+| **Amazon Comprehend** | análise de sentimento do relato (`DetectSentiment`) | Em uso |
+| **Amazon Translate** | tradução dos achados para o relatório bilíngue | Em uso |
 
-**Nota sobre o Azure Anomaly Detector.** O serviço que seria o encaixe natural para
-séries temporais está em processo de aposentadoria (retirada em 1º de outubro de 2026) e
-**não permite criar novos recursos desde 20 de setembro de 2023**. Portanto, a Entrega 3
-permanece com detecção local (IsolationForest), decisão documentada na banca.
+Região: `us-east-1`. A escolha não é indiferente — o **Comprehend Medical não está
+disponível em todas as regiões**, e o comando de verificação do ambiente confere isso
+antes de qualquer chamada.
+
+### 6.2 O que Roda Local, e por quê
+
+| Modalidade | Processamento | Justificativa |
+|:--|:--|:--|
+| Vídeo (Entrega 1) | OpenPose local | Não há serviço gerenciado equivalente para pose clínica; a extração de keypoints é feita pelo binário do OpenPose |
+| Anomalias (Entrega 3) | IsolationForest local | Ver nota abaixo |
+
+**Nota sobre serviços gerenciados de anomalia.** Os dois serviços que seriam o encaixe
+natural para séries temporais foram descontinuados pelos respectivos provedores:
+
+- **Azure Anomaly Detector** — não permite criar novos recursos desde 20 de setembro de
+  2023, com retirada completa prevista.
+- **Amazon Lookout for Metrics** — **suporte encerrado em 10 de outubro de 2025**; o
+  serviço deixou de ser acessível pelo console e pela API, e a AWS orienta migrar para
+  CloudWatch, OpenSearch, Redshift ML ou QuickSight.
+
+A Entrega 3 permanece, portanto, com detecção local (IsolationForest). A decisão não
+decorre de preferência técnica, mas do fato de que **os serviços gerenciados dedicados a
+essa função foram retirados do mercado pelos dois provedores**. Uma alternativa gerenciada
+ainda viável seria a detecção de anomalias do **Amazon CloudWatch**, voltada a métricas
+operacionais — encaixe possível, porém menos direto para séries clínicas multivariadas com
+rótulo de deterioração.
+
+### 6.3 Evidência de Uso
+
+Os serviços deixam rastro auditável no console da AWS, o que permite verificar a
+integração de forma independente do código:
+
+| Serviço | Onde verificar |
+|:--|:--|
+| Transcribe | Console → Amazon Transcribe → *Transcription jobs* (nome, status, idioma, horário) |
+| S3 | Console → S3 → bucket → prefixo `consultations/` |
+| Comprehend Medical | Console → CloudTrail → *Event history*, filtrando por `comprehendmedical.amazonaws.com` |
+| Métricas do Transcribe | CloudWatch → namespace `AWS/Transcribe` (18 métricas, incluindo `AudioDurationTime`) |
+
+O Comprehend Medical **não publica métricas no CloudWatch** (o namespace
+`AWS/ComprehendMedical` permanece vazio); sua evidência de uso está no CloudTrail, que
+registra cada chamada `DetectEntitiesV2`.
+
+![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
+
+> **Figura 8.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
+> 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
+> tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
+> integração sem executar o pipeline.
+>
+> O nome da tarefa termina com o instante de submissão porque a AWS **não permite
+> reaproveitar o nome de uma tarefa existente**. O prefixo do caso mais antigo é
+> `consulta-` e o dos demais, `consultation-`: o RES0029 foi processado antes da
+> padronização dos identificadores para o inglês, e o nome da tarefa ficou registrado na
+> AWS como estava à época.
+
+### 6.4 Fluxo de Alerta à Equipe Médica
+
+**[Em desenvolvimento]** — a camada de fusão entre as três modalidades e o disparo
+automático de alerta ainda não estão implementados. O desenho previsto consome o sinal de
+anomalia de cada pipeline (desvio postural, achado clínico, anomalia em sinal vital) e
+encaminha o alerta à equipe.
+
+O relatório clínico bilíngue (4.7) já constitui a **saída legível** desse fluxo: reúne os
+achados, sua origem na fala do paciente e a confiabilidade da transcrição que os produziu.
+O que falta é a automação do disparo.
 
 ---
 
@@ -633,9 +984,10 @@ A GPU local (MX330, 2 GB) processa a ~1,2 s/frame. Subamostrar 1 a cada 3 frames
 tempo em ~3x, adequado ao movimento lento do agachamento, preservando o mapeamento de frames
 para validação.
 
-### 7.4 Detecção de Anomalias Local em vez do Azure Anomaly Detector
+### 7.4 Detecção de Anomalias Local, por Indisponibilidade de Serviço Gerenciado
 
-O Azure Anomaly Detector não pode ser provisionado (aposentadoria/retirada). Mantém-se o
+Nem o Azure Anomaly Detector nem o Amazon Lookout for Metrics podem ser provisionados
+(ambos descontinuados — ver 6.2). Mantém-se o
 IsolationForest local, tecnicamente adequado e reprodutível.
 
 ### 7.5 Baseline IsolationForest Comum às Entregas 1 e 3
@@ -651,7 +1003,7 @@ abordagem e facilitando a comparação.
 ```
 fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── src/
-│   ├── common/                 # config e utilitários compartilhados (Azure, caminhos)
+│   ├── common/                 # config e utilitários compartilhados (AWS, caminhos)
 │   ├── video/                  # Entrega 1 — análise de vídeo (OpenPose)
 │   │   ├── keypoints.py        # parser dos JSON BODY_25
 │   │   ├── posture.py          # ângulos articulares por frame
@@ -662,7 +1014,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── run_openpose.py     # invocação do binário OpenPose (com progresso)
 │   │   ├── cli.py              # pipeline fim-a-fim (barra de progresso no terminal)
 │   │   └── app.py              # app web (Gradio) para o vídeo-demo
-│   ├── audio/                  # Entrega 2 — análise de áudio (Azure)  [Em desenvolvimento]
+│   ├── audio/                  # Entrega 2 — análise de áudio (AWS)
 │   └── anomaly/                # Entrega 3 — detecção de anomalias
 │       ├── load_challenge2019.py   # loader + baseline (sinais vitais)
 │       └── load_uci_har.py         # loader + baseline (movimentação)
@@ -687,7 +1039,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
 | Gradio | App web local de demonstração (Entrega 1) |
-| Azure Cognitive Services | Speech-to-Text e Text Analytics (Entrega 2) |
+| AWS (Transcribe, Comprehend Medical, Comprehend, Translate, S3) | Serviços gerenciados da Entrega 2 |
 
 ### 9.2 Bibliotecas Python
 
@@ -697,10 +1049,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | `scikit-learn` | IsolationForest, imputação |
 | `matplotlib`, `seaborn` | Gráficos e relatórios |
 | `opencv-python` | Leitura de vídeo e overlay do esqueleto |
-| `azure-cognitiveservices-speech` | Azure Speech-to-Text (Entrega 2) |
-| `azure-ai-textanalytics` | Azure Text Analytics (Entrega 2) |
-| `librosa`, `soundfile` | Biomarcadores acústicos (Entrega 2) |
-| `python-dotenv` | Carregamento de credenciais Azure |
+| `boto3` | Amazon Transcribe e Comprehend Medical (Entrega 2) |
+| `python-dotenv` | Carregamento de credenciais da nuvem |
 | `pytest` | Testes automatizados |
 
 ---
@@ -711,7 +1061,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 
 - Python 3.10+ e as dependências de `requirements.txt`
 - OpenPose v1.7.0 (binário portátil) — ver `docs/openpose_setup.md`
-- (Entrega 2) Conta Azure com recursos de Speech e Language; credenciais em `.env`
+- (Entrega 2) Conta AWS com acesso a Transcribe, Comprehend Medical e um bucket S3;
+  credenciais em `.env` ou `~/.aws/credentials`
 
 ### 10.2 Instalação
 
@@ -721,6 +1072,41 @@ source .venv/Scripts/activate   # Windows (Git Bash)
 # source .venv/bin/activate     # Linux / macOS
 pip install -r requirements.txt
 ```
+
+**Determinismo e versões.** Os resultados deste relatório são reprodutíveis: o
+`random_state = 42` é fixo em todos os detectores e as demais operações (mediana, MAD,
+cálculo de ângulos) são determinísticas. Isso foi verificado na prática — os artefatos
+foram apagados e os três vídeos reprocessados do zero, e as taxas de validação saíram
+idênticas às da execução anterior.
+
+O `requirements.txt` declara **pisos** de versão (`numpy>=1.24`), para instalar sem atrito
+em qualquer máquina. O risco dessa escolha é que `random_state` fixa a *semente*, não o
+*algoritmo*: se uma versão futura do `scikit-learn` alterar a implementação interna do
+`IsolationForest`, os valores publicados aqui podem não se reproduzir.
+
+Por isso o repositório traz também **`requirements-lock.txt`**, com as versões exatas sob
+as quais os números deste relatório foram medidos. Para auditar os resultados:
+
+```bash
+pip install -r requirements-lock.txt
+```
+
+**Teste de estabilidade entre versões.** O pipeline foi recalculado a partir dos mesmos
+keypoints em dois ambientes independentes, com versões distintas das bibliotecas
+numéricas:
+
+| Biblioteca | Ambiente A | Ambiente B |
+|:--|:--:|:--:|
+| scikit-learn | 1.7.2 | 1.9.0 |
+| pandas | 2.3.3 | 3.0.3 |
+| scipy | 1.16.3 | 1.18.0 |
+| numpy | 2.4.6 | 2.4.6 |
+
+Os dois produziram resultados **idênticos bit a bit** nos três vídeos — 96, 576 e 122
+frames sinalizados — com os CSVs de validação por repetição inalterados. O resultado é
+relevante porque as versões divergem justamente no `scikit-learn`, de onde vem o
+`IsolationForest`: na prática, a detecção se mostrou estável a uma mudança de versão menor
+dessa biblioteca, e não apenas à fixação da semente.
 
 ### 10.3 Execução — Entrega 1 (Análise de Vídeo)
 
@@ -766,15 +1152,15 @@ pytest -q
 |:--|:--|:--|
 | GPU local fraca (MX330, 2 GB) | OpenPose lento (~1,2 s/frame) | Subamostragem (`--frame-step`) |
 | Datasets de modalidades distintas | Não há paciente comum entre vídeo, áudio e vitais | Prática acadêmica padrão; documentado |
-| Azure Anomaly Detector aposentado | Sem serviço gerenciado para séries temporais | Detecção local (IsolationForest) |
-| Entrega 2 (áudio) em desenvolvimento | Modalidade ainda não integrada | Concluir pipeline Azure + Coswara |
+| Serviços gerenciados de anomalia descontinuados (Azure Anomaly Detector e Amazon Lookout for Metrics) | Sem opção gerenciada direta para séries clínicas | Detecção local (IsolationForest); avaliar CloudWatch |
+| Fusão multimodal e alerta automático ausentes | As três modalidades não convergem num alerta único | Implementar a camada de fusão (6.4) |
 | Detecção não-supervisionada | Limiares definidos empiricamente | Calibração com os rótulos disponíveis |
 | Referência = mediana global do vídeo | Em movimentos de grande amplitude (agachamento), a execução correta também se afasta da mediana e a separação cai para 1,4x (3.8) | Referência por fase do movimento em vez de mediana única |
 | Sensibilidade às condições de captura | Em condições adversas (pouca luz, meio-perfil, pessoa ao fundo), a margem cai de 10,5x para 2,8x, por falsos positivos em execuções corretas (3.8) | Rastreamento de identidade entre frames; máscara da região de interesse; normalização por iluminação |
 
 ### 11.2 Trabalhos Futuros
 
-1. Concluir a Entrega 2 (Azure Speech-to-Text + Text Analytics + biomarcadores)
+1. Implementar a camada de fusão multimodal e o disparo automático de alerta (6.4)
 2. Adotar uma referência **por fase do movimento** (em vez da mediana global) para recuperar
    a separação em exercícios de grande amplitude — a limitação mais clara medida em 3.8
 3. Implementar a camada de fusão e o fluxo de alerta em nuvem
@@ -813,6 +1199,6 @@ e a camada de integração em nuvem estão em desenvolvimento.
 
 4. Anguita, D., et al. (2013). A Public Domain Dataset for Human Activity Recognition Using Smartphones (UCI HAR). *ESANN 2013*.
 
-5. Sharma, N., et al. (2020). Coswara — A Database of Breathing, Cough, and Voice Sounds for COVID-19 Diagnosis. [github.com/iiscleap/Coswara-Data](https://github.com/iiscleap/Coswara-Data)
+5. Fareez, F., et al. (2022). *A dataset of simulated patient-physician medical interviews with a focus on respiratory cases.* figshare. [doi.org/10.6084/m9.figshare.16550013.v1](https://doi.org/10.6084/m9.figshare.16550013.v1)
 
-6. Microsoft Azure. Cognitive Services / AI Services — Speech and Language documentation. [learn.microsoft.com/azure/ai-services](https://learn.microsoft.com/azure/ai-services)
+6. Amazon Web Services. Amazon Transcribe, Amazon Comprehend Medical e Amazon Translate — documentação. [docs.aws.amazon.com](https://docs.aws.amazon.com/)

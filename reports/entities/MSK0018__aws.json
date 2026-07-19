@@ -1,0 +1,1834 @@
+[
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.9344,
+  "traits": [],
+  "negated": false,
+  "begin": 35,
+  "end": 37
+ },
+ {
+  "text": "uh incident uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "PROFESSION",
+  "score": 0.4506,
+  "traits": [],
+  "negated": false,
+  "begin": 75,
+  "end": 89
+ },
+ {
+  "text": "uh playing uh rugby",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "PROFESSION",
+  "score": 0.5432,
+  "traits": [],
+  "negated": false,
+  "begin": 102,
+  "end": 121
+ },
+ {
+  "text": "fell",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 154,
+  "end": 158
+ },
+ {
+  "text": "right shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 167,
+  "end": 181
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3256,
+  "traits": [],
+  "negated": false,
+  "begin": 221,
+  "end": 223
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2299,
+  "traits": [],
+  "negated": false,
+  "begin": 297,
+  "end": 299
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 327,
+  "end": 331
+ },
+ {
+  "text": "right shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8617,
+  "traits": [],
+  "negated": false,
+  "begin": 338,
+  "end": 352
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2551,
+  "traits": [],
+  "negated": false,
+  "begin": 394,
+  "end": 396
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3831,
+  "traits": [],
+  "negated": false,
+  "begin": 432,
+  "end": 434
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2587,
+  "traits": [],
+  "negated": false,
+  "begin": 480,
+  "end": 482
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 496,
+  "end": 500
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 642,
+  "end": 646
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 737,
+  "end": 741
+ },
+ {
+  "text": "dull",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 751,
+  "end": 755
+ },
+ {
+  "text": "achy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 760,
+  "end": 764
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4624,
+  "traits": [],
+  "negated": false,
+  "begin": 903,
+  "end": 905
+ },
+ {
+  "text": "able to move your arm",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 941,
+  "end": 962
+ },
+ {
+  "text": "arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 959,
+  "end": 962
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.7605,
+  "traits": [],
+  "negated": false,
+  "begin": 993,
+  "end": 995
+ },
+ {
+  "text": "could move my fingers",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 999,
+  "end": 1020
+ },
+ {
+  "text": "fingers",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 1013,
+  "end": 1020
+ },
+ {
+  "text": "hand",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 1030,
+  "end": 1034
+ },
+ {
+  "text": "elbow",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 1039,
+  "end": 1044
+ },
+ {
+  "text": "elbow",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 1055,
+  "end": 1060
+ },
+ {
+  "text": "can't move my shoulder",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1095,
+  "end": 1117
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 1109,
+  "end": 1117
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1291,
+  "traits": [],
+  "negated": false,
+  "begin": 1134,
+  "end": 1136
+ },
+ {
+  "text": "tingling",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8617,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1175,
+  "end": 1183
+ },
+ {
+  "text": "numbness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1187,
+  "end": 1195
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2687,
+  "traits": [],
+  "negated": false,
+  "begin": 1197,
+  "end": 1199
+ },
+ {
+  "text": "muscle",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 1246,
+  "end": 1252
+ },
+ {
+  "text": "muscle weakness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1246,
+  "end": 1261
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3164,
+  "traits": [],
+  "negated": false,
+  "begin": 1263,
+  "end": 1265
+ },
+ {
+  "text": "weakness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1302,
+  "end": 1310
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1314,
+  "end": 1318
+ },
+ {
+  "text": "can't move it",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1337,
+  "end": 1350
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1895,
+  "traits": [],
+  "negated": false,
+  "begin": 1352,
+  "end": 1354
+ },
+ {
+  "text": "numbness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7614,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1386,
+  "end": 1394
+ },
+ {
+  "text": "above my shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 1403,
+  "end": 1420
+ },
+ {
+  "text": "tingling",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1425,
+  "end": 1433
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1450,
+  "end": 1454
+ },
+ {
+  "text": "body",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 1473,
+  "end": 1477
+ },
+ {
+  "text": "headaches",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1499,
+  "end": 1508
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1652,
+  "traits": [],
+  "negated": false,
+  "begin": 1510,
+  "end": 1512
+ },
+ {
+  "text": "Confusion",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1518,
+  "end": 1527
+ },
+ {
+  "text": "memory loss",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1531,
+  "end": 1542
+ },
+ {
+  "text": "Uh no. Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ID",
+  "score": 0.1432,
+  "traits": [],
+  "negated": false,
+  "begin": 1544,
+  "end": 1553
+ },
+ {
+  "text": "weight loss",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1555,
+  "end": 1566
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4224,
+  "traits": [],
+  "negated": false,
+  "begin": 1568,
+  "end": 1570
+ },
+ {
+  "text": "Fevers",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1576,
+  "end": 1582
+ },
+ {
+  "text": "chills",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1586,
+  "end": 1592
+ },
+ {
+  "text": "Rashes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1598,
+  "end": 1604
+ },
+ {
+  "text": "changes in your vision, hearing, smell, or taste",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1618,
+  "end": 1666
+ },
+ {
+  "text": "coughing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1680,
+  "end": 1688
+ },
+ {
+  "text": "shortness of breath",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1690,
+  "end": 1709
+ },
+ {
+  "text": "wheezing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1713,
+  "end": 1721
+ },
+ {
+  "text": "Chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8922,
+  "traits": [],
+  "negated": false,
+  "begin": 1731,
+  "end": 1736
+ },
+ {
+  "text": "Chest pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1731,
+  "end": 1741
+ },
+ {
+  "text": "heart",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8922,
+  "traits": [],
+  "negated": false,
+  "begin": 1745,
+  "end": 1750
+ },
+ {
+  "text": "heart palpitations",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1745,
+  "end": 1763
+ },
+ {
+  "text": "Changes in your bowel movements",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7614,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1769,
+  "end": 1800
+ },
+ {
+  "text": "bowel",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 1785,
+  "end": 1790
+ },
+ {
+  "text": "Changes in voiding",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1806,
+  "end": 1824
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1868,
+  "end": 1872
+ },
+ {
+  "text": "pains",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2040,
+  "end": 2045
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 2054,
+  "end": 2062
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5444,
+  "traits": [],
+  "negated": false,
+  "begin": 2107,
+  "end": 2109
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 2129,
+  "end": 2137
+ },
+ {
+  "text": "upper arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 2167,
+  "end": 2176
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3774,
+  "traits": [],
+  "negated": false,
+  "begin": 2197,
+  "end": 2199
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.7617,
+  "traits": [],
+  "negated": false,
+  "begin": 2217,
+  "end": 2219
+ },
+ {
+  "text": "healthy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2239,
+  "end": 2246
+ },
+ {
+  "text": "medical conditions",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2270,
+  "end": 2288
+ },
+ {
+  "text": "unhealthy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2315,
+  "end": 2324
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1324,
+  "traits": [],
+  "negated": false,
+  "begin": 2380,
+  "end": 2382
+ },
+ {
+  "text": "medications",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.7614,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 2403,
+  "end": 2414
+ },
+ {
+  "text": "up to date",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 2443,
+  "end": 2453
+ },
+ {
+  "text": "immunizations",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 2464,
+  "end": 2477
+ },
+ {
+  "text": "allergies",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALLERGIES",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 2507,
+  "end": 2516
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5311,
+  "traits": [],
+  "negated": false,
+  "begin": 2518,
+  "end": 2520
+ },
+ {
+  "text": "musculoskeletal",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 2550,
+  "end": 2565
+ },
+ {
+  "text": "musculoskeletal diseases",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 2550,
+  "end": 2574
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2268,
+  "traits": [],
+  "negated": false,
+  "begin": 2604,
+  "end": 2606
+ },
+ {
+  "text": "autoimmune conditions",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 2634,
+  "end": 2655
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4316,
+  "traits": [],
+  "negated": false,
+  "begin": 2657,
+  "end": 2659
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2563,
+  "traits": [],
+  "negated": false,
+  "begin": 2669,
+  "end": 2671
+ },
+ {
+  "text": "smoke",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 2680,
+  "end": 2685
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.6396,
+  "traits": [],
+  "negated": false,
+  "begin": 2694,
+  "end": 2696
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2365,
+  "traits": [],
+  "negated": false,
+  "begin": 2706,
+  "end": 2708
+ },
+ {
+  "text": "marijuana",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 2725,
+  "end": 2734
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.6655,
+  "traits": [],
+  "negated": false,
+  "begin": 2736,
+  "end": 2738
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5696,
+  "traits": [],
+  "negated": false,
+  "begin": 2744,
+  "end": 2746
+ },
+ {
+  "text": "alcohol",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 2761,
+  "end": 2768
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.6259,
+  "traits": [],
+  "negated": false,
+  "begin": 2770,
+  "end": 2772
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2223,
+  "traits": [],
+  "negated": false,
+  "begin": 2778,
+  "end": 2780
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5145,
+  "traits": [],
+  "negated": false,
+  "begin": 2853,
+  "end": 2855
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.8426,
+  "traits": [],
+  "negated": false,
+  "begin": 2921,
+  "end": 2923
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4925,
+  "traits": [],
+  "negated": false,
+  "begin": 2933,
+  "end": 2935
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5307,
+  "traits": [],
+  "negated": false,
+  "begin": 2959,
+  "end": 2961
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3881,
+  "traits": [],
+  "negated": false,
+  "begin": 3000,
+  "end": 3002
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5559,
+  "traits": [],
+  "negated": false,
+  "begin": 3041,
+  "end": 3043
+ },
+ {
+  "text": "sick contacts",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3076,
+  "end": 3089
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5143,
+  "traits": [],
+  "negated": false,
+  "begin": 3143,
+  "end": 3145
+ },
+ {
+  "text": "physical exam",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TEST_NAME",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 3151,
+  "end": 3164
+ },
+ {
+  "text": "both your shoulders",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 3210,
+  "end": 3229
+ },
+ {
+  "text": "redness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3261,
+  "end": 3268
+ },
+ {
+  "text": "swelling",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3272,
+  "end": 3280
+ },
+ {
+  "text": "redness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3310,
+  "end": 3317
+ },
+ {
+  "text": "swelling",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3321,
+  "end": 3329
+ },
+ {
+  "text": "right shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 3348,
+  "end": 3362
+ },
+ {
+  "text": "arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 3370,
+  "end": 3373
+ },
+ {
+  "text": "lower than my left one",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3403,
+  "end": 3425
+ },
+ {
+  "text": "warmth",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3442,
+  "end": 3448
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 3461,
+  "end": 3469
+ },
+ {
+  "text": "atrophy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7614,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3508,
+  "end": 3515
+ },
+ {
+  "text": "deformities",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3517,
+  "end": 3528
+ },
+ {
+  "text": "skin",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 3533,
+  "end": 3537
+ },
+ {
+  "text": "skin changes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3533,
+  "end": 3545
+ },
+ {
+  "text": "shoulders",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 3602,
+  "end": 3611
+ },
+ {
+  "text": "shoulders dropped",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3602,
+  "end": 3619
+ },
+ {
+  "text": "divots",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8216,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3670,
+  "end": 3676
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 3697,
+  "end": 3705
+ },
+ {
+  "text": "bones",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 3775,
+  "end": 3780
+ },
+ {
+  "text": "arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 3820,
+  "end": 3823
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 3846,
+  "end": 3854
+ },
+ {
+  "text": "shoulder blade",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 3880,
+  "end": 3894
+ },
+ {
+  "text": "hurt",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3906,
+  "end": 3910
+ },
+ {
+  "text": "hurts",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8216,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3941,
+  "end": 3946
+ },
+ {
+  "text": "tenderness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3966,
+  "end": 3976
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3981,
+  "end": 3985
+ },
+ {
+  "text": "chromion process",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 3997,
+  "end": 4013
+ },
+ {
+  "text": "scapula",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 4018,
+  "end": 4025
+ },
+ {
+  "text": "biceps",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4061,
+  "end": 4067
+ },
+ {
+  "text": "triceps",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 4069,
+  "end": 4076
+ },
+ {
+  "text": "hurt",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 4088,
+  "end": 4092
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 4167,
+  "end": 4175
+ },
+ {
+  "text": "fingers",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 4226,
+  "end": 4233
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4364,
+  "end": 4372
+ },
+ {
+  "text": "shoulder dislocation",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 4364,
+  "end": 4384
+ },
+ {
+  "text": "X-ray of your shoulder joint",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TEST_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4415,
+  "end": 4443
+ },
+ {
+  "text": "shoulder joint",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.9063,
+  "traits": [],
+  "negated": false,
+  "begin": 4429,
+  "end": 4443
+ },
+ {
+  "text": "dislocation",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "HYPOTHETICAL",
+   "SIGN"
+  ],
+  "negated": false,
+  "begin": 4493,
+  "end": 4504
+ },
+ {
+  "text": "broken bones",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "HYPOTHETICAL",
+   "SIGN"
+  ],
+  "negated": false,
+  "begin": 4526,
+  "end": 4538
+ },
+ {
+  "text": "bones",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 4533,
+  "end": 4538
+ },
+ {
+  "text": "fractures",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "HYPOTHETICAL",
+   "SIGN"
+  ],
+  "negated": false,
+  "begin": 4542,
+  "end": 4551
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3239,
+  "traits": [],
+  "negated": false,
+  "begin": 4591,
+  "end": 4593
+ },
+ {
+  "text": "closed reduction",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.5971,
+  "traits": [
+   "HYPOTHETICAL"
+  ],
+  "negated": false,
+  "begin": 4620,
+  "end": 4636
+ },
+ {
+  "text": "joint",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4660,
+  "end": 4665
+ },
+ {
+  "text": "close reduction",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.6603,
+  "traits": [
+   "HYPOTHETICAL"
+  ],
+  "negated": false,
+  "begin": 4701,
+  "end": 4716
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1438,
+  "traits": [],
+  "negated": false,
+  "begin": 4736,
+  "end": 4738
+ },
+ {
+  "text": "surgery",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.5971,
+  "traits": [
+   "HYPOTHETICAL"
+  ],
+  "negated": false,
+  "begin": 4752,
+  "end": 4759
+ },
+ {
+  "text": "weak shoulder joint",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "HYPOTHETICAL",
+   "SIGN"
+  ],
+  "negated": false,
+  "begin": 4774,
+  "end": 4793
+ },
+ {
+  "text": "shoulder joint",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 4779,
+  "end": 4793
+ },
+ {
+  "text": "ligaments",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 4802,
+  "end": 4811
+ },
+ {
+  "text": "keep it immobilized",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4908,
+  "end": 4927
+ },
+ {
+  "text": "dislocation",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "HYPOTHETICAL",
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 4988,
+  "end": 4999
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1223,
+  "traits": [],
+  "negated": false,
+  "begin": 5004,
+  "end": 5006
+ },
+ {
+  "text": "removed",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.5971,
+  "traits": [
+   "HYPOTHETICAL"
+  ],
+  "negated": false,
+  "begin": 5029,
+  "end": 5036
+ },
+ {
+  "text": "rehab",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 5054,
+  "end": 5059
+ },
+ {
+  "text": "restore some range of motion",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "HYPOTHETICAL",
+   "SIGN"
+  ],
+  "negated": false,
+  "begin": 5071,
+  "end": 5099
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.6803,
+  "traits": [],
+  "negated": false,
+  "begin": 5190,
+  "end": 5192
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4738,
+  "traits": [],
+  "negated": false,
+  "begin": 5214,
+  "end": 5216
+ }
+]

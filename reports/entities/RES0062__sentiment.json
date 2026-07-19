@@ -1,0 +1,162 @@
+{
+ "sentiment": "NEGATIVE",
+ "scores": {
+  "Positive": 0.0447,
+  "Negative": 0.7469,
+  "Neutral": 0.1859,
+  "Mixed": 0.0224
+ },
+ "chunks": 1,
+ "by_turn": [
+  {
+   "order": 2,
+   "text": "Well, I've had this cough but the biggest issue is that I've been really short of breath.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.8794
+  },
+  {
+   "order": 6,
+   "text": "Uh, the shortness of breath has come on, I don't know within the last day or so. It's come on after that, the cough started first.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.3687
+  },
+  {
+   "order": 8,
+   "text": "Well, I've been bringing up some yellowish green, kind of like phlegm, so um I guess a wet cough.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.1125
+  },
+  {
+   "order": 14,
+   "text": "Um, yeah, probably more like the size of like a thumb tip.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0094
+  },
+  {
+   "order": 20,
+   "text": "No, well, maybe I guess when I'm really short of breath, yeah, wheezing, yeah.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.5455
+  },
+  {
+   "order": 24,
+   "text": "Uh, well I can't tell if it's that or the cough. I mean between those two things it's been definitely interrupting my sleep.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.3324
+  },
+  {
+   "order": 26,
+   "text": "No the cough has been kind of going on all day. Um, right when I get up in the morning and goes on all night, it's been getting worse to these last few days.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9338
+  },
+  {
+   "order": 32,
+   "text": "As soon as I breath, well, I just haven't felt good like, tired, kind of weakish.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9668
+  },
+  {
+   "order": 34,
+   "text": "No dizziness and I haven't fainted or anything like that.",
+   "sentiment": "POSITIVE",
+   "negative": 0.001
+  },
+  {
+   "order": 38,
+   "text": "Alright, yeah, maybe a bit, kind of, and weak.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.6053
+  },
+  {
+   "order": 44,
+   "text": "No, those have been normal. I haven't had any diarrhea or constipation.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0004
+  },
+  {
+   "order": 48,
+   "text": "Oh yeah, I don't know why, yeah, my belly's been a bit achy maybe.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.6071
+  },
+  {
+   "order": 52,
+   "text": "No loss of taste, but I've noticed, yeah, my smell has been kind of funny.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0025
+  },
+  {
+   "order": 54,
+   "text": "Yeah, there was a candle on earlier today and I guess I couldn't really smell it, so I guess I haven't been able to smell.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.3798
+  },
+  {
+   "order": 56,
+   "text": "No, I haven't had to blow my nose or anything.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0657
+  },
+  {
+   "order": 62,
+   "text": "No, I haven't had any pain or anything like that.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0022
+  },
+  {
+   "order": 64,
+   "text": "Yeah, I have atrial fibrillation. And I do take Metoprolol for that.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.031
+  },
+  {
+   "order": 66,
+   "text": "It was like 4 years ago I think it was. It was having that like, felt like my heart was racing you were asking about earlier and they did an ECG and I was told I had atrial fibrillation. So yeah, I've been on a beta blocker for three years now.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.1651
+  },
+  {
+   "order": 68,
+   "text": "Uh, maybe just a couple of months ago. I think every time that I come in to see my family doctor, they they do one.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0047
+  },
+  {
+   "order": 70,
+   "text": "Yeah, they said yeah. My heart rate's been around 80 beats per minute which is good and I haven't had any symptoms so things have been stable.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0002
+  },
+  {
+   "order": 72,
+   "text": "I had an inguinal hernia repair about 15 years ago.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0073
+  },
+  {
+   "order": 76,
+   "text": "Oh yeah, I take a statin and baby aspirin.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0247
+  },
+  {
+   "order": 78,
+   "text": "Yeah, I heard it was good for people who have atrial fibrillation so I started taking it.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0018
+  },
+  {
+   "order": 82,
+   "text": "I think it's like a sulfa allergy. I received an antibiotic like that many years ago and had a rash.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.6601
+  },
+  {
+   "order": 84,
+   "text": "No, I haven't had any antibiotics so no, really no changes.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.1692
+  }
+ ]
+}

@@ -1,0 +1,78 @@
+{
+ "sentiment": "NEGATIVE",
+ "scores": {
+  "Positive": 0.0947,
+  "Negative": 0.8776,
+  "Neutral": 0.0239,
+  "Mixed": 0.0039
+ },
+ "chunks": 1,
+ "by_turn": [
+  {
+   "order": 2,
+   "text": "Uhm, so I've had this runny nose, well first it was a stuffy nose, but now I've had this runny nose for the past week and a half and it doesn't seem to be getting any better. So I was just wondering if you could give me something for that?",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9193
+  },
+  {
+   "order": 4,
+   "text": "Uhm, it started getting stuffy about two weeks ago.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.4774
+  },
+  {
+   "order": 6,
+   "text": "Yeah, that started a week and a half ago.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0029
+  },
+  {
+   "order": 20,
+   "text": "No, I haven't tried anything. I've been thinking about using some nasal decongestion but I don't want to make my runny nose any worse.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.1444
+  },
+  {
+   "order": 22,
+   "text": "No dizziness, I feel like sometimes I have a headache though, because I feel like there's a lot of fluid or something backed up into my sinuses.",
+   "sentiment": "MIXED",
+   "negative": 0.079
+  },
+  {
+   "order": 26,
+   "text": "No, nothing like that, that I can think of.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0756
+  },
+  {
+   "order": 46,
+   "text": "I have some old carpets, but that's about it.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0634
+  },
+  {
+   "order": 62,
+   "text": "I had an arm fracture when I was younger, but that's it.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0919
+  },
+  {
+   "order": 72,
+   "text": "Once in a while I'll have like a glass of wine every week.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0019
+  },
+  {
+   "order": 74,
+   "text": "Uh, no, what can I do about this runny nose?",
+   "sentiment": "NEGATIVE",
+   "negative": 0.5496
+  },
+  {
+   "order": 76,
+   "text": "Yeah, that sounds great. Thank you so much.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0001
+  }
+ ]
+}

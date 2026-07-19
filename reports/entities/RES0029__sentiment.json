@@ -1,0 +1,144 @@
+{
+ "sentiment": "NEGATIVE",
+ "scores": {
+  "Positive": 0.0031,
+  "Negative": 0.9503,
+  "Neutral": 0.0418,
+  "Mixed": 0.0049
+ },
+ "chunks": 1,
+ "by_turn": [
+  {
+   "order": 2,
+   "text": "So I came to the emergency Department because I've been having pain in my chest.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.8705
+  },
+  {
+   "order": 4,
+   "text": "I would say it's like the whole pretty much the left side of my chest.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.4332
+  },
+  {
+   "order": 6,
+   "text": "So I think it started just around 2 hours ago. I actually was riding my bicycle and just fell off on, kind of just slipped and I think I fell on that side like when I the impact was right on my chest and since then it's been really painful.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9614
+  },
+  {
+   "order": 8,
+   "text": "I think it's more like someone is just stabbing me and then whole left side area.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.945
+  },
+  {
+   "order": 10,
+   "text": "If I. Think I have to take really really slow and shallow breaths. If I try to take a deep breath it just really hurts like taking those small, smaller breaths helps.",
+   "sentiment": "MIXED",
+   "negative": 0.2771
+  },
+  {
+   "order": 12,
+   "text": "No, I would say just on the left side.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0629
+  },
+  {
+   "order": 14,
+   "text": "I'd say over the last two hours it's been getting worse.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9901
+  },
+  {
+   "order": 16,
+   "text": "Uh, like I think I I'm having. Also maybe it's just because I'm trying to breathe slowly, but I feel like I can't catch my breath.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.3983
+  },
+  {
+   "order": 18,
+   "text": "No, no. I mean, I've never had any pain in my chest before.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0078
+  },
+  {
+   "order": 20,
+   "text": "No, I got right back up. I just just had the pain.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.8302
+  },
+  {
+   "order": 32,
+   "text": "I would say like in the last hour a little bit more so than usual.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.1941
+  },
+  {
+   "order": 34,
+   "text": "Besides, just I got some scrapes here and there on my hands, but nothing else.",
+   "sentiment": "MIXED",
+   "negative": 0.3371
+  },
+  {
+   "order": 38,
+   "text": "No, I've been pretty pretty healthy recently. No, no cough or no infections.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0003
+  },
+  {
+   "order": 42,
+   "text": "Oh no, I I think I got a pretty lucky.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0334
+  },
+  {
+   "order": 44,
+   "text": "Oh no, no, I was completely sober. No no drugs or alcohol.",
+   "sentiment": "POSITIVE",
+   "negative": 0.1623
+  },
+  {
+   "order": 48,
+   "text": "I just had some cereal and, um, just some chocolate milk around breakfast time but nothing else.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0534
+  },
+  {
+   "order": 52,
+   "text": "Uh, not other than just a hay fever, but nothing nothing else. I have like a lot of allergies.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.4968
+  },
+  {
+   "order": 54,
+   "text": "Oh, just sometimes when I take like a nasal spray I think I might have an allergy to the steroids that they give me and sometimes also some of the antihistamines I think I get some allergies from them.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.218
+  },
+  {
+   "order": 60,
+   "text": "Just my father. He has type 2 diabetes but nothing else.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0723
+  },
+  {
+   "order": 62,
+   "text": "Oh so I work just as like a mechanic just in the city and currently I just have myself to support. I live alone in an apartment, so I'm doing fairly well.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0001
+  },
+  {
+   "order": 64,
+   "text": "I smoke around like I'd say 2 and a half to 3 packs per day. I know it's. Yeah, I have tried quitting before, but I would say I've been smoking since I was 18.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0946
+  },
+  {
+   "order": 68,
+   "text": "Yeah, it's just like sometimes on the weekend. I'll just have a beer or two while watching the game, but not nothing regular.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0395
+  }
+ ]
+}

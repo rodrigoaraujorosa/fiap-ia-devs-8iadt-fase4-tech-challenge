@@ -1,0 +1,595 @@
+[
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4787,
+  "traits": [],
+  "negated": false,
+  "begin": 52,
+  "end": 54
+ },
+ {
+  "text": "fell",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 123,
+  "end": 127
+ },
+ {
+  "text": "right shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 136,
+  "end": 150
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3994,
+  "traits": [],
+  "negated": false,
+  "begin": 254,
+  "end": 256
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 284,
+  "end": 288
+ },
+ {
+  "text": "right shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 295,
+  "end": 309
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3427,
+  "traits": [],
+  "negated": false,
+  "begin": 346,
+  "end": 348
+ },
+ {
+  "text": "2 hours",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 359,
+  "end": 366
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 537,
+  "end": 541
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1837,
+  "traits": [],
+  "negated": false,
+  "begin": 543,
+  "end": 545
+ },
+ {
+  "text": "fingers",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 574,
+  "end": 581
+ },
+ {
+  "text": "hand",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8922,
+  "traits": [],
+  "negated": false,
+  "begin": 586,
+  "end": 590
+ },
+ {
+  "text": "elbow",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.9063,
+  "traits": [],
+  "negated": false,
+  "begin": 595,
+  "end": 600
+ },
+ {
+  "text": "elbow",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 610,
+  "end": 615
+ },
+ {
+  "text": "can't move my shoulder",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 651,
+  "end": 673
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 665,
+  "end": 673
+ },
+ {
+  "text": "weakness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 751,
+  "end": 759
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 763,
+  "end": 767
+ },
+ {
+  "text": "can't move it up",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 780,
+  "end": 796
+ },
+ {
+  "text": "numbness just above my shoulder",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 827,
+  "end": 858
+ },
+ {
+  "text": "above my shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 841,
+  "end": 858
+ },
+ {
+  "text": "tingling",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 863,
+  "end": 871
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.0958,
+  "traits": [],
+  "negated": false,
+  "begin": 884,
+  "end": 886
+ },
+ {
+  "text": "Uh, no. Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ID",
+  "score": 0.2415,
+  "traits": [],
+  "negated": false,
+  "begin": 892,
+  "end": 902
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.195,
+  "traits": [],
+  "negated": false,
+  "begin": 912,
+  "end": 914
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2689,
+  "traits": [],
+  "negated": false,
+  "begin": 920,
+  "end": 922
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2069,
+  "traits": [],
+  "negated": false,
+  "begin": 928,
+  "end": 930
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1232,
+  "traits": [],
+  "negated": false,
+  "begin": 948,
+  "end": 950
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3305,
+  "traits": [],
+  "negated": false,
+  "begin": 952,
+  "end": 954
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4317,
+  "traits": [],
+  "negated": false,
+  "begin": 1058,
+  "end": 1060
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 1080,
+  "end": 1088
+ },
+ {
+  "text": "down towards my upper arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 1102,
+  "end": 1127
+ },
+ {
+  "text": "healthy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1161,
+  "end": 1168
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4147,
+  "traits": [],
+  "negated": false,
+  "begin": 1215,
+  "end": 1217
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4622,
+  "traits": [],
+  "negated": false,
+  "begin": 1247,
+  "end": 1249
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4307,
+  "traits": [],
+  "negated": false,
+  "begin": 1255,
+  "end": 1257
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4092,
+  "traits": [],
+  "negated": false,
+  "begin": 1263,
+  "end": 1265
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.6773,
+  "traits": [],
+  "negated": false,
+  "begin": 1337,
+  "end": 1339
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3071,
+  "traits": [],
+  "negated": false,
+  "begin": 1397,
+  "end": 1399
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1861,
+  "traits": [],
+  "negated": false,
+  "begin": 1428,
+  "end": 1430
+ },
+ {
+  "text": "redness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1456,
+  "end": 1463
+ },
+ {
+  "text": "swelling",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1467,
+  "end": 1475
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2185,
+  "traits": [],
+  "negated": false,
+  "begin": 1481,
+  "end": 1483
+ },
+ {
+  "text": "right shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 1488,
+  "end": 1502
+ },
+ {
+  "text": "arm",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 1510,
+  "end": 1513
+ },
+ {
+  "text": "little bit lower than my left one",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1527,
+  "end": 1560
+ },
+ {
+  "text": "deformity",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1595,
+  "end": 1604
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 1644,
+  "end": 1652
+ },
+ {
+  "text": "shoulder's dropped",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1644,
+  "end": 1662
+ },
+ {
+  "text": "divots",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1715,
+  "end": 1721
+ },
+ {
+  "text": "shoulder",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 1738,
+  "end": 1746
+ },
+ {
+  "text": "hurts",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1767,
+  "end": 1772
+ },
+ {
+  "text": "can't move it at all",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1815,
+  "end": 1835
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1558,
+  "traits": [],
+  "negated": false,
+  "begin": 1849,
+  "end": 1851
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3006,
+  "traits": [],
+  "negated": false,
+  "begin": 1873,
+  "end": 1875
+ }
+]

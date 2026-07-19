@@ -8,7 +8,7 @@
 | Entrega | Estado |
 |---|---|
 | 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 3 experimentos (PM_008, PM_034, PM_006) + app Gradio com linguagem para equipe médica + screenshots no relatório |
-| 2 — Análise de Áudio (Azure) | **Não iniciada** (próxima grande peça) |
+| 2 — Análise de Áudio (**AWS**) | **Completa** na branch `feature/entrega-2-audio`: Transcribe (WER 5,37%), Comprehend Medical, Comprehend (sentimento), Translate e relatório clínico bilíngue |
 | 3 — Detecção de Anomalias | **Baseline pronto** (loaders Challenge 2019 + UCI HAR); falta rodar/documentar |
 
 ## Decisões-chave (não reabrir sem motivo)
@@ -27,11 +27,18 @@
 ## Ambiente
 
 - Windows 11, **Python 3.12.6**, GPU **NVIDIA MX330 (2 GB)** — fraca; OpenPose ~1,2 s/frame.
+- ⚠️ **O projeto roda em `.venv` (gitignored, na raiz). SEMPRE ative antes de rodar
+  qualquer comando** — `.venv\Scripts\Activate.ps1` no PowerShell. A máquina também tem um
+  Python de sistema em `C:\Python312` com **versões diferentes** das bibliotecas
+  (scikit-learn 1.7.2 no sistema vs. 1.9.0 no venv, pandas 2.3.3 vs. 3.0.3). Rodar no
+  interpretador errado não quebra, mas mede outro ambiente. Confira com
+  `python -c "import sys; print(sys.prefix)"`.
 - OpenPose em `tools/openpose/` (gitignored). Modelo BODY_25 baixado de mirror HuggingFace
   (o servidor da CMU está morto) — ver `docs/openpose_setup.md`.
-- Dependências em `requirements.txt`. Recentes: `gradio`, `imageio-ffmpeg` (ffmpeg embutido
-  p/ transcodar o overlay a H.264).
-- Usuário tem e-mail acadêmico, **mas SEM cota no Azure for Students**.
+- Dependências em `requirements.txt` (pisos flexíveis) e **`requirements-lock.txt`**
+  (versões exatas do `.venv`, para auditar os números do relatório).
+- **Nuvem: AWS** (Transcribe + Comprehend Medical). A Azure foi descartada — usuário tem
+  e-mail acadêmico mas SEM cota no Azure for Students; a AWS foi liberada depois.
 
 ## Pipeline de Vídeo — `src/video/`
 
@@ -50,6 +57,11 @@
 ## Comandos
 
 ```bash
+# 0. SEMPRE primeiro: ativar o venv
+.venv\Scripts\Activate.ps1         # PowerShell
+# source .venv/Scripts/activate    # Git Bash
+
+# --- Entrega 1 (vídeo) ---
 # CLI completo (extrai + analisa + overlay + valida), com progresso
 python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
     --openpose-root tools/openpose --fps 30 --frame-step 3 --overlay \
@@ -57,6 +69,24 @@ python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
 
 # App web de demonstração
 python -m src.video.app            # http://localhost:7860
+
+# --- Entrega 2 (áudio) ---
+# Consultas médicas: estatísticas e falas do paciente
+python -m src.audio.consultations --root data/audio/consultas --summary
+python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
+
+# Pipeline completo (CUSTA DINHEIRO — cacheia tudo em reports/)
+python -m src.audio.cli --case RES0091
+python -m src.audio.cli --case RES0091 --dry-run   # o que seria cobrado, sem executar
+
+# Etapas isoladas, para depurar
+python -m src.audio.transcribe --report            # métricas só do cache
+python -m src.audio.comprehend --cases RES0029 --compare
+python -m src.audio.comprehend --cases RES0029 --sentiment
+python -m src.audio.report --case RES0029
+
+# Verificação do ambiente AWS (não custa nada)
+python -m src.common.config
 
 # Testes (9 passando)
 pytest
@@ -89,6 +119,17 @@ pytest
 - `reports/json/` é gitignored (centenas de JSONs). Gráficos de relatório (`reports/figures/*.png`)
   são versionáveis (exceção no `.gitignore`).
 
+## Convenções de código (importante)
+
+- **Código em inglês, comentários em pt-BR.** Nomes de arquivo, funções, variáveis, colunas
+  de DataFrame e **parâmetros de CLI** em inglês (`--frame-step`, `--per-group`,
+  `--keep-fillers`); docstrings e comentários em português. A Entrega 1 já seguia isso; a
+  Entrega 2 nasceu em português e foi convertida — não reintroduzir.
+- **Relatórios para a equipe médica são bilíngues.** O áudio-fonte é em inglês, então o
+  trecho citado (transcrição, entidade extraída) aparece **no original em inglês, seguido
+  da tradução em pt-BR**. Nunca só em inglês, nunca traduzido sem o original — a equipe
+  precisa poder conferir contra a gravação.
+
 ## Preferências
 
 - **README** com emojis/badges (default do usuário). **Relatório técnico SEM ícones.**
@@ -100,10 +141,29 @@ pytest
 ## Próximos passos
 
 1. ~~Vídeo curto sem pessoa ao fundo para o demo~~ — **resolvido: PM_034.** Entrega 1 fechada.
-2. **Entrega 2 (Áudio/Azure):** baixar **Coswara**; pipeline Azure Speech-to-Text + Text
-   Analytics (Health) + biomarcadores acústicos (librosa). Credenciais Azure via `.env`
-   (modelo em `.env.example`). Estruturar `src/audio/`.
+2. ~~**Entrega 2**~~ — concluída: 4 casos processados, WER médio 6,95%. Falta o **merge da
+   branch `feature/entrega-2-audio` na `main`**.
 3. **Entrega 3:** baixar Challenge 2019 + UCI HAR, rodar e documentar; Synthea p/ prescrições.
-4. **Relatório técnico** (`reports/TECHNICAL_REPORT_FASE4.md`): completar as seções
-   **[Em desenvolvimento]** (áudio, integração/alerta em nuvem, conclusão).
-5. **Vídeo demo** (YouTube/Vimeo, até 15 min) mostrando o fluxo multimodal.
+4. **Relatório técnico**: completar as seções **[Em desenvolvimento]** (5.4 prescrições,
+   6.4 fluxo de alerta, 12 conclusão).
+5. **Vídeo demo** (YouTube/Vimeo, até 15 min). Orçamento acordado: 1min abertura, 3min30
+   vídeo, 4min áudio, 2min30 anomalias, 2min nuvem/alerta, 1min conclusão, 1min folga.
+
+## Pendências de fechamento (fazer ao final, com tudo pronto)
+
+- [ ] **Glossário no relatório técnico.** Decisão do usuário: fazer no fim, quando todas as
+      entregas estiverem escritas, para o glossário nascer completo. Levantamento das siglas
+      que aparecem 2+ vezes e **nunca são explicadas** no texto:
+
+      WER, REHAB24-6, CLI, HAR, VRAM, CUDA, MAD, UTI, UTF-8/UTF-16,
+      NEGATION / NEGATIVE (traços e rótulos dos serviços AWS)
+
+      O **WER** é o mais crítico: aparece 10 vezes, é a métrica central da Entrega 2 e nunca
+      é expandido. Definição: *Word Error Rate*, taxa de erro de palavra —
+      (substituições + inserções + deleções) / palavras da referência.
+
+- [ ] **Poda do README raiz.** A seção "Configuração da AWS" ficou detalhada demais para um
+      README; parte dela cabe melhor no relatório técnico ou em `docs/`.
+
+- [ ] Revisar se os relatórios de saída em `reports/audio_*.md` devem ficar versionados ou
+      se apenas um exemplo basta.
