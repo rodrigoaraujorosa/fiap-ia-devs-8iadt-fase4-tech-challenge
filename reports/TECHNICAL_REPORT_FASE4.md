@@ -759,7 +759,62 @@ O relatório informa também o **WER da transcrição que originou os achados**:
 perfeita sobre transcrição ruim continua sendo informação ruim, e a equipe precisa desse
 contexto para calibrar a confiança.
 
-### 4.8 Controle de Custo e Credenciais
+### 4.8 Ferramenta de Linha de Comando (`cli.py`)
+
+O `cli.py` é o **único ponto de entrada** da entrega: executa as quatro etapas na ordem em
+que dependem umas das outras e grava o relatório final. Os demais módulos
+(`transcribe.py`, `comprehend.py`, `report.py`) são bibliotecas sem interface de linha de
+comando — mesma organização da Entrega 1, onde apenas `cli.py` e `app.py` são executáveis.
+
+```bash
+python -m src.audio.cli --case RES0062
+```
+
+**Parâmetros.**
+
+| Parâmetro | Padrão | Função |
+|:--|:--|:--|
+| `--case` / `--cases` | — | um caso ou vários (mutuamente exclusivos) |
+| `--root` | `data/audio/consultas` | raiz do dataset |
+| `--force` | desligado | reprocessa mesmo com cache — **cobra novamente** |
+| `--no-compare` | desligado | não extrai entidades da transcrição da AWS (metade do custo da etapa 2) |
+| `--no-translate` | desligado | gera o relatório sem chamar o Amazon Translate |
+| `--keep-fillers` | desligado | conta hesitações no WER |
+| `--dry-run` | desligado | lista o que faria chamada paga, sem executar |
+| `--report` | — | recalcula as métricas do cache, **sem chamar a AWS** |
+| `--show-entities` | — | lista as entidades já extraídas de um caso |
+| `--out` | — | CSV com o resumo dos casos |
+
+**Saída.** Cada etapa concluída informa o **serviço AWS** que a executou e o resultado
+obtido; ao final vêm os tempos por etapa no formato `mm:ss.mi`, o mesmo da Entrega 1.
+
+![Execução do CLI sobre a consulta RES0062](figures/screenshots/cli_audio_RES0062.png)
+
+> **Figura 6.** Pipeline completo sobre o RES0062 (17,8 min de consulta). As quatro etapas
+> nomeiam o serviço que as executou — Transcribe, Comprehend Medical, Comprehend e
+> Translate —, e a barra de progresso conta etapas concluídas. A transcrição domina o
+> tempo (01:56 de 02:18 totais), o que é esperado: é a única etapa que processa o áudio
+> inteiro. Note que os achados não recuperados pela extração sobre a transcrição
+> automática aparecem nomeados na própria saída, sem exigir consulta ao relatório.
+
+A barra de progresso conta **etapas concluídas**, e não percentual dentro da transcrição:
+a API do Transcribe informa apenas `IN_PROGRESS` ou `COMPLETED`, sem progresso parcial.
+Estimar o total pela duração do áudio também não se sustenta — 6,7 min de áudio levaram
+47 s e 7,0 min levaram 93 s. Durante a espera, exibe-se o tempo decorrido, que é
+informação verdadeira. Isso difere da Entrega 1, onde o `tqdm` tem sinal real: o OpenPose
+escreve um JSON por frame, e basta contá-los.
+
+**Modo de consolidação.** O `--report` recalcula as métricas de todos os casos já
+transcritos sem tocar na AWS, produzindo a estatística agregada usada em 4.4:
+
+![Consolidação das métricas dos quatro casos](figures/screenshots/cli_audio_consultations.png)
+
+> **Figura 7.** Modo `--report`: as quatro transcrições são lidas do cache (nenhuma chamada
+> paga é feita) e as métricas, recalculadas. Permite iterar sobre a forma de medir — por
+> exemplo, ligar e desligar a contagem de hesitações — sem pagar novamente pela
+> transcrição. É também a origem do `wer_consultations.csv` versionado no repositório.
+
+### 4.9 Controle de Custo e Credenciais
 
 Transcribe, Comprehend Medical e Translate cobram por volume processado. Todo resultado é
 **cacheado em disco** (`reports/transcriptions/`, `reports/entities/`,
@@ -880,6 +935,20 @@ integração de forma independente do código:
 O Comprehend Medical **não publica métricas no CloudWatch** (o namespace
 `AWS/ComprehendMedical` permanece vazio); sua evidência de uso está no CloudTrail, que
 registra cada chamada `DetectEntitiesV2`.
+
+![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
+
+> **Figura 8.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
+> 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
+> tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
+> integração sem executar o pipeline.
+>
+> O nome da tarefa termina com o instante de submissão porque a AWS **não permite
+> reaproveitar o nome de uma tarefa existente**. O prefixo do caso mais antigo é
+> `consulta-` e o dos demais, `consultation-`: o RES0029 foi processado antes da
+> padronização dos identificadores para o inglês, e o nome da tarefa ficou registrado na
+> AWS como estava à época.
 
 ### 6.4 Fluxo de Alerta à Equipe Médica
 
