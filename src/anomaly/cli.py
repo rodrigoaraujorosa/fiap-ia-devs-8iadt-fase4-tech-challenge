@@ -38,7 +38,7 @@ import time
 
 import pandas as pd
 
-from . import movement, prescriptions, vitals
+from . import alerts, movement, prescriptions, vitals
 from .report import (FIGURES_DIR, REPORT_PATH, build_report, plot_monitor,
                      write_report)
 
@@ -214,6 +214,15 @@ def monitor(patient_id: str, data_dir: str) -> None:
     print()
 
 
+def painel(data_dir: str, limit: int | None) -> None:
+    """Fila de plantão da coorte retida, ordenada por prioridade."""
+    t0 = time.perf_counter()
+    fila = alerts.scan(data_dir, limit=limit)
+    print()
+    print(alerts.render(fila))
+    print(f"({_fmt(time.perf_counter() - t0)})")
+
+
 def monitor_subject(subject_id: int, har_dir: str) -> None:
     """Monitoramento da movimentação de um sujeito do conjunto de teste."""
     r = movement.monitor_subject(subject_id, har_dir)
@@ -260,6 +269,8 @@ def main() -> None:
                     help="alerta de um paciente de UTI: sinais vitais + prescrições")
     ap.add_argument("--monitor-subject", metavar="ID", type=int,
                     help="alerta de movimentação de um sujeito do UCI HAR")
+    ap.add_argument("--alerts", action="store_true",
+                    help="painel de plantão: fila de alertas da coorte, por prioridade")
     args = ap.parse_args()
 
     if args.train:
@@ -272,6 +283,10 @@ def main() -> None:
 
     if args.monitor_subject is not None:
         monitor_subject(args.monitor_subject, args.har_data)
+        return
+
+    if args.alerts:
+        painel(args.vitals_data, args.limit)
         return
 
     t0 = time.perf_counter()

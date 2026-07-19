@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.anomaly import prescriptions, vitals
+from src.anomaly import alerts, prescriptions, vitals
 
 RNG = np.random.default_rng(42)
 
@@ -271,3 +271,56 @@ def test_prescricoes_lead_time_respeita_a_janela():
     df = prescriptions.detect(prescriptions.build_series(
         _com_dose("p1", doses, onset=190)))
     assert len(prescriptions.lead_time(df, window=48)) == 0      # escalonou na hora 5
+
+
+# ---------------------------------------------------------------- fila de alertas
+
+def _linha(paciente, vitais, doses, horas=100):
+    prioridade, origem = alerts._prioridade(vitais, doses)
+    return {
+        "patient": paciente, "priority": prioridade,
+        "vitals_alerts": vitais, "last_vitals_hour": 50 if vitais else None,
+        "escalations": doses, "last_escalation_hour": 40 if doses else None,
+        "hours_monitored": horas, "source": origem,
+    }
+
+
+def test_corroboracao_de_duas_series_tem_prioridade_maxima():
+    """
+    Duas séries independentes apontando o mesmo paciente valem mais que uma.
+
+    É a única regra da fila que não vem direto da AUC medida: vitais e dose são
+    medições distintas, então concordância entre elas carrega informação que nenhuma
+    das duas traz sozinha.
+    """
+    assert alerts._prioridade(3, 2)[0] == alerts.ALTA
+    assert alerts._prioridade(3, 0)[0] == alerts.MEDIA
+    assert alerts._prioridade(0, 2)[0] == alerts.MEDIA
+    assert alerts._prioridade(0, 0)[0] == alerts.BAIXA
+
+
+def test_origem_do_alerta_identifica_o_que_disparou():
+    """Um alerta que não diz o que disparou obriga a equipe a reabrir o caso."""
+    assert alerts._prioridade(1, 1)[1] == "vitais + dose"
+    assert alerts._prioridade(0, 1)[1] == "dose"
+    assert alerts._prioridade(1, 0)[1] == "vitais"
+
+
+def test_painel_lista_prioridade_alta_primeiro():
+    df = pd.DataFrame([_linha("pA", 1, 0), _linha("pB", 2, 2), _linha("pC", 0, 1)])
+    df["_o"] = df["priority"].map(alerts._ORDEM)
+    ordenado = df.sort_values("_o").drop(columns="_o")
+    texto = alerts.render(ordenado)
+    assert texto.index("pB") < texto.index("pA")
+    assert "ALTA 1" in texto and "MEDIA 2" in texto
+
+
+def test_painel_vazio_nao_quebra():
+    assert "Nenhum alerta" in alerts.render(pd.DataFrame())
+
+
+def test_painel_avisa_que_vitais_nao_sao_diagnostico():
+    """A ressalva precisa estar na tela, não só no relatório."""
+    texto = alerts.render(pd.DataFrame([_linha("pA", 1, 1)]))
+    assert "não constituem diagnóstico" in texto.lower()
+    assert "triagem" in texto.lower()
