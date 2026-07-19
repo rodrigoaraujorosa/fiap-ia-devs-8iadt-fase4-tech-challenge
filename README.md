@@ -269,11 +269,12 @@ citado aparecem no original em inglês seguidos da tradução para o português 
 ### Entrega 3 — Detecção de Anomalias
 
 ```bash
-# 1. Treina o detector na coorte de normalidade e salva em models/
+# 1. Treina os dois detectores no padrão de normalidade e salva em models/
 python -m src.anomaly.cli --train --limit 5000
 
-# 2. Monitoramento de UM paciente que o modelo não viu (é a demonstração)
-python -m src.anomaly.cli --monitor p000009
+# 2. Monitoramento de UM indivíduo que o modelo não viu (é a demonstração)
+python -m src.anomaly.cli --monitor p000188        # vitais + prescrições
+python -m src.anomaly.cli --monitor-subject 2      # movimentação
 
 # 3. Avaliação completa + relatório em reports/anomalias.md
 python -m src.anomaly.cli --limit 5000

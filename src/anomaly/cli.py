@@ -16,9 +16,15 @@ pacientes que nunca desenvolveram sepse, e a avaliação ocorre sobre pacientes 
 que o modelo não viu. Depois de treinado, o modo de monitoramento pontua **um paciente
 por vez**, que é como o sistema operaria em leito.
 
+Movimentação e sinais vitais vêm de datasets distintos, sem correspondência de
+indivíduos — não existe o paciente ``p000009`` no UCI HAR. Por isso o monitoramento tem
+dois comandos: ``--monitor`` cobre as duas subtarefas do Challenge 2019 (vitais e dose
+prescrita, que descrevem o mesmo paciente) e ``--monitor-subject`` cobre a movimentação.
+
 Uso:
-    python -m src.anomaly.cli --train                  # treina e salva o modelo
-    python -m src.anomaly.cli --monitor p000009        # alerta de UM paciente
+    python -m src.anomaly.cli --train                  # treina e salva os detectores
+    python -m src.anomaly.cli --monitor p000009        # vitais + prescrições de 1 paciente
+    python -m src.anomaly.cli --monitor-subject 2      # movimentação de 1 sujeito
     python -m src.anomaly.cli                          # avaliação completa + relatório
     python -m src.anomaly.cli --only movement          # uma subtarefa
     python -m src.anomaly.cli --limit 5000             # tamanho da coorte
@@ -104,61 +110,124 @@ def _pick_patient(v: dict) -> str | None:
     return str(bons.sort_values("lead_hours", ascending=False).iloc[0]["patient"])
 
 
-def train_and_save(data_dir: str, limit: int | None, contamination: float) -> None:
-    """Treina o detector de vitais na coorte de normalidade e persiste em disco."""
-    print("Treinando o detector de sinais vitais")
+def train_and_save(vitals_dir: str, har_dir: str, limit: int | None,
+                   contamination: float) -> None:
+    """Treina os dois detectores no respectivo padrão de normalidade e persiste."""
     t0 = time.perf_counter()
-    raw = vitals.load_dataset(data_dir, limit=limit)
-    treino, teste = vitals.split_cohorts(vitals.prepare(raw))
-    det = vitals.fit(treino, contamination=contamination)
-    caminho = vitals.save(det)
 
-    print(f"  coorte de treino : {det.trained_on['patients']} pacientes sem sepse, "
-          f"{det.trained_on['hours']} horas")
+    print("Detector de sinais vitais")
+    raw = vitals.load_dataset(vitals_dir, limit=limit)
+    treino, teste = vitals.split_cohorts(vitals.prepare(raw))
+    det_v = vitals.fit(treino, contamination=contamination)
+    caminho_v = vitals.save(det_v)
+    print(f"  coorte de treino : {det_v.trained_on['patients']} pacientes sem sepse, "
+          f"{det_v.trained_on['hours']} horas")
     print(f"  retidos p/ teste : {teste['patient'].nunique()} pacientes")
-    print(f"  features usadas  : {len(det.features)} — {', '.join(det.features)}")
-    print(f"  limiar de alerta : {det.threshold:.4f}")
-    print(f"  modelo salvo em  : {caminho}")
-    print(f"  ({_fmt(time.perf_counter() - t0)})")
+    print(f"  features usadas  : {len(det_v.features)}")
+    print(f"  limiar de alerta : {det_v.threshold:.4f}")
+    print(f"  salvo em         : {caminho_v}")
+
+    print("\nDetector de movimentação")
+    X_train, y_train, subj_train = movement.load_split(har_dir, "train")
+    det_m = movement.fit(X_train, y_train, contamination=contamination)
+    caminho_m = movement.save(det_m)
+    _, _, subj_test = movement.load_split(har_dir, "test")
+    print(f"  coorte de treino : {det_m.trained_on['samples']} amostras de repouso, "
+          f"{subj_train['subject'].nunique()} sujeitos")
+    print(f"  retidos p/ teste : {subj_test['subject'].nunique()} sujeitos — "
+          f"{', '.join(str(s) for s in sorted(subj_test['subject'].unique()))}")
+    print(f"  salvo em         : {caminho_m}")
+
+    print("\nA subtarefa de prescrições não tem modelo a treinar: a detecção é uma regra")
+    print("de degrau na dose, idêntica para um paciente ou para a coorte inteira.")
+    print(f"\n({_fmt(time.perf_counter() - t0)})")
 
 
 def monitor(patient_id: str, data_dir: str) -> None:
     """
-    Monitoramento de um paciente com o modelo já treinado.
+    Monitoramento de um paciente de UTI com os modelos já treinados.
 
-    É a simulação do alerta de leito: o modelo nunca viu este paciente, recebe a série
-    horária dele e devolve as horas em que dispararia o alerta.
+    Cobre as duas subtarefas que vêm do Challenge 2019 — sinais vitais e evolução da
+    dose prescrita — porque ambas descrevem o mesmo paciente. A movimentação usa outro
+    dataset, sem correspondência de indivíduos, e tem comando próprio
+    (``--monitor-subject``).
     """
     r = vitals.monitor_patient(patient_id, data_dir)
     s = r["summary"]
+    serie = r["data"]
 
-    print(f"\nPaciente {s['patient']} — {s['hours']} horas de internação")
-    print(f"Modelo: {vitals.MODEL_PATH} (treinado só em pacientes sem sepse)\n")
+    print(f"\n{'=' * 66}")
+    print(f"Paciente {s['patient']} — {s['hours']} horas de internação")
+    print(f"{'=' * 66}")
 
+    # ---------------------------------------------------------------- vitais
+    print(f"\nSINAIS VITAIS   modelo: {vitals.MODEL_PATH}")
     if not s["alerts"]:
-        print("  Nenhum alerta. Série dentro do padrão aprendido.")
+        print("  Nenhum alerta — série dentro do padrão aprendido.")
     else:
-        print(f"  {s['alerts']} horas em alerta ({s['alert_rate']:.1%} da internação):")
         horas = s["alert_hours"]
+        print(f"  {s['alerts']} horas em alerta ({s['alert_rate']:.1%} da internação)")
         print(f"    horas {', '.join(str(h) for h in horas[:20])}"
               + (" ..." if len(horas) > 20 else ""))
 
-    print()
-    if s["developed_sepsis"]:
-        print(f"  Conferência com o ground-truth: sepse a partir da hora {s['onset_hour']}.")
-        if s.get("warned"):
-            print(f"  ALERTA ANTECIPADO — primeiro aviso {s['lead_hours']} h antes "
-                  f"do início registrado.")
-        else:
-            print(f"  Sem alerta na janela de {vitals.LEAD_WINDOW_HOURS} h que antecede "
-                  f"o início.")
+    # ----------------------------------------------------------- prescrições
+    px = prescriptions.monitor_patient(serie)["summary"]
+    print("\nPRESCRIÇÕES     dose de oxigênio (FiO2), regra de degrau")
+    if not px["monitored"]:
+        print(f"  Fora de monitoramento — {px['observations']} registros de dose "
+              f"(mínimo {prescriptions.MIN_OBSERVATIONS}).")
     else:
-        print("  Conferência com o ground-truth: paciente não desenvolveu sepse.")
+        print(f"  {px['observations']} registros, dose entre {px['dose_min']:.2f} "
+              f"e {px['dose_max']:.2f}")
+        if px["escalations"]:
+            print(f"  {px['escalations']} escalonamento(s) nas horas "
+                  f"{', '.join(str(h) for h in px['escalation_hours'])}")
+        else:
+            print("  Nenhum escalonamento brusco.")
+        if px["weanings"]:
+            print(f"  {px['weanings']} desmame(s) — não geram alerta.")
 
-    fig = vitals.plot_patient(r["data"], patient_id,
-                              str(FIGURES_DIR / f"monitor_{patient_id}.png"))
-    if fig:
-        print(f"\n  Figura: {fig}")
+    # ------------------------------------------------------------ conferência
+    print("\nCONFERÊNCIA COM O GROUND-TRUTH (não usado na detecção)")
+    if s["developed_sepsis"]:
+        print(f"  Sepse registrada a partir da hora {s['onset_hour']}.")
+        if s.get("warned"):
+            print(f"  Vitais    — alerta {s['lead_hours']} h antes do início.")
+        else:
+            print(f"  Vitais    — sem alerta na janela de "
+                  f"{vitals.LEAD_WINDOW_HOURS} h que antecede o início.")
+        if px.get("lead_hours"):
+            print(f"  Prescrição — escalonamento {px['lead_hours']} h antes do início.")
+        elif px["escalations"]:
+            print("  Prescrição — escalonamentos fora da janela de 48 h.")
+    else:
+        print("  Paciente não desenvolveu sepse.")
+    print()
+
+
+def monitor_subject(subject_id: int, har_dir: str) -> None:
+    """Monitoramento da movimentação de um sujeito do conjunto de teste."""
+    r = movement.monitor_subject(subject_id, har_dir)
+    s = r["summary"]
+    res = r["data"]
+
+    print(f"\n{'=' * 66}")
+    print(f"Sujeito {s['subject']} — {s['windows']} janelas de leitura")
+    print(f"{'=' * 66}")
+    print(f"\nMOVIMENTAÇÃO    modelo: {movement.MODEL_PATH}")
+    print(f"  {s['alerts']} janelas em alerta ({s['alert_rate']:.1%} das leituras)")
+
+    print("\nCONFERÊNCIA COM O GROUND-TRUTH (não usado na detecção)")
+    tabela = (res.groupby("activity")
+                 .agg(janelas=("is_anomaly", "size"), alerta=("is_anomaly", "mean")))
+    for atividade, linha in tabela.sort_values("alerta", ascending=False).iterrows():
+        marca = "movimento" if atividade not in movement.REST_ACTIVITIES else "repouso  "
+        print(f"  {marca}  {atividade:20s} {int(linha['janelas']):4d} janelas  "
+              f"{linha['alerta']:6.1%} em alerta")
+    if s["recall_movement"] is not None:
+        print(f"\n  Recall sobre marcha: {s['recall_movement']:.1%} | "
+              f"falso alarme no repouso: {s['false_alarm_rate']:.1%}")
+    print()
 
 
 def main() -> None:
@@ -179,15 +248,21 @@ def main() -> None:
     ap.add_argument("--train", action="store_true",
                     help="treina o detector de vitais e salva em models/")
     ap.add_argument("--monitor", metavar="PACIENTE",
-                    help="pontua um paciente com o modelo salvo (simula o alerta de leito)")
+                    help="alerta de um paciente de UTI: sinais vitais + prescrições")
+    ap.add_argument("--monitor-subject", metavar="ID", type=int,
+                    help="alerta de movimentação de um sujeito do UCI HAR")
     args = ap.parse_args()
 
     if args.train:
-        train_and_save(args.vitals_data, args.limit, args.contamination)
+        train_and_save(args.vitals_data, args.har_data, args.limit, args.contamination)
         return
 
     if args.monitor:
         monitor(args.monitor, args.vitals_data)
+        return
+
+    if args.monitor_subject is not None:
+        monitor_subject(args.monitor_subject, args.har_data)
         return
 
     t0 = time.perf_counter()

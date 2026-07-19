@@ -22,28 +22,46 @@ O detector de vitais é **treinado, salvo e depois aplicado** a pacientes que n�
 participaram do treino:
 
 ```bash
-# 1. Treina na coorte de normalidade (só pacientes sem sepse) e salva em models/
+# 1. Treina os dois detectores no padrão de normalidade e salva em models/
 python -m src.anomaly.cli --train --limit 5000
 
-# 2. Monitoramento de UM paciente — é a demonstração do alerta de leito
-python -m src.anomaly.cli --monitor p000009
+# 2. Monitoramento de UM indivíduo — é a demonstração do alerta de leito
+python -m src.anomaly.cli --monitor p000188        # vitais + prescrições (mesmo paciente)
+python -m src.anomaly.cli --monitor-subject 2      # movimentação (outro dataset)
 
 # 3. Avaliação completa + relatório em reports/anomalias.md
 python -m src.anomaly.cli --limit 5000
 python -m src.anomaly.cli --only movement
 ```
 
+> ⚠️ **Os dois datasets não têm os mesmos indivíduos.** Não existe o paciente `p000188` no
+> UCI HAR. Por isso o monitoramento tem dois comandos: `--monitor` reúne as subtarefas que
+> vêm do Challenge 2019 (vitais e dose prescrita, do mesmo paciente) e `--monitor-subject`
+> cobre a movimentação, por sujeito.
+
 Roda inteiramente local — não chama a nuvem e não custa nada.
 
 ## 🧠 Treino e inferência
 
 ```
-TREINO (uma vez)      pacientes que NUNCA tiveram sepse
-                      └─► models/vitals_detector.joblib (modelo + limiar)
+TREINO (uma vez)   padrão de normalidade ──► models/*.joblib (modelo + limiar)
+                   vitais: só pacientes que NUNCA tiveram sepse
+                   movimentação: só atividades de repouso
 
-INFERÊNCIA (por pac.) série de um paciente que o modelo não viu
-                      └─► horas em alerta
+INFERÊNCIA         série de um indivíduo que o modelo não viu
+                   └─► instantes em alerta
 ```
+
+**Exemplo de saída (`--monitor p000188`)** — as subtarefas se complementam:
+
+| Subtarefa | Resultado |
+|---|---|
+| Sinais vitais | nenhum alerta em 84 horas |
+| Prescrições | 2 escalonamentos, horas 51 e 53 |
+| Conferência | sepse a partir da hora 75 |
+
+Os vitais ficaram em silêncio; a dose escalonou **24 h antes** do início. É o mesmo efeito
+que a comparação vitais × laboratório mostra de forma agregada — os vitais reagem tarde.
 
 A coorte de treino exclui pacientes sépticos **de propósito**: é o padrão de normalidade
 que o detector deve aprender. Mantê-los no treino ensinaria ao modelo que a deterioração é
@@ -117,5 +135,5 @@ de outubro de 2025. A decisão está documentada na §6.2 do relatório técnico
 pytest tests/test_anomaly.py
 ```
 
-16 testes com séries sintéticas — não exigem os datasets baixados. Cobrem sobretudo as
+18 testes com séries sintéticas — não exigem os datasets baixados. Cobrem sobretudo as
 armadilhas acima, que são silenciosas: não levantam erro, só produzem números errados.

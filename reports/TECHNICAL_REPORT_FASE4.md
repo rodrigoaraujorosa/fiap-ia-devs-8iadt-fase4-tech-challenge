@@ -885,176 +885,310 @@ ambiente antes de qualquer chamada paga.
 
 ### 5.1 Visão Geral
 
-Três subtarefas de detecção de anomalias, todas **não-supervisionadas**: os rótulos do
-dataset entram apenas na avaliação, como ground-truth. Organização igual à das Entregas 1
-e 2 — `movement.py`, `vitals.py`, `prescriptions.py` e `report.py` são bibliotecas e
-`cli.py` é o único ponto de entrada. Execução local, `random_state = 42`.
+O pipeline de anomalias monitora três séries do paciente internado — **sinais vitais**,
+**evolução da dose prescrita** e **padrões de movimentação** — e sinaliza os instantes que
+fogem do padrão esperado, produzindo o insumo da camada de alerta.
 
-| Subtarefa | Dataset | Ground-truth | Resultado |
+A decisão de arquitetura central: **o modelo aprende apenas o padrão de normalidade e é
+aplicado a séries que não participaram do treino**. Em ambos os detectores a coorte de
+treino é restrita ao comportamento esperado — só atividades de repouso, na movimentação;
+só pacientes que nunca desenvolveram sepse, nos vitais — e os rótulos do dataset entram
+exclusivamente na avaliação. O modelo treinado é persistido, o que permite pontuar um
+paciente por vez, como o sistema operaria em leito.
+
+```
+TREINO (uma vez)     padrão de normalidade ──► models/*.joblib (modelo + limiar)
+INFERÊNCIA (por pac.) série de um indivíduo ──► instantes em alerta
+```
+
+| Subtarefa | Dataset | Ground-truth | Modelo |
 |:--|:--|:--|:--|
-| Movimentação | UCI HAR | atividade real | F1 **0,973** · AUC **0,9999** |
-| Sinais vitais | Challenge 2019 | `SepsisLabel` | AUC **0,555** · lead mediano **30 h** |
-| Prescrições | Challenge 2019 (derivada) | `SepsisLabel` | sepse **17,9%** vs **10,5%** |
+| Movimentação | UCI HAR | atividade real | IsolationForest treinado em repouso |
+| Sinais vitais | Challenge 2019 | `SepsisLabel` | IsolationForest sobre desvios por paciente |
+| Prescrições | Challenge 2019 (derivada) | `SepsisLabel` | regra de degrau na dose |
 
-Em ambos os casos o modelo é treinado no padrão de **normalidade** e avaliado sobre dados
-que não viu: na movimentação, treina só em repouso e testa em sujeitos distintos; nos
-vitais, treina só em pacientes que nunca desenvolveram sepse e testa em pacientes retidos.
+### 5.2 Datasets
 
-### 5.2 Movimentação do Paciente — UCI HAR
+**Sinais vitais e prescrições — PhysioNet/CinC Challenge 2019.**
 
 | Item | Descrição |
 |:--|:--|
-| Dados | 10.299 janelas, 561 features (acelerômetro + giroscópio), 30 sujeitos |
-| Enquadramento | Repouso (`LAYING`/`SITTING`/`STANDING`) = esperado em leito; marcha = alerta |
-| Modelo | IsolationForest treinado nas 4.067 amostras de repouso (`contamination = 0.05`) |
+| Fonte | [physionet.org/content/challenge-2019/1.0.0](https://physionet.org/content/challenge-2019/1.0.0/) |
+| Acesso | Aberto, sem credenciamento |
+| Conteúdo | 40.336 pacientes de UTI, um arquivo `.psv` por paciente, uma linha por hora |
+| Variáveis | 8 sinais vitais, 26 laboratoriais, 6 de demografia |
+| Rótulo | `SepsisLabel` (0/1) — deterioração clínica confirmada |
+| Licença | Open Data Commons ODbL 1.0 |
 
-O modelo nunca vê marcha no treino; as três atividades de marcha do conjunto de teste
-(2.947 amostras, 9 sujeitos disjuntos) são o ground-truth de anomalia.
+**Movimentação — UCI HAR (Human Activity Recognition).**
+
+| Item | Descrição |
+|:--|:--|
+| Fonte | [archive.ics.uci.edu/dataset/240](https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones) |
+| Acesso | Aberto, sem credenciamento |
+| Conteúdo | 10.299 janelas de acelerômetro e giroscópio, 30 sujeitos |
+| Variáveis | 561 features já extraídas por janela |
+| Rótulos | 6 atividades: `WALKING`, `WALKING_UPSTAIRS`, `WALKING_DOWNSTAIRS`, `SITTING`, `STANDING`, `LAYING` |
+| Licença | CC BY 4.0 |
+
+**Justificativa da escolha.** Ambos são abertos e trazem rótulo utilizável como
+*ground-truth*, o que permite medir a detecção em vez de apenas exibi-la. O Challenge 2019
+foi preferido ao MIMIC-IV, mais rico, porque este exige curso CITI e Data Use Agreement,
+com tramitação incompatível com o prazo do trabalho.
+
+> **Nota de acesso.** Os arquivos `training_setA.zip` e `training_setB.zip` citados na
+> documentação do PhysioNet **não existem mais** — respondem 404, e os dados passaram a ser
+> servidos individualmente, um `.psv` por paciente. O download por HTTP exigiria 40.336
+> requisições. O caminho usado é o espelho público em S3:
+> `aws s3 sync --no-sign-request s3://physionet-open/challenge-2019/1.0.0/training/`.
+
+> **Os dois datasets não descrevem os mesmos indivíduos.** Não existe correspondência entre
+> um paciente do Challenge 2019 e um sujeito do UCI HAR. É a prática usual quando cada
+> modalidade tem sua fonte aberta, mas tem uma consequência concreta no sistema: o
+> monitoramento de um paciente de UTI reúne sinais vitais e dose prescrita, que vêm da mesma
+> fonte, enquanto a movimentação é monitorada por sujeito, em comando separado (5.6).
+
+### 5.3 Movimentação do Paciente (`movement.py`)
+
+**Enquadramento.** Durante a internação, o esperado é o paciente em repouso — deitado,
+sentado ou em pé parado. Marcha, sobretudo subir e descer escada, é movimentação
+inesperada em leito e deve gerar alerta.
+
+O modelo é treinado **apenas** nas 4.067 amostras de repouso do conjunto de treino e nunca
+vê marcha; as três atividades de marcha do conjunto de teste funcionam como *ground-truth*
+de anomalia. Os 30 sujeitos são divididos pelo próprio dataset em 21 para treino e 9 para
+teste, sem sobreposição.
+
+**Resultados quantitativos.** Sobre as 2.947 amostras de teste, com
+`contamination = 0.05` e `random_state = 42`:
 
 | Métrica | Valor |
-|:--|:--|
-| Precisão · Recall · F1 | 0,947 · 1,000 · 0,973 |
+|:--|:--:|
+| Precisão | 0,947 |
+| Recall | 1,000 |
+| F1 | 0,973 |
 | AUC | 0,9999 |
 | Falso alarme sobre repouso | 5,00% (78 de 1.560) |
 
-**Figura 9** — taxa de alerta por atividade (`reports/figures/anomalia_movimentacao.png`):
-100% nas três atividades de marcha; 3,5% a 7,0% nas de repouso.
+A taxa de alerta por atividade real mostra onde o detector acerta e onde erra:
 
-Um paciente que deveria estar em repouso e começa a deambular é detectado sem exceção, ao
-custo de um alarme falso a cada vinte leituras de repouso.
+| Atividade | Classe | Taxa de alerta |
+|:--|:--|:--:|
+| `WALKING` | movimento | 100,0% |
+| `WALKING_UPSTAIRS` | movimento | 100,0% |
+| `WALKING_DOWNSTAIRS` | movimento | 100,0% |
+| `STANDING` | repouso | 7,0% |
+| `LAYING` | repouso | 4,5% |
+| `SITTING` | repouso | 3,5% |
 
-### 5.3 Sinais Vitais — PhysioNet/CinC Challenge 2019
+A separação é praticamente completa: **nenhuma das 1.387 amostras de marcha escapou**, e o
+custo é um alarme falso a cada vinte leituras de repouso — proporção controlada pelo
+parâmetro de contaminação. Um paciente que deveria estar em repouso e começa a deambular é
+detectado sem exceção.
 
-| Item | Descrição |
-|:--|:--|
-| Dados | 40.336 pacientes de UTI, séries horárias (1 `.psv` por paciente) |
-| Amostra | 5.000 pacientes — 3.187 sem sepse para treino, 1.813 retidos para teste |
-| Ground-truth | `SepsisLabel` (0/1) |
-| Modelo | IsolationForest sobre desvios normalizados por paciente, salvo em `models/` |
+O erro se concentra em `STANDING` (7,0%), o dobro de `SITTING` (3,5%). É coerente com a
+natureza do sinal: estar em pé parado envolve micro-oscilações de equilíbrio que aproximam
+a leitura do início de uma marcha, enquanto deitado e sentado são posturas estáveis.
 
-**Normalização contra a linha de base do próprio paciente.** Um IsolationForest global
-aprende "o que é raro na população", não "o que mudou neste paciente". Cada série é
-convertida em desvio robusto (z-score por MAD) contra a mediana das primeiras 8 horas
-daquele paciente — mesma técnica de `src/video/anomaly.py`.
+### 5.4 Sinais Vitais (`vitals.py`)
 
-**Treino separado da inferência.** A coorte de treino exclui pacientes sépticos de
-propósito: é o padrão de normalidade que o detector deve aprender, e mantê-los ensinaria
-ao modelo que a deterioração é normal. O modelo treinado é persistido e depois pontua
-pacientes que não participaram do treino, um por vez (Seção 5.5).
+O detector opera sobre os 8 sinais vitais horários, com duas decisões de modelagem que
+determinam o resultado.
 
-**Resultados (1.813 pacientes de teste, 446 com sepse):**
+**Normalização contra a linha de base do próprio paciente.** Um IsolationForest ajustado
+sobre os valores brutos aprende "o que é raro na população", e não "o que mudou neste
+paciente" — que é a pergunta do alerta de leito. Cada série é convertida em desvio robusto
+(z-score por mediana e MAD) contra as primeiras 8 horas daquele paciente, a mesma técnica
+usada na Entrega 1 (3.7). Sem isso, o detector sinaliza sobretudo pacientes cronicamente
+fora da faixa, não pacientes que estão piorando.
+
+**Coorte de treino restrita à normalidade.** A separação entre treino e teste é feita
+**por paciente**, nunca por hora, e o treino recebe apenas pacientes que nunca
+desenvolveram sepse. Manter pacientes sépticos no treino ensinaria ao modelo que a
+deterioração faz parte do padrão normal. O conjunto de teste reúne os pacientes com sepse
+e os pacientes sem sepse retidos, para que a avaliação tenha as duas classes.
+
+**Limiar absoluto.** O corte de alerta é o percentil 5 dos *scores* da coorte de treino,
+fixado no momento do treino e guardado junto com o modelo. A alternativa — sinalizar as 5%
+piores horas *de cada paciente* — foi implementada e descartada: com corte percentual
+individual, todo paciente recebe alertas por construção, inclusive o paciente estável, e a
+taxa deixa de ser comparável entre pacientes. Com limiar absoluto, um paciente dentro do
+padrão pode passar a internação inteira sem alerta, que é o comportamento correto.
+
+**Resultados quantitativos.** Sobre uma amostra de 5.000 pacientes — 3.187 sem sepse no
+treino (117.947 horas) e 1.813 retidos para teste (76.888 horas, 446 com sepse):
 
 | Métrica | Valor |
-|:--|:--|
-| AUC | 0,5550 |
-| AUPRC | 0,0680 (prevalência horária 0,0555) |
+|:--|:--:|
+| AUC | 0,555 |
+| AUPRC | 0,068 (prevalência horária 0,056) |
 | Pacientes com sepse que receberam algum alerta | 156 de 446 |
-| Avisados dentro da janela de 48 h | 111 de 446 |
-| Antecedência mediana do aviso | **30 horas** |
+| Avisados na janela de 48 h que antecede o início | 111 de 446 |
+| Antecedência mediana do aviso | 30 horas |
 
-**Figura 10** — série de um paciente com as horas sinalizadas e o início da sepse
-(`reports/figures/anomalia_vitais.png`).
+O desempenho hora a hora é **fraco**: a AUC fica pouco acima do acaso, e a AUPRC supera a
+prevalência por margem estreita. A leitura honesta é que os sinais vitais isolados não
+separam bem a hora de sepse da hora estável. O valor prático aparece no nível do paciente:
+quando o alerta ocorre dentro da janela, ocorre com antecedência clinicamente útil.
 
-A janela de 48 horas não é detalhe de apresentação: medir a antecedência a partir do
-primeiro alerta da internação inteira transformaria um alerta 239 horas antes do evento em
-"aviso prévio".
+**A janela de 48 horas não é um detalhe de apresentação.** Medir a antecedência a partir do
+primeiro alerta da internação inteira infla o número sem significado clínico — há paciente
+com sepse na hora 248 e alertas nas primeiras 60 horas, o que produziria uma "antecedência"
+de 239 horas para um evento sem relação com o alerta. Só contam alertas nas 48 horas
+anteriores ao início registrado.
 
-**Limitações medidas:**
+**Onde está o sinal: vitais e marcadores de laboratório.** Para verificar se o desempenho
+fraco vem do método ou das variáveis, o mesmo modelo foi aplicado a três conjuntos de
+features:
 
-- **O desempenho hora-a-hora é fraco** — AUC pouco acima do acaso. Para saber se a
-  limitação está no método ou nas variáveis, medimos o mesmo modelo sobre os marcadores de
-  laboratório: AUC **0,628** contra **0,571** dos vitais, apesar de terem cobertura muito
-  menor (4–14% das horas, contra 83–91%). É coerente com a clínica — lactato e leucócitos
-  são marcadores diretos de sepse, enquanto a alteração dos vitais é tardia. A entrega
-  mantém os vitais como objeto, conforme o escopo, e registra o achado.
-- **Menos da metade dos pacientes com sepse é avisada na janela.** É a consequência de
-  usar limiar absoluto, que não garante alerta para todo paciente — ao contrário do corte
-  percentual por paciente, que garantia mas não constitui um detector aplicável. Baixar o
-  limiar aumenta a cobertura ao custo de alarme falso.
-- **`EtCO2` tem 0% de cobertura no *training set A*** (7,6% no set B); é descartada
-  automaticamente por `live_features()`, senão entra como constante e dilui a distância
-  entre amostras.
-- O `SepsisLabel` marca a janela em que a sepse é considerada instalada, não "hora
-  anormal": um alerta fora dela não é necessariamente falso. A precisão hora-a-hora é
+| Conjunto | Nº features | AUC | AUPRC |
+|:--|:--:|:--:|:--:|
+| Sinais vitais | 7 | 0,571 | 0,029 |
+| Marcadores de laboratório | 8 | 0,628 | 0,034 |
+| Vitais + laboratório | 15 | 0,628 | 0,035 |
+
+Os marcadores de laboratório (`Lactate`, `WBC`, `Creatinine`, `Platelets`, `BUN`, `pH`,
+`HCO3`, `FiO2`) discriminam melhor que os sinais vitais **apesar de terem cobertura muito
+menor** — de 4% a 14% das horas, contra 83% a 91% dos vitais. O resultado é coerente com a
+prática clínica: lactato e leucócitos são marcadores diretos de sepse, enquanto a alteração
+dos sinais vitais é tardia. A entrega mantém os vitais como objeto, conforme o escopo do
+desafio, e registra a comparação como limitação medida da modalidade.
+
+> **O que este resultado não demonstra.** A comparação mede o poder discriminante de cada
+> conjunto de variáveis sob o mesmo modelo não-supervisionado, não o teto do problema. Um
+> modelo supervisionado, com contexto temporal mais longo e imputação específica para
+> exames esparsos, alcançaria desempenho superior aos três — a literatura do próprio
+> Challenge 2019 reporta AUC bem mais alta com abordagens supervisionadas. O que se pode
+> afirmar é que, mantidos fixos o modelo e o pré-processamento, o sinal de sepse está mais
+> nos exames do que nos vitais.
+
+**Limitações medidas.**
+
+- **Menos da metade dos pacientes com sepse é avisada dentro da janela** (111 de 446). É a
+  consequência direta do limiar absoluto, que não garante alerta para todo paciente.
+  Baixá-lo aumenta a cobertura ao custo de mais alarme falso; a escolha do ponto de
+  operação depende do volume de alertas que a equipe consegue absorver.
+- **`EtCO2` tem 0% de cobertura no *training set A*** — a coluna consta do schema oficial e
+  nunca é medida (no *set B* a cobertura é de 7,6%). É descartada automaticamente; mantida,
+  entraria no modelo como constante e diluiria a distância entre as amostras.
+- **Acrescentar tendência e volatilidade não melhorou o resultado.** A hipótese de que
+  janelas móveis de 6 horas carregariam o sinal de deterioração foi testada e descartada: a
+  AUC caiu de 0,559 para 0,533 numa amostra de 300 pacientes.
+- **O `SepsisLabel` marca a janela em que a sepse é considerada instalada**, e não "hora
+  anormal". Um alerta fora dessa janela não é necessariamente falso — pode ser
+  instabilidade real que não evoluiu para sepse. A precisão hora a hora é, portanto,
   conservadora por construção.
 
-### 5.4 Evolução de Prescrições — Variável Derivada (FiO2)
+### 5.5 Evolução de Prescrições (`prescriptions.py`)
 
-Não existe fonte pública aberta e granular de prescrições hospitalares — a referência é o
-MIMIC-IV, que exige credenciamento incompatível com o prazo. As opções eram gerar dados
-sintéticos (Synthea) ou derivar a série de uma variável de intervenção já presente no
-Challenge 2019.
+Não existe fonte pública aberta e granular de prescrições hospitalares: a base de
+referência é o MIMIC-IV, que exige credenciamento. As duas saídas viáveis eram gerar dados
+sintéticos com o **Synthea** ou derivar a série de uma variável de intervenção já presente
+no Challenge 2019.
 
-**Decisão: variável derivada, usando a `FiO2`.** Ao contrário dos demais campos, que são
-*medições* do paciente, a FiO2 é um valor **prescrito e titulado pela equipe** — sua série
-ao longo das horas é uma série de doses. Mantém uma única fonte de dados na entrega e
-preserva o mesmo ground-truth.
+**Decisão: variável derivada, usando a `FiO2`** (fração inspirada de oxigênio). Ao
+contrário dos demais campos do dataset, que são *medições* do paciente, a FiO2 é um valor
+**prescrito e titulado pela equipe** — a série ao longo das horas é uma série de doses, que
+é o objeto da subtarefa. A alternativa sintética seria mais fiel ao enunciado, mas exige
+Java JDK e geração local, e ambas demandam a mesma ressalva: nenhuma é prescrição real de
+paciente real. A variável derivada mantém uma única fonte de dados na entrega e preserva o
+mesmo *ground-truth*.
 
-| Item | Descrição |
-|:--|:--|
-| Cobertura | 14,2% das horas; 2.942 pacientes elegíveis (≥ 3 registros) |
-| Anomalia | degrau ≥ 0,15 entre coletas consecutivas, **só aumentos** |
-| Detectados | 963 escalonamentos, 2.374 desmames |
+**Detecção.** Anomalia é um degrau de 0,15 ou mais entre coletas consecutivas — cerca de
+dois níveis de suporte, numa escala que vai de 0,21 (ar ambiente) a 1,0. Apenas
+**aumentos** alertam: reduzir a FiO2 é desmame, sinal de melhora, e sinalizá-lo encheria o
+alerta de falsos positivos benignos. Entre duas coletas, a prescrição vigente é a última
+informada, então o preenchimento para a frente não é imputação estatística — é o valor que
+estava valendo.
 
-Reduzir a FiO2 é desmame, sinal de melhora, e marcá-lo encheria o alerta de falsos
-positivos benignos. Uma armadilha tratada no loader: o dataset **mistura escalas** —
-percentual (21–100) e fração (0,21–1,0); sem normalizar, todo registro percentual seria
-lido como degrau gigantesco.
+> **Armadilha de escala.** O dataset mistura duas notações para a FiO2: parte dos registros
+> usa percentual (21 a 100) e parte usa fração (0,21 a 1,0). Sem normalizar, todo registro
+> em percentual seria lido como um degrau gigantesco. O loader converte tudo para fração
+> antes de medir a variação.
 
-| Métrica | Valor |
-|:--|:--|
-| Sepse entre os que escalonaram | **17,9%** |
-| Sepse entre os que não escalonaram | **10,5%** |
+**Resultados quantitativos.** Sobre os mesmos 5.000 pacientes, dos quais 2.942 têm ao menos
+três registros de dose (cobertura da FiO2: 14,2% das horas):
 
-O sinal é modesto mas consistente: escalonar a oferta de oxigênio quase dobra a
-probabilidade de sepse. **Figura 11** — `reports/figures/anomalia_prescricoes.png`.
+| Grupo | Pacientes | Desenvolveram sepse |
+|:--|:--:|:--:|
+| Escalonaram a dose | — | 17,9% |
+| Não escalonaram | — | 10,5% |
 
-**Ressalva a declarar na banca:** é uma *proxy* de prescrição, não a prescrição registrada
-em prontuário. Cobre um eixo do que uma base real traria (não há classe do medicamento,
-posologia nem interações).
+Foram detectados 963 escalonamentos e 2.374 desmames. O sinal é modesto mas consistente:
+escalonar a oferta de oxigênio **quase dobra** a probabilidade de o paciente desenvolver
+sepse. A análise se restringe aos pacientes com dose registrada — quem nunca teve FiO2
+medida não está sob suporte de oxigênio, e incluí-lo como "sem alerta" mediria a cobertura
+do dataset, não a qualidade do detector.
 
-### 5.5 Monitoramento de um Paciente e Geração de Alertas
+> **É uma proxy de prescrição, não a prescrição de prontuário.** O escalonamento de
+> oxigênio é uma decisão terapêutica real e registrada, mas cobre um único eixo do que uma
+> base de prescrições traria: não há classe de medicamento, posologia, via de administração
+> nem interações. A subtarefa demonstra o método de detecção sobre série de doses; a
+> generalização para prescrição farmacológica depende de fonte que o projeto não teve.
 
-O detector treinado é persistido em `models/vitals_detector.joblib` e usado para pontuar
-**um paciente por vez**, que é como o sistema operaria em leito:
+### 5.6 Monitoramento de um Indivíduo (`cli.py`)
+
+Os modelos treinados são persistidos em `models/` e aplicados a séries individuais. Como os
+dois datasets não descrevem os mesmos indivíduos (5.2), o monitoramento tem dois comandos:
 
 ```bash
-python -m src.anomaly.cli --train              # treina na coorte de normalidade
-python -m src.anomaly.cli --monitor p000009    # alerta de um paciente
+python -m src.anomaly.cli --train                 # treina e salva os dois detectores
+python -m src.anomaly.cli --monitor p000188       # vitais + prescrições de um paciente
+python -m src.anomaly.cli --monitor-subject 2     # movimentação de um sujeito
 ```
 
-O modelo não conhece o paciente informado; recebe a série horária dele e devolve as horas
-em que dispararia o alerta, com a conferência contra o `SepsisLabel` exibida em separado —
-o rótulo nunca entra na pontuação (há teste que fixa isso: embaralhá-lo não altera os
-alertas).
+O primeiro reúne as duas subtarefas do Challenge 2019, que descrevem o mesmo paciente; o
+segundo cobre a movimentação. Em ambos, o modelo não viu o indivíduo durante o treino, e o
+rótulo é exibido apenas na seção de conferência — nunca entra na pontuação.
 
-Os resultados sugerem **pesos distintos por modalidade** na camada de alerta (Seção 6), e
-não um limiar único:
+**Exemplo — paciente `p000188`.** A saída ilustra o funcionamento complementar das duas
+subtarefas de UTI:
 
-- **Movimentação** (AUC 0,9999) — precisão suficiente para alerta automático.
-- **Prescrições** — fator de risco agregado, não gatilho isolado.
-- **Sinais vitais** (AUC 0,555) — **triagem para revisão humana**, não diagnóstico.
+| Subtarefa | Resultado |
+|:--|:--|
+| Sinais vitais | nenhum alerta em 84 horas |
+| Prescrições | 2 escalonamentos, nas horas 51 e 53 |
+| Conferência | sepse a partir da hora 75 |
 
-### 5.6 Por que os desempenhos são tão diferentes
+Os sinais vitais permaneceram em silêncio durante toda a internação, enquanto o
+escalonamento da dose ocorreu **24 horas antes** do início registrado. O caso é uma
+ilustração concreta do que a comparação de features da seção 5.4 indicou de forma agregada:
+a alteração dos vitais é tardia, e outras séries do mesmo paciente avisam antes.
 
-A distância entre AUC 0,9999 e 0,555 não é defeito de implementação. Marcha e repouso são
-estados fisicamente distintos, medidos por sensores de cobertura quase total — a fronteira
-é nítida. Deterioração clínica é um processo lento e contínuo, ao qual o `SepsisLabel`
-impõe um corte binário, e os sinais vitais são o sintoma **tardio**, como a comparação com
-os marcadores de laboratório mostrou.
+### 5.7 Geração de Alertas
 
-A lição para o sistema é que um mesmo baseline não-supervisionado produz qualidade muito
-diferente conforme a modalidade, e reportar apenas a subtarefa mais favorável daria uma
-impressão falsa da confiabilidade do monitoramento.
+Os instantes sinalizados alimentam a camada de alerta descrita na Seção 6. Os resultados
+das três subtarefas sugerem **pesos distintos por modalidade**, e não um limiar comum:
 
-### 5.7 Testes
+- **Movimentação** (AUC 0,9999) — a separação entre marcha e repouso é praticamente
+  completa, com falso alarme conhecido e ajustável. Precisão suficiente para alerta
+  automático.
+- **Prescrições** — sinal fraco mas consistente, e derivado de uma decisão terapêutica
+  explícita. Adequado como fator de risco agregado, não como gatilho isolado.
+- **Sinais vitais** (AUC 0,555) — deve ser tratado como **triagem para revisão humana**, e
+  não como diagnóstico. A antecedência mediana de 30 horas é clinicamente útil quando o
+  alerta ocorre, mas menos da metade dos pacientes com sepse é avisada dentro da janela.
 
-`tests/test_anomaly.py` — 16 testes com séries sintéticas, sem exigir os datasets. Cobrem
-a separação treino/teste (nenhum paciente vaza, nenhum séptico no treino), a persistência
-do modelo, a garantia de que o rótulo não influencia a pontuação, e as armadilhas
-silenciosas: lead time sem janela, coluna sem cobertura, escala mista da FiO2 e desmame
-contado como anomalia.
+**Por que os desempenhos são tão diferentes.** A distância entre AUC 0,9999 e 0,555 não
+decorre de diferença de implementação — o modelo, o `random_state` e o parâmetro de
+contaminação são os mesmos. Marcha e repouso são estados fisicamente distintos, medidos por
+sensores de alta frequência e cobertura quase total: a fronteira entre as classes é nítida
+no espaço de features. Deterioração clínica é um processo lento e contínuo, ao qual o
+`SepsisLabel` impõe um corte binário, medido por variáveis esparsas e de reação tardia.
 
+O ponto relevante para o sistema é que **um mesmo baseline não-supervisionado produz
+qualidade muito diferente conforme a modalidade**. Reportar apenas a subtarefa mais
+favorável daria uma impressão falsa da confiabilidade do monitoramento como um todo.
+
+### 5.8 Testes
+
+`tests/test_anomaly.py` cobre a entrega com 18 testes sobre séries sintéticas, sem exigir
+os datasets baixados. Além do caminho feliz, os testes fixam as decisões que, se revertidas,
+produzem números melhores do que a realidade sem levantar erro: a separação entre treino e
+teste (nenhum paciente aparece nos dois, nenhum paciente séptico entra no treino), a
+identidade entre o modelo salvo e o recarregado, a exigência de que embaralhar o
+`SepsisLabel` não altere nenhum alerta, a janela do cálculo de antecedência, a normalização
+de escala da FiO2 e o desmame que não deve alertar.
 
 ---
 
@@ -1316,11 +1450,12 @@ de uso, na **seção 3.11**.
 ### 10.4 Execução — Entrega 3 (Detecção de Anomalias)
 
 ```bash
-# 1. Treina o detector de sinais vitais na coorte de normalidade e salva em models/
+# 1. Treina os dois detectores no padrão de normalidade e salva em models/
 python -m src.anomaly.cli --train --limit 5000
 
-# 2. Monitoramento de um paciente — o modelo não viu esta série (é a demonstração)
-python -m src.anomaly.cli --monitor p000009
+# 2. Monitoramento de um indivíduo — o modelo não viu estas séries
+python -m src.anomaly.cli --monitor p000188        # vitais + prescrições
+python -m src.anomaly.cli --monitor-subject 2      # movimentação
 
 # 3. Avaliação completa das três subtarefas + relatório em reports/anomalias.md
 python -m src.anomaly.cli --limit 5000

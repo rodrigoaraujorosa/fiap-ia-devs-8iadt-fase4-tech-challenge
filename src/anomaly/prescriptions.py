@@ -137,6 +137,36 @@ def lead_time(df: pd.DataFrame, window: int = 48) -> pd.DataFrame:
     return pd.DataFrame(linhas)
 
 
+def monitor_patient(df_patient: pd.DataFrame,
+                    threshold: float = STEP_THRESHOLD) -> dict:
+    """
+    Modo de inferência: escalonamentos de dose de **um** paciente.
+
+    Não há modelo a carregar — a detecção é uma regra de degrau, e a regra é a mesma
+    para um paciente ou para a coorte inteira. Recebe a série já carregada para compor
+    com o monitoramento de vitais do mesmo paciente, que vem do mesmo dataset.
+    """
+    serie = detect(build_series(df_patient), threshold=threshold)
+    com_dose = serie.dropna(subset=["dose"])
+    esc = serie[serie["is_escalation"] == 1]
+
+    resumo = {
+        "observations": int(len(com_dose)),
+        "monitored": len(com_dose) >= MIN_OBSERVATIONS,
+        "escalations": int(len(esc)),
+        "escalation_hours": esc["hour"].tolist(),
+        "weanings": int(serie["is_weaning"].sum()),
+        "dose_min": float(com_dose["dose"].min()) if len(com_dose) else None,
+        "dose_max": float(com_dose["dose"].max()) if len(com_dose) else None,
+    }
+    if serie["SepsisLabel"].max() == 1 and len(esc):
+        onset = int(serie.loc[serie["SepsisLabel"] == 1, "hour"].min())
+        na_janela = [h for h in resumo["escalation_hours"] if onset - 48 <= h < onset]
+        resumo.update({"onset_hour": onset,
+                       "lead_hours": onset - min(na_janela) if na_janela else None})
+    return {"data": serie, "summary": resumo}
+
+
 def run(df: pd.DataFrame, threshold: float = STEP_THRESHOLD) -> dict:
     """Recebe o dataframe já carregado pelo módulo de vitais e roda a subtarefa."""
     serie = detect(build_series(df), threshold=threshold)

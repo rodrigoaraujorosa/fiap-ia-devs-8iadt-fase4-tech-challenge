@@ -247,6 +247,24 @@ def test_variacao_abaixo_do_limiar_nao_alerta():
     assert r["is_escalation"].sum() == 0
 
 
+def test_monitor_de_paciente_sem_dose_nao_entra_em_monitoramento():
+    """Quem tem menos de 3 registros de FiO2 não está sob suporte de oxigênio."""
+    df = _patient("p1", 40)                       # FiO2 é NaN em _patient()
+    s = prescriptions.monitor_patient(df)["summary"]
+    assert not s["monitored"]
+    assert s["observations"] == 0
+
+
+def test_monitor_de_paciente_reporta_escalonamentos_e_antecedencia():
+    """Escalonamento na hora 5, sepse na hora 40 -> fora da janela; na 20 -> dentro."""
+    doses = [0.30] * 20 + [0.60] * 30
+    s = prescriptions.monitor_patient(_com_dose("p1", doses, onset=40))["summary"]
+    assert s["monitored"]
+    assert s["escalations"] == 1
+    assert s["escalation_hours"] == [20]
+    assert s["lead_hours"] == 20
+
+
 def test_prescricoes_lead_time_respeita_a_janela():
     """Mesma regra dos vitais: escalonamento antigo demais não conta como aviso."""
     doses = [0.30] * 5 + [0.60] * 195

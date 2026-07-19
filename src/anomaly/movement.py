@@ -15,9 +15,13 @@ Módulo de biblioteca: o ponto de entrada é ``python -m src.anomaly.cli``.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+MODEL_PATH = Path("models/movement_detector.joblib")
 
 # Em leito, estas são as atividades esperadas; as demais (marcha) são o alvo do alerta.
 REST_ACTIVITIES = ["LAYING", "SITTING", "STANDING"]
@@ -52,20 +56,27 @@ def load_split(root: str, split: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Da
     return X, y, subject
 
 
-def detect(
-    X_train: pd.DataFrame,
-    y_train: pd.DataFrame,
-    X_test: pd.DataFrame,
-    y_test: pd.DataFrame,
-    contamination: float = 0.05,
-    rest_activities: list[str] | None = None,
-) -> pd.DataFrame:
-    """
-    Treina o IsolationForest apenas nas atividades de repouso e classifica o teste.
+@dataclass
+class MovementDetector:
+    """Detector treinado em repouso, pronto para classificar leituras de um sujeito."""
+    model: object
+    rest_activities: list[str]
+    contamination: float
+    trained_on: dict
 
-    Devolve o y_test acrescido de ``is_anomaly`` (1 = alerta) e ``is_movement``
-    (ground-truth: 1 quando a atividade real não é de repouso).
-    """
+    def score(self, X: pd.DataFrame, y: pd.DataFrame | None = None) -> pd.DataFrame:
+        """Classifica leituras. ``y`` é opcional e serve só para conferência posterior."""
+        res = y.copy() if y is not None else pd.DataFrame(index=X.index)
+        res["is_anomaly"] = (self.model.predict(X) == -1).astype(int)
+        res["score"] = self.model.score_samples(X)
+        if y is not None:
+            res["is_movement"] = (~res["activity"].isin(self.rest_activities)).astype(int)
+        return res
+
+
+def fit(X_train: pd.DataFrame, y_train: pd.DataFrame, contamination: float = 0.05,
+        rest_activities: list[str] | None = None) -> MovementDetector:
+    """Treina o IsolationForest **apenas** nas atividades de repouso."""
     from sklearn.ensemble import IsolationForest
 
     rest = rest_activities or REST_ACTIVITIES
@@ -74,12 +85,64 @@ def detect(
     model = IsolationForest(contamination=contamination, random_state=RANDOM_STATE)
     model.fit(X_train[mask])
 
-    res = y_test.copy()
-    res["is_anomaly"] = (model.predict(X_test) == -1).astype(int)
-    res["is_movement"] = (~res["activity"].isin(rest)).astype(int)
-    # score bruto: quanto menor, mais anômalo — usado para a curva ROC
-    res["score"] = model.score_samples(X_test)
-    return res
+    return MovementDetector(
+        model=model,
+        rest_activities=rest,
+        contamination=contamination,
+        trained_on={"samples": int(mask.sum()), "features": X_train.shape[1]},
+    )
+
+
+def save(detector: MovementDetector, path: Path = MODEL_PATH) -> Path:
+    import joblib
+    path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(detector, path)
+    return path
+
+
+def load(path: Path = MODEL_PATH) -> MovementDetector:
+    import joblib
+    if not path.exists():
+        raise FileNotFoundError(
+            f"nenhum modelo em {path} — treine antes: python -m src.anomaly.cli --train")
+    return joblib.load(path)
+
+
+def monitor_subject(subject_id: int, data_root: str,
+                    detector: MovementDetector | None = None) -> dict:
+    """
+    Modo de inferência: classifica as leituras de **um** sujeito do conjunto de teste.
+
+    O sujeito não participou do treino. Devolve as janelas em que o alerta dispararia e,
+    em separado, a atividade real de cada uma, para conferência.
+    """
+    det = detector or load()
+    X, y, subj = load_split(data_root, "test")
+
+    mask = subj["subject"] == subject_id
+    if not mask.any():
+        disponiveis = sorted(subj["subject"].unique().tolist())
+        raise ValueError(f"sujeito {subject_id} não está no teste; disponíveis: {disponiveis}")
+
+    res = det.score(X[mask], y[mask])
+    res["window"] = np.arange(len(res))
+
+    alertas = res[res["is_anomaly"] == 1]
+    return {
+        "data": res,
+        "summary": {
+            "subject": int(subject_id),
+            "windows": int(len(res)),
+            "alerts": int(len(alertas)),
+            "alert_rate": float(res["is_anomaly"].mean()),
+            "recall_movement": float(
+                res.loc[res["is_movement"] == 1, "is_anomaly"].mean())
+                if (res["is_movement"] == 1).any() else None,
+            "false_alarm_rate": float(
+                res.loc[res["is_movement"] == 0, "is_anomaly"].mean())
+                if (res["is_movement"] == 0).any() else None,
+        },
+    }
 
 
 def evaluate(res: pd.DataFrame) -> dict:
@@ -125,17 +188,20 @@ def run(data_root: str, contamination: float = 0.05) -> dict:
     X_train, y_train, subj_train = load_split(data_root, "train")
     X_test, y_test, subj_test = load_split(data_root, "test")
 
-    res = detect(X_train, y_train, X_test, y_test, contamination=contamination)
+    detector = fit(X_train, y_train, contamination=contamination)
+    res = detector.score(X_test, y_test)
     metrics = evaluate(res)
     metrics.update({
         "train_samples": len(X_train),
-        "train_rest_samples": int(y_train["activity"].isin(REST_ACTIVITIES).sum()),
+        "train_rest_samples": detector.trained_on["samples"],
         "features": X_train.shape[1],
         "subjects_train": int(subj_train["subject"].nunique()),
         "subjects_test": int(subj_test["subject"].nunique()),
         "contamination": contamination,
     })
-    return {"results": res, "metrics": metrics, "per_activity": per_activity(res)}
+    return {"results": res, "metrics": metrics, "per_activity": per_activity(res),
+            "detector": detector,
+            "test_subjects": sorted(subj_test["subject"].unique().tolist())}
 
 
 def plot(res: pd.DataFrame, out_path: str) -> str:
