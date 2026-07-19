@@ -361,3 +361,39 @@ def test_grafico_agrupa_horas_consecutivas_em_faixas(tmp_path):
     saida = plot_monitor(df, "p1", str(tmp_path / "fig.png"))
     assert saida and pathlib.Path(saida).exists()
     assert pathlib.Path(saida).stat().st_size > 0
+
+
+# ------------------------------------------------------- movimentação: inferência
+
+def _leituras(atividades: list[str], alertas: list[int]) -> pd.DataFrame:
+    return pd.DataFrame({"activity": atividades, "is_anomaly": alertas})
+
+
+def test_timeline_de_movimentacao_gera_figura(tmp_path):
+    """A faixa temporal mostra a sequência, que o gráfico de barras agregado não mostra."""
+    from src.anomaly.report import plot_subject_timeline
+
+    res = _leituras(["LAYING"] * 10 + ["WALKING"] * 10 + ["SITTING"] * 5,
+                    [0] * 10 + [1] * 10 + [0] * 5)
+    saida = plot_subject_timeline(res, 2, str(tmp_path / "t.png"))
+    assert saida and pathlib.Path(saida).exists()
+
+
+def test_timeline_vazia_devolve_none(tmp_path):
+    from src.anomaly.report import plot_subject_timeline
+
+    assert plot_subject_timeline(pd.DataFrame(), 2, str(tmp_path / "t.png")) is None
+
+
+def test_movimentacao_e_leitos_usam_unidades_diferentes():
+    """
+    Sujeito e paciente não são a mesma coisa, e o app não pode sugerir que sejam.
+
+    Os dois datasets não têm indivíduos em comum; juntá-los numa fila única daria a
+    entender que o hospital monitora as três séries do mesmo paciente. O teste fixa que
+    a lista de sujeitos do HAR é disjunta do formato de id dos pacientes de UTI.
+    """
+    from src.anomaly.app import HAR_TEST_SUBJECTS
+
+    assert all(isinstance(s, int) for s in HAR_TEST_SUBJECTS)
+    assert not any(str(s).startswith("p0") for s in HAR_TEST_SUBJECTS)

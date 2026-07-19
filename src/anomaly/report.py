@@ -125,6 +125,66 @@ def plot_monitor(df: pd.DataFrame, patient: str, out_path: str,
     return str(caminho)
 
 
+def plot_subject_timeline(res: pd.DataFrame, subject: int, out_path: str) -> str | None:
+    """
+    Figura do monitoramento de movimentação: atividade real e alerta ao longo do tempo.
+
+    A taxa de alerta por atividade (``movement.plot``) mostra o agregado, mas não deixa
+    ver o comportamento na sequência. Aqui cada janela de leitura vira uma coluna: em
+    cima a atividade que o sujeito realizava, embaixo se o alerta disparou. Fica visível
+    de relance que os blocos de marcha acendem por inteiro e os de repouso ficam quase
+    todos apagados.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+
+    if res.empty:
+        return None
+
+    from .movement import REST_ACTIVITIES
+
+    ordem = ["LAYING", "SITTING", "STANDING",
+             "WALKING", "WALKING_UPSTAIRS", "WALKING_DOWNSTAIRS"]
+    presentes = [a for a in ordem if a in set(res["activity"])]
+    pos = {a: i for i, a in enumerate(presentes)}
+
+    x = range(len(res))
+    fig, (ax_a, ax_b) = plt.subplots(
+        2, 1, figsize=(11, 5), sharex=True, gridspec_kw={"height_ratios": [3, 1]})
+
+    # painel de cima: atividade real, colorida por classe
+    for i, (_, r) in enumerate(res.iterrows()):
+        movimento = r["activity"] not in REST_ACTIVITIES
+        ax_a.bar(i, 1, bottom=pos[r["activity"]], width=1.0,
+                 color="#c0392b" if movimento else "#2e86c1", linewidth=0)
+
+    ax_a.set_yticks([v + 0.5 for v in pos.values()])
+    ax_a.set_yticklabels(presentes, fontsize=8)
+    ax_a.set_ylim(0, len(presentes))
+    ax_a.set_title(f"Movimentação do sujeito {subject} — atividade real e alerta")
+    # legenda fora da área de dados: dentro, ela cobre os blocos do canto superior
+    ax_a.legend(handles=[Patch(color="#2e86c1", label="repouso (esperado em leito)"),
+                         Patch(color="#c0392b", label="marcha (deve alertar)")],
+                loc="lower center", bbox_to_anchor=(0.5, 1.06), ncol=2, fontsize=8,
+                frameon=False)
+
+    # painel de baixo: o que o detector disparou
+    ax_b.bar(x, res["is_anomaly"], width=1.0, color="#c0392b", linewidth=0)
+    ax_b.set_yticks([0, 1])
+    ax_b.set_yticklabels(["sem alerta", "ALERTA"], fontsize=8)
+    ax_b.set_ylim(-0.1, 1.1)
+    ax_b.set_xlabel("janela de leitura (ordem de aquisição)")
+
+    fig.tight_layout()
+    caminho = Path(out_path)
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(caminho, dpi=120)
+    plt.close(fig)
+    return str(caminho)
+
+
 def build_report(vitals: dict, movement: dict, prescriptions: dict,
                  comparison: pd.DataFrame, figures: dict[str, str]) -> str:
     """Monta o markdown do relatório a partir dos resultados das três subtarefas."""

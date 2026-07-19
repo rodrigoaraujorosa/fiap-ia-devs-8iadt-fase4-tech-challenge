@@ -21,11 +21,15 @@ from pathlib import Path
 import gradio as gr
 import pandas as pd
 
-from . import alerts, prescriptions, vitals
-from .report import FIGURES_DIR, plot_monitor
+from . import alerts, movement, prescriptions, vitals
+from .report import FIGURES_DIR, plot_monitor, plot_subject_timeline
 
 DEFAULT_VITALS_DIR = "data/anomaly/challenge2019"
+DEFAULT_HAR_DIR = "data/anomaly/uci_har/UCI HAR Dataset"
 DEFAULT_LIMIT = 1000
+
+# Sujeitos que o UCI HAR reserva para teste — o modelo de movimentação não os viu.
+HAR_TEST_SUBJECTS = [2, 4, 9, 10, 12, 13, 18, 20, 24]
 
 # A porta 7860 é do app da Entrega 1; os dois podem ficar abertos lado a lado na demo.
 PORT = 7861
@@ -163,48 +167,122 @@ def abrir_paciente(serie: pd.DataFrame | None, tabela: pd.DataFrame | None,
     return fig, "\n".join(L)
 
 
+def carregar_movimentacao(sujeito: int, progress=gr.Progress()):
+    """Classifica as leituras de um sujeito e devolve a faixa temporal + a leitura."""
+    try:
+        detector = movement.load()
+    except FileNotFoundError as e:
+        raise gr.Error(str(e)) from e
+
+    progress(0.3, desc=f"Classificando as leituras do sujeito {int(sujeito)}...")
+    try:
+        r = movement.monitor_subject(int(sujeito), DEFAULT_HAR_DIR, detector=detector)
+    except ValueError as e:
+        raise gr.Error(str(e)) from e
+
+    s, res = r["summary"], r["data"]
+    fig = plot_subject_timeline(
+        res, int(sujeito), str(FIGURES_DIR / f"timeline_sujeito_{int(sujeito)}.png"))
+
+    por_atividade = (res.groupby("activity")
+                        .agg(janelas=("is_anomaly", "size"), alerta=("is_anomaly", "mean"))
+                        .sort_values("alerta", ascending=False))
+
+    L = [f"### Sujeito {s['subject']} — {s['windows']} janelas de leitura", ""]
+    L.append(f"**{s['alerts']} janelas em alerta** ({s['alert_rate']:.1%} das leituras).")
+    L.append("")
+    L.append("| Atividade | Classe | Janelas | Em alerta |")
+    L.append("|---|---|---:|---:|")
+    for atividade, linha in por_atividade.iterrows():
+        classe = "repouso" if atividade in movement.REST_ACTIVITIES else "**marcha**"
+        L.append(f"| `{atividade}` | {classe} | {int(linha['janelas'])} "
+                 f"| {linha['alerta']:.1%} |")
+    L.append("")
+    if s["recall_movement"] is not None:
+        L.append(f"**Recall sobre marcha {s['recall_movement']:.1%}** · "
+                 f"falso alarme no repouso {s['false_alarm_rate']:.1%}")
+    return fig, "\n".join(L)
+
+
 def build_demo() -> gr.Blocks:
+    """
+    Duas abas, uma por fonte de dados.
+
+    A separação não é estética: os pacientes do Challenge 2019 e os sujeitos do UCI HAR
+    **não são as mesmas pessoas**. Uma fila única sugeriria que o hospital monitora as
+    três séries do mesmo paciente, o que a origem dos dados não sustenta. As abas deixam
+    a fronteira explícita, e o texto de cada uma diz de onde vêm os dados.
+    """
     with gr.Blocks(title="Painel de Plantão — Entrega 3") as demo:
         gr.Markdown(
             "# 🚨 Painel de Plantão — Alertas Automáticos\n"
-            "Fluxo final do alerta à equipe médica. A fila é montada a partir das "
-            "anomalias detectadas em **sinais vitais** e **evolução da dose prescrita**, "
-            "sobre pacientes que o modelo não viu no treino."
+            "Fluxo final do alerta à equipe médica, a partir das anomalias detectadas. "
+            "Cada aba corresponde a uma fonte de dados; em ambas, os indivíduos "
+            "monitorados **não participaram do treino** do respectivo modelo."
         )
 
         estado_serie = gr.State()
         estado_fila = gr.State()
 
-        with gr.Row():
-            limite = gr.Slider(200, 5000, value=DEFAULT_LIMIT, step=100,
-                               label="Pacientes na coorte (mais = mais lento)")
-            prioridades = gr.CheckboxGroup(
-                [alerts.ALTA, alerts.MEDIA], value=[alerts.ALTA, alerts.MEDIA],
-                label="Prioridades exibidas")
-        carregar_btn = gr.Button("▶ Carregar plantão", variant="primary")
-        resumo = gr.Markdown()
+        with gr.Tab("🛏️ Leitos — sinais vitais e prescrições"):
+            gr.Markdown(
+                "Pacientes de UTI do **PhysioNet Challenge 2019**. As duas subtarefas "
+                "descrevem o mesmo paciente, então compõem uma fila única."
+            )
+            with gr.Row():
+                limite = gr.Slider(200, 5000, value=DEFAULT_LIMIT, step=100,
+                                   label="Pacientes na coorte (mais = mais lento)")
+                prioridades = gr.CheckboxGroup(
+                    [alerts.ALTA, alerts.MEDIA], value=[alerts.ALTA, alerts.MEDIA],
+                    label="Prioridades exibidas")
+            carregar_btn = gr.Button("▶ Carregar plantão", variant="primary")
+            resumo = gr.Markdown()
 
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown("**Fila de plantão** — clique numa linha para abrir o paciente.")
-                tabela = gr.Dataframe(interactive=False, wrap=True,
-                                      label="Alertas ativos")
-                gr.Markdown(LEGENDA)
-            with gr.Column(scale=2):
-                gr.Markdown("**Série temporal do paciente** — a faixa laranja é a janela "
-                            "de 48 h que antecede o início da sepse; as faixas "
-                            "vermelhas marcam as horas em alerta.")
-                grafico = gr.Image(label="Monitoramento", type="filepath")
-                detalhe = gr.Markdown()
+            with gr.Row():
+                with gr.Column(scale=1):
+                    gr.Markdown("**Fila de plantão** — clique numa linha para abrir "
+                                "o paciente.")
+                    tabela = gr.Dataframe(interactive=False, wrap=True,
+                                          label="Alertas ativos")
+                    gr.Markdown(LEGENDA)
+                with gr.Column(scale=2):
+                    gr.Markdown("**Série temporal do paciente** — a faixa laranja é a "
+                                "janela de 48 h que antecede o início da sepse; as "
+                                "faixas vermelhas marcam as horas em alerta.")
+                    grafico = gr.Image(label="Monitoramento", type="filepath")
+                    detalhe = gr.Markdown()
 
-        gr.Markdown(
-            "---\n"
-            "A prioridade vem da confiabilidade **medida** de cada modalidade: "
-            "movimentação AUC 0,9999 (alerta automático), sinais vitais AUC 0,555 "
-            "(triagem). Um paciente sobe para **ALTA** quando duas séries independentes "
-            "disparam. **Sinais vitais não constituem diagnóstico** — esta fila é de "
-            "triagem, para revisão humana."
-        )
+            gr.Markdown(
+                "---\n"
+                "A prioridade vem da confiabilidade **medida**: os sinais vitais têm "
+                "AUC 0,555 e servem de **triagem**, não de diagnóstico. Um paciente "
+                "sobe para **ALTA** quando duas séries independentes disparam."
+            )
+
+        with gr.Tab("🚶 Movimentação do paciente"):
+            gr.Markdown(
+                "Sujeitos do **UCI HAR**, monitorados por acelerômetro e giroscópio. "
+                "**Outro dataset, outras pessoas** — não há correspondência com os "
+                "pacientes da aba anterior, e por isso a unidade aqui é o *sujeito*.\n\n"
+                "O modelo foi treinado **apenas** em atividades de repouso (`LAYING`, "
+                "`SITTING`, `STANDING`), que é o esperado em leito, e nunca viu marcha. "
+                "Com AUC 0,9999 é a modalidade de maior confiabilidade medida — a única "
+                "adequada a alerta automático."
+            )
+            with gr.Row():
+                sujeito = gr.Dropdown(HAR_TEST_SUBJECTS, value=HAR_TEST_SUBJECTS[0],
+                                      label="Sujeito monitorado (retidos para teste)")
+                mov_btn = gr.Button("▶ Monitorar sujeito", variant="primary")
+
+            grafico_mov = gr.Image(label="Atividade real e alerta", type="filepath")
+            detalhe_mov = gr.Markdown()
+
+            gr.Markdown(
+                "---\n"
+                "No painel superior, a atividade que o sujeito realizava em cada janela "
+                "de leitura; no inferior, se o alerta disparou. Os blocos de marcha "
+                "acendem por inteiro e os de repouso ficam quase todos apagados."
+            )
 
         carregar_btn.click(
             carregar, [limite, prioridades],
@@ -212,6 +290,8 @@ def build_demo() -> gr.Blocks:
             show_progress_on=[tabela])
         prioridades.change(filtrar, [estado_fila, prioridades], [tabela])
         tabela.select(abrir_paciente, [estado_serie, tabela], [grafico, detalhe])
+        mov_btn.click(carregar_movimentacao, [sujeito], [grafico_mov, detalhe_mov],
+                      show_progress_on=[grafico_mov])
 
     return demo
 
