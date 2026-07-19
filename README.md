@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10%20ou%20superior-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![OpenPose](https://img.shields.io/badge/OpenPose-BODY__25-00FFFF)
-![Azure](https://img.shields.io/badge/Azure-Cognitive%20Services-0078D4?logo=microsoftazure&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-Transcribe%20%C2%B7%20Comprehend%20Medical-FF9900?logo=amazonaws&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Plataforma que monitora continuamente pacientes em ambiente hospitalar / UTI a partir de
@@ -39,21 +39,25 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── keypoints.py posture.py anomaly.py   # parser, ângulos, desvios
 │   │   ├── report.py overlay.py validate.py     # relatório, vídeo anotado, validação
 │   │   └── run_openpose.py cli.py               # OpenPose + pipeline fim-a-fim
-│   ├── audio/                # Entrega 2 — análise de áudio
+│   ├── audio/                # Entrega 2 — análise de áudio (AWS)
+│   │   ├── consultations.py transcribe.py       # dataset, Transcribe + WER
+│   │   ├── comprehend.py report.py              # entidades, sentimento, relatório
+│   │   └── cli.py cache.py                      # pipeline fim-a-fim + cache
 │   └── anomaly/              # Entrega 3 — detecção de anomalias
 │       ├── load_challenge2019.py   # loader + baseline (sinais vitais)
 │       └── load_uci_har.py         # loader + baseline (movimentação)
 ├── data/                     # datasets baixados localmente (não versionado)
 │   ├── video/  audio/  anomaly/
-├── docs/                     # enunciado do desafio + guia de datasets
-│   ├── 8IADT - Fase 4 - Tech challenge.pdf
-│   └── datasets_README.md
+├── docs/                     # guia de datasets e setup do OpenPose
+│   ├── datasets_README.md
+│   └── openpose_setup.md
 ├── reports/                  # relatório técnico e figuras geradas
 │   └── figures/
 ├── tests/                    # testes automatizados
-├── requirements.txt
+├── requirements.txt          # pisos de versão
+├── requirements-lock.txt     # versões exatas, para auditar os resultados
 ├── pyproject.toml
-├── .env.example              # modelo de credenciais Azure
+├── .env.example              # modelo de configuração da AWS (sem segredos)
 ├── LICENSE                   # MIT (código); datasets têm licença própria
 └── README.md
 ```
@@ -217,6 +221,28 @@ Há também uma **app web local** para demonstração (`python -m src.video.app`
 progresso, o gráfico, o relatório e o vídeo com o esqueleto sobreposto. Detalhes em
 [`src/video/README.md`](src/video/README.md).
 
+### Entrega 2 — Análise de Áudio (AWS)
+
+Requer conta AWS configurada (ver a seção acima) e o dataset de consultas em
+`data/audio/consultas/`. Um comando roda o pipeline inteiro: upload ao S3 → transcrição →
+entidades clínicas → sentimento → relatório bilíngue.
+
+```bash
+python -m src.audio.cli --case RES0029
+```
+
+- `--dry-run` mostra o que seria cobrado, **sem executar nada**
+- `--cases A B C` processa em lote e reporta média e desvio do WER
+- `--report` recalcula as métricas do cache, **sem chamar a AWS**
+- `--no-translate` gera o relatório sem usar o Amazon Translate
+
+O relatório sai em `reports/audio_<caso>.md`, **bilíngue**: cada achado e cada trecho
+citado aparecem no original em inglês seguidos da tradução para o português — o áudio-fonte
+é em inglês, e a equipe precisa poder conferir contra a gravação.
+
+> 💰 As etapas de nuvem são pagas por volume. Todo resultado é **cacheado**, e nenhum caso
+> é reprocessado sem `--force`. Detalhes em [`src/audio/README.md`](src/audio/README.md).
+
 ### Entrega 3 — Detecção de Anomalias
 
 ```bash
@@ -248,7 +274,7 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 - 📄 **Relatório técnico** ([`reports/`](reports/)): fluxo multimodal, modelos por tipo de
   dado, resultados e exemplos de anomalias detectadas
 - 🎬 **Vídeo** (até 15 min, YouTube/Vimeo) demonstrando o processamento multimodal, a
-  detecção/resposta a anomalias, a integração Azure e o fluxo de alerta à equipe médica
+  detecção/resposta a anomalias, a integração com a AWS e o fluxo de alerta à equipe médica
 
 ---
 

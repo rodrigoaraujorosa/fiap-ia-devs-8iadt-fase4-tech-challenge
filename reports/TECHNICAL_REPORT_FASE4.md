@@ -110,6 +110,50 @@ dos datasets (fontes distintas, sem pacientes compartilhados).
 
 ---
 
+### 2.3 Modelos Aplicados por Tipo de Dado
+
+| Tipo de dado | Tarefa | Modelo / serviço | Natureza |
+|:--|:--|:--|:--|
+| **Vídeo** (RGB) | estimação de pose 2D | **OpenPose, arquitetura BODY_25** (v1.7.0) | modelo aberto, arquitetura e pesos públicos |
+| Vídeo (ângulos) | detecção de desvio | **z-score robusto (mediana + MAD)** ∪ **IsolationForest** | algoritmos clássicos, implementados localmente |
+| **Áudio** (fala) | reconhecimento de fala + diarização | **Amazon Transcribe** (`en-US`, `MaxSpeakerLabels=2`) | serviço gerenciado |
+| Áudio (texto) | extração de entidades clínicas | **Amazon Comprehend Medical** (`DetectEntitiesV2`) | serviço gerenciado |
+| Áudio (texto) | classificação de sentimento | **Amazon Comprehend** (`DetectSentiment`, `BatchDetectSentiment`) | serviço gerenciado |
+| Áudio (texto) | tradução en→pt | **Amazon Translate** (`TranslateText`) | serviço gerenciado |
+| **Séries temporais** | detecção de anomalia | **IsolationForest** (`contamination` ajustado por subtarefa) | algoritmo clássico, implementado localmente |
+
+**Uma diferença que vale explicitar.** No vídeo, o modelo é **nomeado e auditável**: a
+arquitetura BODY_25 é pública, os pesos são distribuídos, e é possível inspecionar os 25
+keypoints que ela produz. No áudio, os modelos são **proprietários e não publicados** — a
+AWS expõe a tarefa e o contrato da API, não a arquitetura nem os dados de treino.
+
+Isso é uma consequência direta do requisito do enunciado de usar serviços gerenciados em
+nuvem, e tem implicações que o trabalho procurou endereçar:
+
+- **Não se pode inspecionar o modelo, mas pode-se medir sua saída.** Daí a decisão de
+  validar o Transcribe contra a transcrição humana do dataset (WER, 4.4) e o Comprehend
+  Medical comparando as extrações sobre as duas transcrições (recall, 4.5), em vez de
+  apenas exibir os resultados.
+- **A versão da API importa e fica registrada.** `DetectEntitiesV2` substitui a `V1` e
+  devolve traços (`NEGATION`, `PERTAINS_TO_FAMILY`) que a versão anterior não tem — e é
+  desses traços que depende a separação entre o que o paciente afirmou e o que negou.
+- **O comportamento pode mudar sem aviso.** Modelos gerenciados são atualizados pelo
+  provedor; os números aqui valem para as execuções de julho de 2026, cujos JSON brutos
+  estão versionados em `reports/` para permitir auditoria posterior.
+
+**Componentes determinísticos implementados neste trabalho** (não são modelos aprendidos,
+mas participam da decisão e por isso constam aqui):
+
+| Componente | Onde | Papel |
+|:--|:--|:--|
+| Seleção robusta de pessoa | `video/keypoints.py` | escolhe o paciente entre várias pessoas na cena |
+| Cálculo de 9 ângulos articulares | `video/posture.py` | converte keypoints em variáveis clínicas |
+| WER por distância de edição | `audio/transcribe.py` | mede o erro da transcrição contra a referência |
+| Identificação do falante-paciente | `audio/transcribe.py` | dois sinais independentes, recusa-se a decidir se discordarem |
+| Filtro de achados clínicos | `audio/comprehend.py` | descarta negados, hipotéticos, de familiares e abaixo de 0,70 |
+
+---
+
 ## 3. Entrega 1 — Análise de Vídeo (OpenPose)
 
 ### 3.1 Visão Geral

@@ -36,6 +36,12 @@ ENV/
 secrets.json
 azure_credentials.json
 
+# ===== Documentos internos (não publicar) =====
+# HANDOFF: notas de continuidade entre sessões, uso interno da equipe.
+docs/HANDOFF.md
+# Enunciado do desafio: material da FIAP, não redistribuir no repositório público.
+docs/*.pdf
+
 # ===== Configuração local de ferramentas =====
 .claude/
 
