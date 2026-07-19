@@ -57,7 +57,8 @@ Desenvolver um sistema que:
 | Este Relatório | `reports/TECHNICAL_REPORT_FASE4.md` |
 | Repositório | https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge |
 | Vídeo (até 15 min) | (a publicar — YouTube/Vimeo) |
-| App de demonstração (Gradio) | `python -m src.video.app` |
+| App de demonstração — vídeo (Gradio) | `python -m src.video.app` (porta 7860) |
+| App de demonstração — alertas (Gradio) | `python -m src.anomaly.app` (porta 7861) |
 
 ### 1.3 Visão Geral das Três Entregas
 
@@ -65,15 +66,16 @@ Desenvolver um sistema que:
 |:--|:--|:--|:--|:--|:--|
 | 1 | Análise de Vídeo | Detectar desvios posturais em vídeos de reabilitação | REHAB24-6 (RGB + rótulos correto/incorreto) | OpenPose (BODY_25), IsolationForest, z-score robusto | **Implementada e validada** (3 vídeos, contra os rótulos de execução) |
 | 2 | Análise de Áudio | Transcrever a fala, extrair achados clínicos e analisar o sentimento | Consultas médicas simuladas (transcrição humana como referência) | Amazon Transcribe, Comprehend Medical, Comprehend, Translate | **Implementada e validada** (4 consultas, contra a transcrição humana) |
-| 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR, Synthea | IsolationForest (baseline) | Baseline implementado, **ainda não executado com dados reais** |
+| 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR | IsolationForest (vitais e movimentação), regra de degrau (dose) | **Implementada e validada** (5.000 pacientes e 9 sujeitos retidos, contra `SepsisLabel` e rótulos de atividade) |
 
 > **Critério de "validada".** Uma entrega é considerada validada quando seus resultados
 > são **medidos contra um ground-truth independente**, e não apenas exibidos. Na Entrega 1,
 > os desvios posturais são cruzados com os rótulos de execução correta/incorreta do
 > REHAB24-6 (3.8); na Entrega 2, a transcrição automática é medida contra a transcrição
 > humana revisada do dataset (WER, 4.4) e a extração clínica é comparada entre as duas
-> origens (recall, 4.5). A Entrega 3 dispõe de ground-truth (`SepsisLabel` e os rótulos de
-> atividade), mas ainda não foi executada com os dados reais.
+> origens (recall, 4.5); na Entrega 3, os alertas são medidos contra o `SepsisLabel` e
+> contra a atividade real do UCI HAR, sempre sobre indivíduos que não participaram do
+> treino (5.3 a 5.5).
 
 ### 1.4 Datasets Utilizados
 
@@ -83,39 +85,60 @@ Desenvolver um sistema que:
 | Áudio | Consultas médicas simuladas | Aberto (figshare, CC0) | 272 consultas com áudio e transcrição humana |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | 40.336 pacientes de UTI, séries horárias |
 | Movimentação | UCI HAR | Aberto (~60 MB) | 561 features (acelerômetro + giroscópio), 6 atividades |
-| Prescrições | Synthea (sintético) | Aberto | Gerador de registros clínicos sintéticos |
+| Prescrições | variável derivada do Challenge 2019 (`FiO2`) | — sem dataset adicional | Único campo *prescrito*, e não medido; ver 5.5 |
+
+Os datasets **não descrevem os mesmos indivíduos** — não há paciente comum entre vídeo,
+áudio e sinais vitais. É a prática usual quando cada modalidade tem sua fonte aberta, e a
+consequência para a arquitetura está em 2.2.
 
 ---
 
 ## 2. Arquitetura Geral do Sistema
 
-O sistema é composto por três pipelines independentes (um por modalidade) que convergem
-para uma camada de fusão e alerta. Cada modalidade produz um sinal de anomalia
-interpretável que pode disparar um alerta à equipe médica.
+O sistema é composto por **três pipelines independentes**, um por modalidade, cada um com
+seu próprio entregável. O vídeo e o áudio produzem relatórios; a detecção de anomalias
+produz, além do relatório, a **fila de alerta à equipe médica** — que é onde o enunciado
+pede alerta automático (item 3).
 
 ```
-[Vídeo: reabilitação]  ── OpenPose ──► keypoints ──► ângulos ──► desvios ─┐
-                                                                          │
-[Áudio: consulta]  ── Transcribe ──► transcrição ──► Comprehend Medical ─┤
-                                                                          ├─► fusão / alerta
-                                                                          │    à equipe médica
-[Sinais vitais / movimentação / prescrições]  ── IsolationForest ────────┘
+[Vídeo: reabilitação]  ── OpenPose ──► ângulos ──► desvios ──────► relatório + vídeo anotado
+
+[Áudio: consulta]  ── Transcribe ──► Comprehend Medical ─────────► relatório clínico bilíngue
+
+[Sinais vitais]      ── IsolationForest ──┐
+[Movimentação]       ── IsolationForest ──┼─► fila de plantão ──► alerta à equipe médica
+[Prescrições (dose)] ── regra de degrau ──┘
 ```
+
+As três modalidades **não se fundem num sinal único**, e a razão é dos dados: os datasets
+descrevem populações distintas, sem paciente comum entre vídeo, áudio e sinais vitais
+(1.4). Uma camada de fusão exigiria correspondência de indivíduos que as fontes abertas não
+oferecem — e o enunciado não a requer. O que integra o trabalho é a arquitetura comum:
+mesma estrutura de módulos, mesma disciplina de validação contra *ground-truth* e o mesmo
+baseline não-supervisionado onde cabe.
 
 ### 2.1 Componentes por Modalidade
 
 | Modalidade | Entrada | Processamento | Saída |
 |:--|:--|:--|:--|
-| Vídeo | vídeo RGB (.mp4) | OpenPose (BODY_25) → ângulos articulares → detecção de desvios | relatório + vídeo anotado |
-| Áudio | consulta (.mp3) | Amazon Transcribe + Comprehend Medical | transcrição + achados clínicos tipados |
-| Anomalias | séries temporais (.psv/.txt/.csv) | IsolationForest + z-score | frames/horas anômalas + alertas |
+| Vídeo | vídeo RGB (`.mp4`) | OpenPose (BODY_25) → ângulos articulares → detecção de desvios | relatório + vídeo anotado |
+| Áudio | consulta (`.mp3`) | Amazon Transcribe → Comprehend Medical + Comprehend + Translate | relatório clínico bilíngue |
+| Sinais vitais | séries horárias (`.psv`) | z-score por MAD contra a linha de base do paciente → IsolationForest | horas em alerta |
+| Movimentação | janelas de sensor (`.txt`) | IsolationForest treinado só em repouso | janelas em alerta |
+| Prescrições | série de dose, derivada (`.psv`) | regra de degrau na FiO2 | escalonamentos de dose |
+
+As três últimas convergem para a fila de plantão (5.7), que é o alerta pedido no item 3 do
+enunciado.
 
 ### 2.2 Princípio de Projeto: Desacoplamento
 
-Cada modalidade é autocontida e independe das demais para executar. A integração ocorre na
-camada de alerta, que consome os sinais de anomalia de cada pipeline. Esse desacoplamento
-permite desenvolver, testar e avaliar cada entrega separadamente — coerente com a natureza
-dos datasets (fontes distintas, sem pacientes compartilhados).
+Cada modalidade é autocontida e independe das demais para executar. Esse desacoplamento
+permite desenvolver, testar e avaliar cada entrega separadamente — e é coerente com a
+natureza dos datasets, que vêm de fontes distintas e não compartilham pacientes.
+
+Dentro da Entrega 3, sinais vitais e prescrições **descrevem o mesmo paciente** e por isso
+compõem uma fila única; a movimentação vem de outro dataset e é monitorada por sujeito, em
+comando e aba próprios (5.6, 5.8).
 
 ---
 
@@ -129,7 +152,9 @@ dos datasets (fontes distintas, sem pacientes compartilhados).
 | Áudio (texto) | extração de entidades clínicas | **Amazon Comprehend Medical** (`DetectEntitiesV2`) | serviço gerenciado |
 | Áudio (texto) | classificação de sentimento | **Amazon Comprehend** (`DetectSentiment`, `BatchDetectSentiment`) | serviço gerenciado |
 | Áudio (texto) | tradução en→pt | **Amazon Translate** (`TranslateText`) | serviço gerenciado |
-| **Séries temporais** | detecção de anomalia | **IsolationForest** (`contamination` ajustado por subtarefa) | algoritmo clássico, implementado localmente |
+| **Séries de sinais vitais** | detecção de anomalia | **IsolationForest** (`contamination = 0.05`) sobre desvios normalizados por paciente, treinado em coorte sem sepse e persistido | algoritmo clássico, implementado localmente |
+| **Séries de movimentação** | detecção de anomalia | **IsolationForest** (`contamination = 0.05`) treinado apenas em atividades de repouso | algoritmo clássico, implementado localmente |
+| **Série de dose prescrita** | mudança abrupta | **regra de degrau** (variação ≥ 0,15 na FiO2, só aumentos) | determinístico, sem aprendizado |
 
 **Uma diferença que vale explicitar.** No vídeo, o modelo é **nomeado e auditável**: a
 arquitetura BODY_25 é pública, os pesos são distribuídos, e é possível inspecionar os 25
@@ -160,6 +185,9 @@ mas participam da decisão e por isso constam aqui):
 | WER por distância de edição | `audio/transcribe.py` | mede o erro da transcrição contra a referência |
 | Identificação do falante-paciente | `audio/transcribe.py` | dois sinais independentes, recusa-se a decidir se discordarem |
 | Filtro de achados clínicos | `audio/comprehend.py` | descarta negados, hipotéticos, de familiares e abaixo de 0,70 |
+| Normalização por linha de base | `anomaly/vitals.py` | converte cada série no desvio contra as 8 primeiras horas do próprio paciente |
+| Separação treino/teste por paciente | `anomaly/vitals.py` | garante que nenhum paciente avaliado tenha participado do treino |
+| Regra de prioridade da fila | `anomaly/alerts.py` | pondera as modalidades pela confiabilidade medida e eleva a ALTA quando duas séries concordam |
 
 ---
 
