@@ -27,8 +27,9 @@ from pathlib import Path
 
 from ..common.config import ROOT_DIR, get_aws_config
 from .comprehend import CATEGORY_LABELS_PT, TRAIT_LABELS_PT
+from .comprehend import SENTIMENT_LABELS_PT
 from .comprehend import cache_path as entities_cache_path
-from .comprehend import clinical_findings
+from .comprehend import sentiment_cache_path
 from .consultations import load_transcript
 from .transcribe import cache_path as transcript_cache_path
 from .transcribe import evaluate
@@ -83,6 +84,25 @@ def translate(texts: list[str], region: str, enabled: bool = True) -> dict[str, 
     return {t: cache.get(t, t) for t in texts}
 
 
+def _shorten(text: str, limit: int = 220) -> str:
+    """
+    Encurta um trecho **sem cortar palavra pela metade**.
+
+    Isso não é estética: o texto encurtado vai para a tradução automática, e um corte no
+    meio da palavra faz o tradutor adivinhar. Numa verificação, "...right on my chest"
+    truncado como "...right on my che" foi traduzido como "na minha cabeça" em vez de "no
+    meu peito" — num relatório clínico, isso muda o local do trauma.
+    """
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cortado = text[:limit]
+    espaco = cortado.rfind(" ")
+    if espaco > limit * 0.6:      # só recua até a palavra anterior se não mutilar o trecho
+        cortado = cortado[:espaco]
+    return cortado.rstrip(",;:. ") + "..."
+
+
 def _quotes_for(term: str, turns, limit: int = 1) -> list[str]:
     """
     Frases do paciente que contêm o termo, para o achado não ficar solto.
@@ -93,8 +113,7 @@ def _quotes_for(term: str, turns, limit: int = 1) -> list[str]:
     found = []
     for t in turns.itertuples():
         if term.lower() in t.text.lower():
-            frase = " ".join(t.text.split())
-            found.append(frase if len(frase) <= 220 else frase[:217] + "...")
+            found.append(_shorten(t.text))
             if len(found) >= limit:
                 break
     return found
@@ -148,6 +167,13 @@ def build_report(
     quotes = {e["text"]: _quotes_for(e["text"], patient_turns) for e in affirmed}
     to_translate = ([e["text"] for e in affirmed + denied + family]
                     + [q for qs in quotes.values() for q in qs])
+
+    # As falas destacadas na seção de sentimento também precisam de tradução.
+    spath_pre = sentiment_cache_path(case)
+    if spath_pre.exists():
+        s_pre = json.loads(spath_pre.read_text(encoding="utf-8"))
+        for turno in sorted(s_pre.get("by_turn", []), key=lambda x: -x["negative"])[:2]:
+            to_translate.append(_shorten(turno["text"]))
     pt = translate(to_translate, region, enabled=translate_enabled)
 
     L: list[str] = []
@@ -203,19 +229,55 @@ def build_report(
         L.append("")
 
     # --- Trechos de apoio ---
+    #
+    # Agrupados POR TRECHO, não por termo: uma frase costuma conter vários achados
+    # ("...the impact was right on my chest and since then it's been really painful"),
+    # e repeti-la sob cada termo tornava o relatório longo e cansativo de ler.
     L.append("## Trechos que sustentam os achados\n")
-    citados = 0
+    por_trecho: dict[str, list[dict]] = {}
     for e in affirmed:
         for q in quotes.get(e["text"], []):
-            L.append(f"**{e['text']}** — {pt.get(e['text'], e['text'])}\n")
+            por_trecho.setdefault(q, []).append(e)
+            break
+
+    if por_trecho:
+        # Trechos que sustentam mais achados primeiro — são os mais informativos.
+        for q, termos in sorted(por_trecho.items(), key=lambda kv: -len(kv[1]))[:6]:
+            rotulos = "; ".join(f"**{e['text']}** — {pt.get(e['text'], e['text'])}"
+                                for e in termos)
+            L.append(f"{rotulos}\n")
             L.append(f"> {q}\n")
             L.append(f"> *{pt.get(q, q)}*\n")
-            citados += 1
-            break
-        if citados >= 6:
-            break
-    if not citados:
+    else:
         L.append("Não foi possível localizar os trechos de origem.\n")
+
+    # --- Tom do relato ---
+    spath = sentiment_cache_path(case)
+    if spath.exists():
+        s = json.loads(spath.read_text(encoding="utf-8"))
+        rotulo = SENTIMENT_LABELS_PT.get(s["sentiment"], s["sentiment"])
+        neg = s["scores"].get("Negative", 0)
+        L.append("## Tom do relato\n")
+        L.append(f"Análise de sentimento sobre a fala do paciente (Amazon Comprehend): "
+                 f"**{s['sentiment']}** ({rotulo}), com {neg:.0%} de confiança na classe "
+                 f"negativa.\n")
+
+        piores = sorted(s.get("by_turn", []), key=lambda t: -t["negative"])[:2]
+        if piores:
+            L.append("Falas com maior carga negativa:\n")
+            for t in piores:
+                trecho = _shorten(t["text"])
+                L.append(f"> {trecho}\n")
+                L.append(f"> *{pt.get(trecho, trecho)}*\n")
+
+        L.append("> **Como ler este indicador.** O modelo de sentimento é de propósito "
+                 "geral, treinado sobretudo em avaliações e redes sociais. Num relato de "
+                 "sintomas, o vocabulário de dor e desconforto é intrinsecamente negativo, "
+                 "de modo que **um resultado negativo é o esperado numa consulta e, "
+                 "isoladamente, diz pouco**. O indicador ganha sentido na comparação — "
+                 "entre casos, ou no acompanhamento do mesmo paciente ao longo do tempo. "
+                 "Trata-se do sentimento **do texto**, não de uma aferição do estado "
+                 "emocional do paciente.\n")
 
     # --- Qualidade da transcrição ---
     L.append("## Qualidade da transcrição\n")
@@ -237,9 +299,9 @@ def build_report(
 
     L.append("---\n")
     L.append("Relatório gerado automaticamente a partir de: Amazon Transcribe "
-             "(transcrição), Amazon Comprehend Medical (extração de entidades clínicas) "
-             "e Amazon Translate (tradução). **Não substitui a avaliação de um "
-             "profissional de saúde.**")
+             "(transcrição), Amazon Comprehend Medical (entidades clínicas), Amazon "
+             "Comprehend (sentimento) e Amazon Translate (tradução). **Não substitui a "
+             "avaliação de um profissional de saúde.**")
     return "\n".join(L)
 
 

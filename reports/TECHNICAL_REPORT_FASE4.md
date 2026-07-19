@@ -521,8 +521,9 @@ os achados clínicos mencionados pelo paciente, produzindo um relatório para a 
 médica.
 
 ```
-consulta (.mp3) ──► S3 ──► Transcribe ──► diarização ──► Comprehend Medical ──► relatório
-                                                                                bilíngue
+                                        ┌─► Comprehend Medical ──► achados clínicos ─┐
+consulta (.mp3) ──► S3 ──► Transcribe ──┤                                            ├─► relatório
+                          (diarização)  └─► Comprehend ──────────► sentimento ───────┘   bilíngue
 ```
 
 ### 4.2 Troca de Provedor: Azure → AWS
@@ -535,7 +536,13 @@ equivalência é direta e, num ponto, favorável:
 |:--|:--|:--|
 | Transcrição | Azure AI Speech | **Amazon Transcribe** |
 | Entidades clínicas | Text Analytics for Health | **Amazon Comprehend Medical** |
+| Sentimento | Text Analytics | **Amazon Comprehend** (serviço geral) |
 | Tradução | — | **Amazon Translate** |
+
+A divisão entre os serviços difere: o Azure Text Analytics reunia sentimento, frases-chave
+e entidades de saúde num único serviço, enquanto a AWS separa o **Comprehend Medical**
+(entidades clínicas) do **Comprehend** geral (sentimento). São dois clientes distintos, e o
+Comprehend Medical **não possui operação de sentimento** — verificado na própria API.
 
 O Comprehend Medical devolve as entidades já **tipadas e qualificadas por traços**
 (`NEGATION`, `PERTAINS_TO_FAMILY`, `HYPOTHETICAL`), o que carrega para o serviço parte da
@@ -636,7 +643,30 @@ Em sentido oposto, o serviço extraiu `head was fine` como achado positivo, quan
 paciente afirmava justamente estar bem — falso positivo que fica registrado como
 limitação.
 
-### 4.6 Relatório Clínico Bilíngue (`report.py`)
+### 4.6 Análise de Sentimento (`comprehend.py`)
+
+O enunciado pede a identificação de "termos críticos **e sentimentos**". Os termos vêm do
+Comprehend Medical (4.5); o sentimento vem do **Amazon Comprehend** geral, aplicado à fala
+do paciente.
+
+A análise é feita em dois níveis: o **tom geral do relato**, com as pontuações ponderadas
+pelo tamanho de cada bloco de texto, e o **sentimento por turno de fala**, que localiza
+onde o relato é mais negativo.
+
+**Resultado (RES0029):** tom predominante **NEGATIVE**, com 0,95 na classe negativa. As
+três falas de maior carga negativa são clinicamente pertinentes — a piora recente ("it's
+been getting worse", 0,99), o mecanismo do trauma (a queda de bicicleta, 0,96) e a
+qualidade da dor ("someone is just stabbing me", 0,94).
+
+> **Limitação do indicador.** O modelo de sentimento é de propósito geral, treinado
+> sobretudo em avaliações de produtos e redes sociais. Num relato de sintomas, o
+> vocabulário de dor e desconforto é intrinsecamente negativo, de modo que **um resultado
+> negativo é o esperado numa consulta e, isoladamente, informa pouco**. O indicador ganha
+> sentido na **comparação** — entre casos, ou no acompanhamento do mesmo paciente ao longo
+> do tempo. Trata-se do sentimento **do texto**, não de uma aferição do estado emocional do
+> paciente, e o relatório de saída traz essa ressalva junto do resultado.
+
+### 4.7 Relatório Clínico Bilíngue (`report.py`)
 
 O relatório destina-se à equipe médica e é **bilíngue por necessidade**: o áudio-fonte é em
 inglês, e traduzir sem mostrar o original impediria a conferência contra a gravação.
@@ -663,7 +693,7 @@ O relatório informa também o **WER da transcrição que originou os achados**:
 perfeita sobre transcrição ruim continua sendo informação ruim, e a equipe precisa desse
 contexto para calibrar a confiança.
 
-### 4.7 Controle de Custo e Credenciais
+### 4.8 Controle de Custo e Credenciais
 
 Transcribe, Comprehend Medical e Translate cobram por volume processado. Todo resultado é
 **cacheado em disco** (`reports/transcriptions/`, `reports/entities/`,
@@ -739,6 +769,7 @@ executado localmente.
 | **Amazon S3** | armazenamento do áudio — o Transcribe não aceita upload direto | Em uso |
 | **Amazon Transcribe** | transcrição da fala, com diarização de 2 falantes | Em uso |
 | **Amazon Comprehend Medical** | extração de entidades clínicas tipadas (`DetectEntitiesV2`) | Em uso |
+| **Amazon Comprehend** | análise de sentimento do relato (`DetectSentiment`) | Em uso |
 | **Amazon Translate** | tradução dos achados para o relatório bilíngue | Em uso |
 
 Região: `us-east-1`. A escolha não é indiferente — o **Comprehend Medical não está
@@ -791,7 +822,7 @@ automático de alerta ainda não estão implementados. O desenho previsto consom
 anomalia de cada pipeline (desvio postural, achado clínico, anomalia em sinal vital) e
 encaminha o alerta à equipe.
 
-O relatório clínico bilíngue (4.6) já constitui a **saída legível** desse fluxo: reúne os
+O relatório clínico bilíngue (4.7) já constitui a **saída legível** desse fluxo: reúne os
 achados, sua origem na fala do paciente e a confiabilidade da transcrição que os produziu.
 O que falta é a automação do disparo.
 
@@ -873,7 +904,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
 | Gradio | App web local de demonstração (Entrega 1) |
-| AWS (Transcribe, Comprehend Medical, Translate, S3) | Serviços gerenciados da Entrega 2 |
+| AWS (Transcribe, Comprehend Medical, Comprehend, Translate, S3) | Serviços gerenciados da Entrega 2 |
 
 ### 9.2 Bibliotecas Python
 

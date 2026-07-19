@@ -24,7 +24,7 @@ não são os mesmos pacientes nas 3 fontes).
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços |
 |---|---------|----------|---------|--------------------|
 | 1 | 🎥 **Análise de Vídeo** | Detectar movimentos/eventos fora do padrão em vídeos clínicos | REHAB24-6 (reabilitação, RGB + rótulos correto/incorreto) | OpenPose (BODY_25) |
-| 2 | 🎙️ **Análise de Áudio** | Transcrever consultas e extrair os achados clínicos relatados | Consultas médicas simuladas (figshare) | Amazon Transcribe · Comprehend Medical · Translate |
+| 2 | 🎙️ **Análise de Áudio** | Transcrever consultas, extrair achados clínicos e analisar o sentimento do relato | Consultas médicas simuladas (figshare) | Amazon Transcribe · Comprehend Medical · Comprehend · Translate |
 | 3 | 📈 **Detecção de Anomalias** | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019 · UCI HAR · Synthea | IsolationForest (baseline) |
 
 ---
@@ -113,6 +113,7 @@ programático. As permissões mínimas são:
 | **Amazon S3** | o Transcribe **não aceita upload direto** — o áudio precisa estar no S3 | `s3:PutObject`, `s3:GetObject`, `s3:ListBucket` |
 | **Amazon Transcribe** | transcrever a fala das consultas | `transcribe:StartTranscriptionJob`, `transcribe:GetTranscriptionJob` |
 | **Amazon Comprehend Medical** | extrair entidades clínicas da transcrição | `comprehendmedical:DetectEntitiesV2` |
+| **Amazon Comprehend** | analisar o sentimento do relato | `comprehend:DetectSentiment`, `comprehend:BatchDetectSentiment` |
 
 As políticas gerenciadas `AmazonS3FullAccess`, `AmazonTranscribeFullAccess` e
 `ComprehendMedicalFullAccess` cobrem tudo — são mais amplas que o necessário, aceitável

@@ -157,6 +157,106 @@ def cache_path(case: str, source: str) -> Path:
     return CACHE_DIR / f"{case}__{source}.json"
 
 
+# ----- Sentimento (Amazon Comprehend, o serviço geral) -----
+#
+# A divisão da AWS difere da Azure: o Text Analytics reunia sentimento, frases-chave e
+# entidades de saúde num serviço só; na AWS o **Comprehend Medical** faz as entidades
+# clínicas e o **Comprehend** (geral) faz o sentimento. São dois clientes distintos.
+
+SENTIMENT_LABELS_PT = {
+    "POSITIVE": "positivo",
+    "NEGATIVE": "negativo",
+    "NEUTRAL": "neutro",
+    "MIXED": "misto",
+}
+
+# Limite de bytes por chamada do DetectSentiment, com folga.
+SENTIMENT_MAX_BYTES = 4_500
+
+
+def sentiment_cache_path(case: str) -> Path:
+    return CACHE_DIR / f"{case}__sentiment.json"
+
+
+def detect_sentiment(text: str, region: str) -> dict:
+    """
+    Sentimento predominante do texto e a pontuação de cada classe.
+
+    Textos longos são divididos e as pontuações, ponderadas pelo tamanho de cada bloco —
+    a média simples daria a um trecho de 20 palavras o mesmo peso de um de 400.
+    """
+    import boto3
+
+    client = boto3.client("comprehend", region_name=region)
+    chunks = _split_text(text, max_bytes=SENTIMENT_MAX_BYTES)
+
+    total = 0
+    acc = {"Positive": 0.0, "Negative": 0.0, "Neutral": 0.0, "Mixed": 0.0}
+    for chunk in chunks:
+        r = client.detect_sentiment(Text=chunk, LanguageCode="en")
+        peso = len(chunk)
+        total += peso
+        for k, v in r["SentimentScore"].items():
+            acc[k] += v * peso
+
+    scores = {k: round(v / total, 4) for k, v in acc.items()} if total else acc
+    predominante = max(scores, key=scores.get).upper()
+    return {"sentiment": predominante, "scores": scores, "chunks": len(chunks)}
+
+
+def sentiment_by_turn(turns: list[dict], region: str, max_turns: int = 25) -> list[dict]:
+    """
+    Sentimento de cada fala do paciente, para localizar onde o relato é mais negativo.
+
+    Usa ``BatchDetectSentiment`` (até 25 documentos por chamada), o que reduz o número de
+    requisições. Turnos muito curtos ("yeah", "no") são descartados: não carregam
+    sentimento avaliável e só empurrariam a média para NEUTRAL.
+    """
+    import boto3
+
+    uteis = [t for t in turns if len(t["text"].split()) >= 8][:max_turns]
+    if not uteis:
+        return []
+
+    client = boto3.client("comprehend", region_name=region)
+    r = client.batch_detect_sentiment(
+        TextList=[t["text"][:SENTIMENT_MAX_BYTES] for t in uteis], LanguageCode="en")
+
+    out = []
+    for item in r.get("ResultList", []):
+        t = uteis[item["Index"]]
+        out.append({
+            "order": t.get("order"),
+            "text": t["text"],
+            "sentiment": item["Sentiment"],
+            "negative": round(item["SentimentScore"]["Negative"], 4),
+        })
+    return out
+
+
+def analyze_sentiment(case: str, root: str | Path, region: str,
+                      force: bool = False) -> dict:
+    """Sentimento do relato do paciente (geral e por turno), com cache."""
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path = sentiment_cache_path(case)
+    if path.exists() and not force:
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    from .consultations import load_transcript
+
+    text = patient_text(root, case)
+    if not text.strip():
+        raise ValueError(f"texto vazio para {case}")
+
+    df = load_transcript(root, case)
+    turns = df[df["speaker"] == "patient"].to_dict("records")
+
+    result = detect_sentiment(text, region)
+    result["by_turn"] = sentiment_by_turn(turns, region)
+    path.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    return result
+
+
 def extract(case: str, root: str | Path, region: str, source: str = "human",
             force: bool = False) -> list[dict]:
     """
@@ -248,6 +348,8 @@ def main() -> None:
                     help="origem do texto: transcrição humana ou do Transcribe")
     ap.add_argument("--compare", action="store_true",
                     help="extrai das duas origens e mede a recuperação dos achados")
+    ap.add_argument("--sentiment", action="store_true",
+                    help="analisa o sentimento do relato (Amazon Comprehend geral)")
     ap.add_argument("--force", action="store_true",
                     help="reprocessa mesmo com cache (custa dinheiro de novo)")
     ap.add_argument("--report", action="store_true",
@@ -276,6 +378,21 @@ def main() -> None:
 
     if not cfg["region"]:
         print("AWS não configurada. Rode: python -m src.common.config")
+        return
+
+    if args.sentiment:
+        for case in args.cases:
+            s = analyze_sentiment(case, args.root, cfg["region"], force=args.force)
+            rotulo = SENTIMENT_LABELS_PT.get(s["sentiment"], s["sentiment"])
+            print(f"\n=== {case}: tom do relato ===")
+            print(f"  predominante: {s['sentiment']} ({rotulo})")
+            for k, v in sorted(s["scores"].items(), key=lambda kv: -kv[1]):
+                print(f"    {k:9s} {v:.4f}")
+            if s.get("by_turn"):
+                piores = sorted(s["by_turn"], key=lambda t: -t["negative"])[:3]
+                print("\n  falas mais negativas:")
+                for t in piores:
+                    print(f"    [{t['negative']:.2f}] {t['text'][:90]}")
         return
 
     if args.compare:

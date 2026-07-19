@@ -8,7 +8,7 @@
 | Entrega | Estado |
 |---|---|
 | 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 3 experimentos (PM_008, PM_034, PM_006) + app Gradio com linguagem para equipe médica + screenshots no relatório |
-| 2 — Análise de Áudio (**AWS**) | **Completa** na branch `feature/entrega-2-audio`: Transcribe (WER 5,37%), Comprehend Medical, Translate e relatório clínico bilíngue |
+| 2 — Análise de Áudio (**AWS**) | **Completa** na branch `feature/entrega-2-audio`: Transcribe (WER 5,37%), Comprehend Medical, Comprehend (sentimento), Translate e relatório clínico bilíngue |
 | 3 — Detecção de Anomalias | **Baseline pronto** (loaders Challenge 2019 + UCI HAR); falta rodar/documentar |
 
 ## Decisões-chave (não reabrir sem motivo)
@@ -79,8 +79,9 @@ python -m src.audio.consultations --root data/audio/consultas --case RES0001 --p
 python -m src.audio.transcribe --cases RES0029
 python -m src.audio.transcribe --report --out reports/wer_consultations.csv  # só do cache
 
-# Entidades clínicas e relatório final
+# Entidades clínicas, sentimento e relatório final
 python -m src.audio.comprehend --cases RES0029 --compare
+python -m src.audio.comprehend --cases RES0029 --sentiment
 python -m src.audio.report --case RES0029
 
 # Verificação do ambiente AWS (não custa nada)

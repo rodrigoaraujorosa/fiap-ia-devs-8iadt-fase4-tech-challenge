@@ -6,14 +6,16 @@ relatados pelo paciente, produzindo um relatório para a equipe médica.
 ## Pipeline
 
 ```
-consulta (.mp3) ──► S3 ──► Transcribe ──► diarização ──► Comprehend Medical ──► relatório
-                                                                                bilíngue
+                                        ┌─► Comprehend Medical ──► achados ─┐
+consulta (.mp3) ──► S3 ──► Transcribe ──┤                                   ├─► relatório
+                          (diarização)  └─► Comprehend ────────► sentimento ┘   bilíngue
 ```
 
 1. **Amazon Transcribe** — transcrição da fala, com diarização de 2 falantes.
 2. **Amazon Comprehend Medical** — entidades clínicas tipadas (sintomas, anatomia,
    medicações) com traços como `NEGATION` e `PERTAINS_TO_FAMILY`.
-3. **Amazon Translate** — tradução dos achados para o relatório bilíngue.
+3. **Amazon Comprehend** — sentimento do relato, geral e por turno de fala.
+4. **Amazon Translate** — tradução dos achados para o relatório bilíngue.
 
 > **Provedor de nuvem: AWS.** O plano original usava Azure Cognitive Services, mas não
 > havia cota disponível. Com a liberação da AWS, o pipeline passou a usar Transcribe +
@@ -30,7 +32,7 @@ direto na chamada.
 |---|---|
 | `consultations.py` | loader do dataset: lista casos, separa turnos por falante, isola a fala do paciente |
 | `transcribe.py` | upload ao S3, job do Transcribe, diarização e medição de WER contra a referência humana |
-| `comprehend.py` | extração de entidades clínicas e comparação entre as duas transcrições |
+| `comprehend.py` | entidades clínicas, sentimento e comparação entre as duas transcrições |
 | `report.py` | relatório bilíngue para a equipe médica |
 
 ## Dataset: consultas médicas simuladas
@@ -70,6 +72,9 @@ python -m src.audio.transcribe --report --out reports/wer_consultations.csv
 python -m src.audio.comprehend --cases RES0029
 python -m src.audio.comprehend --cases RES0029 --compare
 
+# sentimento do relato (geral e por turno)
+python -m src.audio.comprehend --cases RES0029 --sentiment
+
 # relatório final para a equipe médica
 python -m src.audio.report --case RES0029
 ```
@@ -86,7 +91,7 @@ papel do paciente é identificado por dois sinais independentes — quem fala ma
 
 ## Controle de custo
 
-Transcribe, Comprehend Medical e Translate cobram por volume. Todo resultado é **cacheado**
+Transcribe, Comprehend Medical, Comprehend e Translate cobram por volume. Todo resultado é **cacheado**
 (`reports/transcriptions/`, `reports/entities/`, `reports/translations.json`) e nenhum caso
 é reprocessado sem `--force`. O modo `--report` recalcula métricas do cache **sem chamar a
 AWS**. Os JSON brutos são versionados, permitindo auditar os resultados sem credenciais.
