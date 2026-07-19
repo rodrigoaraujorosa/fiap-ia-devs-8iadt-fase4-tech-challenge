@@ -108,3 +108,6 @@ CLAUDE.md
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Modelos treinados (artefato de build; regerar com: python -m src.anomaly.cli --train)
+models/

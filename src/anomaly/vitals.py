@@ -15,7 +15,13 @@ Duas decisões importantes de modelagem:
 
 2. **Antecedência (lead time) é a métrica que importa.** Acertar a hora exata em que o
    ``SepsisLabel`` vira 1 é menos útil clinicamente do que alertar antes. Medimos quantas
-   horas antes do início da sepse o primeiro alerta ocorre.
+   horas antes do início da sepse o alerta ocorre, dentro de uma janela de 48 h.
+
+3. **Treino e inferência são separados.** O detector é treinado numa coorte de pacientes
+   que nunca desenvolveram sepse, persistido em disco, e depois pontua pacientes que não
+   participaram do treino — inclusive um por vez, via ``monitor_patient()``. Sem essa
+   separação não haveria detector algum: ajustar o modelo sobre os mesmos dados que se
+   quer avaliar mede memorização, não capacidade de alertar.
 
 Módulo de biblioteca: o ponto de entrada é ``python -m src.anomaly.cli``.
 """
@@ -23,9 +29,14 @@ from __future__ import annotations
 
 import glob
 import os
+from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+# modelo persistido: treinado uma vez, usado para pontuar pacientes novos
+MODEL_PATH = Path("models/vitals_detector.joblib")
 
 VITALS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2"]
 
@@ -102,44 +113,109 @@ def live_features(df: pd.DataFrame) -> list[str]:
     return [f"z_{c}" for c in VITALS if df[f"z_{c}"].abs().sum() > 0]
 
 
-def detect(df: pd.DataFrame, contamination: float = 0.05,
-           per_patient: bool = True) -> pd.DataFrame:
+@dataclass
+class VitalsDetector:
     """
-    IsolationForest sobre os desvios normalizados. Devolve df com is_anomaly/score.
+    Detector treinado, pronto para pontuar um paciente que o modelo nunca viu.
 
-    ``per_patient`` decide **como o limiar é aplicado**, não como o modelo é treinado:
+    Guarda o limiar junto com o modelo. O limiar é **absoluto** — o percentil dos scores
+    da coorte de treino — e não um percentil calculado dentro do paciente. A diferença
+    importa na hora do alerta de leito: com limiar percentual por paciente, todo paciente
+    recebe alertas por construção (sempre existe um "5% pior"), inclusive o paciente
+    estável, e estadias curtas não recebem nenhum porque 5% de 19 horas arredonda para
+    zero. Com limiar absoluto, um paciente estável pode passar a internação inteira sem
+    alerta, que é o comportamento correto.
+    """
+    model: object
+    features: list[str]
+    threshold: float
+    contamination: float
+    trained_on: dict
 
-    - ``True`` (padrão): sinaliza as horas mais anômalas *de cada paciente*. É o modo
-      compatível com alerta de leito — cada paciente é vigiado contra si mesmo.
-    - ``False``: limiar global. Mede o quanto a hora é rara na população inteira.
+    def score(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Pontua uma série já passada por ``prepare()``. Não reaproveita rótulo algum."""
+        faltando = [c for c in self.features if c not in df.columns]
+        if faltando:
+            raise ValueError(f"features ausentes na série: {faltando}")
+        out = df.copy()
+        out["score"] = self.model.score_samples(df[self.features].to_numpy())
+        out["is_anomaly"] = (out["score"] <= self.threshold).astype(int)
+        return out
 
-    A diferença é grande na prática. Medido em 300 pacientes: no modo global os alertas
-    se concentram nos pacientes cronicamente instáveis e só **8 dos 29** pacientes que
-    desenvolveram sepse recebem algum alerta; por paciente, sobe para **20 dos 29** — o
-    que é a condição para o lead time significar alguma coisa.
 
-    **Limitação conhecida do modo por paciente:** um orçamento de 5% das horas só rende
-    um alerta a partir de 20 horas de internação. Os 9 pacientes com sepse que ficam sem
-    nenhum alerta têm internações de 8 a 19 horas — o corte percentual arredonda para
-    zero. Estadias curtas exigiriam um limiar absoluto, não percentual.
+def split_cohorts(df: pd.DataFrame, test_size: float = 0.3,
+                  seed: int = RANDOM_STATE) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Separa treino e teste **por paciente**, nunca por hora.
+
+    O treino recebe apenas pacientes que **nunca desenvolveram sepse** — é o padrão de
+    normalidade que o detector deve aprender. Manter pacientes sépticos no treino
+    ensinaria ao modelo que a deterioração é normal, que é exatamente o oposto do
+    objetivo. Mesmo desenho já usado na movimentação, onde o modelo só vê repouso.
+
+    O teste reúne os pacientes com sepse (todos) e os pacientes sem sepse retidos, para
+    que a avaliação tenha as duas classes.
+    """
+    rng = np.random.default_rng(seed)
+    por_paciente = df.groupby("patient")["SepsisLabel"].max()
+    sem_sepse = por_paciente[por_paciente == 0].index.to_numpy()
+    com_sepse = por_paciente[por_paciente == 1].index.to_numpy()
+
+    rng.shuffle(sem_sepse)
+    corte = int(len(sem_sepse) * (1 - test_size))
+    treino_ids, retidos_ids = sem_sepse[:corte], sem_sepse[corte:]
+
+    treino = df[df["patient"].isin(treino_ids)]
+    teste = df[df["patient"].isin(np.concatenate([retidos_ids, com_sepse]))]
+    return treino, teste
+
+
+def fit(df_train: pd.DataFrame, contamination: float = 0.05) -> VitalsDetector:
+    """
+    Treina o detector na coorte de normalidade e fixa o limiar de alerta.
+
+    ``df_train`` já deve ter passado por ``prepare()``. O limiar é o percentil
+    ``contamination`` dos scores do próprio treino: por construção, o detector alerta em
+    cerca de 5% das horas de um paciente **estável**, e mais do que isso num paciente
+    que se afasta desse padrão.
     """
     from sklearn.ensemble import IsolationForest
 
-    cols = live_features(df)
-    X = df[cols].to_numpy()
+    cols = live_features(df_train)
+    X = df_train[cols].to_numpy()
 
     model = IsolationForest(contamination=contamination, random_state=RANDOM_STATE)
     model.fit(X)
 
-    out = df.copy()
-    out["score"] = model.score_samples(X)          # menor = mais anômalo
-    if per_patient:
-        # percentil dentro do próprio paciente; 1 - contamination = corte superior
-        rank = out.groupby("patient")["score"].rank(pct=True)
-        out["is_anomaly"] = (rank <= contamination).astype(int)
-    else:
-        out["is_anomaly"] = (model.predict(X) == -1).astype(int)
-    return out
+    scores = model.score_samples(X)
+    threshold = float(np.quantile(scores, contamination))
+
+    return VitalsDetector(
+        model=model,
+        features=cols,
+        threshold=threshold,
+        contamination=contamination,
+        trained_on={
+            "patients": int(df_train["patient"].nunique()),
+            "hours": int(len(df_train)),
+            "sepsis_patients": int(df_train.groupby("patient")["SepsisLabel"].max().sum()),
+        },
+    )
+
+
+def save(detector: VitalsDetector, path: Path = MODEL_PATH) -> Path:
+    import joblib
+    path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(detector, path)
+    return path
+
+
+def load(path: Path = MODEL_PATH) -> VitalsDetector:
+    import joblib
+    if not path.exists():
+        raise FileNotFoundError(
+            f"nenhum modelo em {path} — treine antes: python -m src.anomaly.cli --train")
+    return joblib.load(path)
 
 
 def evaluate(df: pd.DataFrame) -> dict:
@@ -257,12 +333,67 @@ def lead_time(df: pd.DataFrame, window: int = LEAD_WINDOW_HOURS) -> pd.DataFrame
     return pd.DataFrame(linhas)
 
 
+def monitor_patient(patient_id: str, data_dir: str,
+                    detector: VitalsDetector | None = None) -> dict:
+    """
+    Modo de inferência: pontua **um** paciente com o modelo já treinado.
+
+    É o caminho que o monitoramento de leito percorreria — o modelo não conhece este
+    paciente, recebe a série dele e devolve as horas de alerta. O ``SepsisLabel`` é lido
+    apenas para conferência posterior, nunca entra na pontuação.
+    """
+    det = detector or load()
+    caminhos = glob.glob(os.path.join(data_dir, "**", f"{patient_id}.psv"), recursive=True)
+    if not caminhos:
+        raise FileNotFoundError(f"paciente {patient_id} não encontrado em {data_dir}")
+
+    serie = prepare(load_patient(caminhos[0]))
+    pontuado = det.score(serie)
+    alertas = pontuado[pontuado["is_anomaly"] == 1]
+
+    resumo = {
+        "patient": patient_id,
+        "hours": len(pontuado),
+        "alerts": int(len(alertas)),
+        "alert_hours": alertas["hour"].tolist(),
+        "alert_rate": float(pontuado["is_anomaly"].mean()),
+        "developed_sepsis": bool(pontuado["SepsisLabel"].max() == 1),
+    }
+    if resumo["developed_sepsis"]:
+        onset = int(pontuado.loc[pontuado["SepsisLabel"] == 1, "hour"].min())
+        na_janela = [h for h in resumo["alert_hours"]
+                     if onset - LEAD_WINDOW_HOURS <= h < onset]
+        resumo.update({
+            "onset_hour": onset,
+            "warned": bool(na_janela),
+            "lead_hours": onset - min(na_janela) if na_janela else None,
+        })
+    return {"data": pontuado, "summary": resumo}
+
+
 def run(data_dir: str, limit: int | None = None, contamination: float = 0.05) -> dict:
-    """Carrega, prepara, detecta e avalia. Devolve tudo o que o relatório precisa."""
+    """
+    Treina na coorte de normalidade e avalia nos pacientes retidos.
+
+    Nenhum paciente do teste aparece no treino, e nenhum paciente com sepse é usado para
+    treinar. As métricas abaixo são, portanto, de **generalização** — o que o detector
+    faz com séries que nunca viu.
+    """
     raw = load_dataset(data_dir, limit=limit)
-    df = detect(prepare(raw), contamination=contamination)
+    preparado = prepare(raw)
+
+    treino, teste = split_cohorts(preparado)
+    detector = fit(treino, contamination=contamination)
+    df = detector.score(teste)
 
     metrics = evaluate(df)
+    metrics.update({
+        "train_patients": detector.trained_on["patients"],
+        "train_hours": detector.trained_on["hours"],
+        "test_patients": int(teste["patient"].nunique()),
+        "features_used": len(detector.features),
+        "threshold": detector.threshold,
+    })
     lt = lead_time(df)
     na_janela = lt[lt["alert_in_window"]] if len(lt) else lt
 
@@ -279,7 +410,8 @@ def run(data_dir: str, limit: int | None = None, contamination: float = 0.05) ->
         "lead_mean_hours": float(na_janela["lead_hours"].mean())
                            if len(na_janela) else None,
     })
-    return {"data": df, "metrics": metrics, "lead_time": lt}
+    return {"data": df, "metrics": metrics, "lead_time": lt, "detector": detector,
+            "prepared": preparado}
 
 
 def plot_patient(df: pd.DataFrame, patient: str, out_path: str) -> str | None:

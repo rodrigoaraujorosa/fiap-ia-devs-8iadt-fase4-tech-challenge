@@ -11,11 +11,17 @@ Este é o **único ponto de entrada** da entrega: ``vitals.py``, ``movement.py``
 ``prescriptions.py`` e ``report.py`` são módulos de biblioteca, sem CLI própria — mesma
 organização das Entregas 1 e 2.
 
+O detector de sinais vitais é **treinado e salvo**: a coorte de treino tem apenas
+pacientes que nunca desenvolveram sepse, e a avaliação ocorre sobre pacientes retidos,
+que o modelo não viu. Depois de treinado, o modo de monitoramento pontua **um paciente
+por vez**, que é como o sistema operaria em leito.
+
 Uso:
-    python -m src.anomaly.cli                          # tudo, com o relatório
+    python -m src.anomaly.cli --train                  # treina e salva o modelo
+    python -m src.anomaly.cli --monitor p000009        # alerta de UM paciente
+    python -m src.anomaly.cli                          # avaliação completa + relatório
     python -m src.anomaly.cli --only movement          # uma subtarefa
-    python -m src.anomaly.cli --limit 1000             # mais pacientes
-    python -m src.anomaly.cli --patient p000009        # figura de um paciente
+    python -m src.anomaly.cli --limit 5000             # tamanho da coorte
 
 Não custa dinheiro: roda inteiramente local.
 """
@@ -56,7 +62,9 @@ def run_vitals(data_dir: str, limit: int | None, contamination: float) -> dict:
     t0 = time.perf_counter()
     r = vitals.run(data_dir, limit=limit, contamination=contamination)
     m = r["metrics"]
-    print(f"      {m['patients']} pacientes | {m['rows']} horas | "
+    print(f"      treino: {m['train_patients']} pacientes SEM sepse "
+          f"({m['train_hours']} horas, {m['features_used']} features)")
+    print(f"      teste : {m['patients']} pacientes retidos | {m['rows']} horas | "
           f"{m['sepsis_patients']} com sepse")
     print(f"      AUC {m['roc_auc']:.4f} | AUPRC {m['auprc']:.4f} "
           f"(prevalência {m['prevalence']:.4f})")
@@ -96,6 +104,63 @@ def _pick_patient(v: dict) -> str | None:
     return str(bons.sort_values("lead_hours", ascending=False).iloc[0]["patient"])
 
 
+def train_and_save(data_dir: str, limit: int | None, contamination: float) -> None:
+    """Treina o detector de vitais na coorte de normalidade e persiste em disco."""
+    print("Treinando o detector de sinais vitais")
+    t0 = time.perf_counter()
+    raw = vitals.load_dataset(data_dir, limit=limit)
+    treino, teste = vitals.split_cohorts(vitals.prepare(raw))
+    det = vitals.fit(treino, contamination=contamination)
+    caminho = vitals.save(det)
+
+    print(f"  coorte de treino : {det.trained_on['patients']} pacientes sem sepse, "
+          f"{det.trained_on['hours']} horas")
+    print(f"  retidos p/ teste : {teste['patient'].nunique()} pacientes")
+    print(f"  features usadas  : {len(det.features)} — {', '.join(det.features)}")
+    print(f"  limiar de alerta : {det.threshold:.4f}")
+    print(f"  modelo salvo em  : {caminho}")
+    print(f"  ({_fmt(time.perf_counter() - t0)})")
+
+
+def monitor(patient_id: str, data_dir: str) -> None:
+    """
+    Monitoramento de um paciente com o modelo já treinado.
+
+    É a simulação do alerta de leito: o modelo nunca viu este paciente, recebe a série
+    horária dele e devolve as horas em que dispararia o alerta.
+    """
+    r = vitals.monitor_patient(patient_id, data_dir)
+    s = r["summary"]
+
+    print(f"\nPaciente {s['patient']} — {s['hours']} horas de internação")
+    print(f"Modelo: {vitals.MODEL_PATH} (treinado só em pacientes sem sepse)\n")
+
+    if not s["alerts"]:
+        print("  Nenhum alerta. Série dentro do padrão aprendido.")
+    else:
+        print(f"  {s['alerts']} horas em alerta ({s['alert_rate']:.1%} da internação):")
+        horas = s["alert_hours"]
+        print(f"    horas {', '.join(str(h) for h in horas[:20])}"
+              + (" ..." if len(horas) > 20 else ""))
+
+    print()
+    if s["developed_sepsis"]:
+        print(f"  Conferência com o ground-truth: sepse a partir da hora {s['onset_hour']}.")
+        if s.get("warned"):
+            print(f"  ALERTA ANTECIPADO — primeiro aviso {s['lead_hours']} h antes "
+                  f"do início registrado.")
+        else:
+            print(f"  Sem alerta na janela de {vitals.LEAD_WINDOW_HOURS} h que antecede "
+                  f"o início.")
+    else:
+        print("  Conferência com o ground-truth: paciente não desenvolveu sepse.")
+
+    fig = vitals.plot_patient(r["data"], patient_id,
+                              str(FIGURES_DIR / f"monitor_{patient_id}.png"))
+    if fig:
+        print(f"\n  Figura: {fig}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(
         description="Pipeline da detecção de anomalias (vitais, movimentação, prescrições).")
@@ -111,7 +176,19 @@ def main() -> None:
                     help="roda só uma subtarefa (não gera o relatório)")
     ap.add_argument("--patient", help="paciente para a figura da série de vitais")
     ap.add_argument("--no-report", action="store_true", help="não escreve o relatório")
+    ap.add_argument("--train", action="store_true",
+                    help="treina o detector de vitais e salva em models/")
+    ap.add_argument("--monitor", metavar="PACIENTE",
+                    help="pontua um paciente com o modelo salvo (simula o alerta de leito)")
     args = ap.parse_args()
+
+    if args.train:
+        train_and_save(args.vitals_data, args.limit, args.contamination)
+        return
+
+    if args.monitor:
+        monitor(args.monitor, args.vitals_data)
+        return
 
     t0 = time.perf_counter()
     figuras: dict[str, str] = {}

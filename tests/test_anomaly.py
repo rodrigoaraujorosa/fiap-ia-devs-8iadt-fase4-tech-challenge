@@ -9,6 +9,8 @@ silenciosas — não levantam erro, só produzem números bonitos e errados:
 2. **Limiar global x por paciente.** Um limiar global gasta o orçamento de alertas nos
    pacientes cronicamente instáveis e deixa os demais sem nenhum alerta.
 """
+import pathlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -106,52 +108,114 @@ def test_lead_time_ignora_alerta_posterior_ao_inicio():
     assert not lt.iloc[0]["alert_in_window"]
 
 
-def test_limiar_por_paciente_alcanca_todos_os_pacientes():
+def _coorte(n_estaveis: int = 12, n_sepse: int = 4, horas: int = 120) -> pd.DataFrame:
+    partes = [_patient(f"ok{i}", horas) for i in range(n_estaveis)]
+    partes += [_patient(f"sep{i}", horas, onset=90) for i in range(n_sepse)]
+    return vitals.prepare(pd.concat(partes, ignore_index=True))
+
+
+def test_split_nao_vaza_paciente_entre_treino_e_teste():
+    """Split por paciente, nunca por hora — senão o mesmo paciente treina e testa."""
+    treino, teste = vitals.split_cohorts(_coorte())
+    assert set(treino["patient"]) & set(teste["patient"]) == set()
+
+
+def test_treino_nao_contem_paciente_com_sepse():
     """
-    O modo por paciente não deixa um paciente instável consumir todos os alertas.
+    A coorte de treino é o padrão de normalidade.
 
-    Com limiar global, o paciente ruidoso concentra os alertas e os estáveis ficam sem
-    nenhum; por paciente, cada um é vigiado contra a própria linha de base.
+    Deixar pacientes sépticos no treino ensina ao modelo que a deterioração é normal —
+    o oposto do objetivo do detector.
     """
-    df = pd.concat([
-        _patient("ruidoso", 120, unstable=True),
-        _patient("estavel_a", 120),
-        _patient("estavel_b", 120),
-    ], ignore_index=True)
-    prep = vitals.prepare(df)
-
-    por_paciente = vitals.detect(prep, contamination=0.05, per_patient=True)
-    alcancados = por_paciente.groupby("patient")["is_anomaly"].max()
-    assert alcancados.all(), "todo paciente com estadia longa deve receber algum alerta"
-
-    globais = vitals.detect(prep, contamination=0.05, per_patient=False)
-    do_ruidoso = globais.loc[globais.patient == "ruidoso", "is_anomaly"].sum()
-    total = globais["is_anomaly"].sum()
-    assert do_ruidoso > total / 2, "o cenário deve mesmo concentrar alertas no ruidoso"
+    treino, teste = vitals.split_cohorts(_coorte())
+    assert treino.groupby("patient")["SepsisLabel"].max().sum() == 0
+    # e todos os pacientes com sepse precisam estar disponíveis para avaliar
+    assert teste.groupby("patient")["SepsisLabel"].max().sum() == 4
 
 
-def test_estadia_curta_nao_rende_alerta_percentual():
+def test_limiar_absoluto_separa_estavel_de_deteriorando():
     """
-    Limitação conhecida e documentada: 5% de 19 horas arredonda para zero alertas.
+    Diferença central do limiar absoluto para o percentual por paciente.
 
-    O teste existe para que a limitação seja notada se alguém trocar o critério.
+    Com corte percentual dentro do paciente sempre existe um "5% pior", então **todo**
+    paciente recebe alerta por construção, inclusive o estável — o que torna a taxa de
+    alerta incomparável entre pacientes. Com limiar absoluto, a taxa passa a significar
+    alguma coisa: o paciente estável fica na taxa-base do treino (~contamination) e o
+    que deteriora fica claramente acima.
+
+    Note que o estável **não** fica em zero, e não deveria: o limiar é o percentil 5 dos
+    scores de treino, então um paciente estatisticamente igual ao treino dispara em
+    torno de 5% das horas. O que o teste fixa é a separação entre os dois.
     """
-    df = vitals.prepare(pd.concat([_patient("curto", 19), _patient("longo", 200)],
-                                  ignore_index=True))
-    res = vitals.detect(df, contamination=0.05, per_patient=True)
-    assert res.loc[res.patient == "curto", "is_anomaly"].sum() == 0
-    assert res.loc[res.patient == "longo", "is_anomaly"].sum() > 0
+    treino, _ = vitals.split_cohorts(_coorte(n_estaveis=16, n_sepse=2))
+    det = vitals.fit(treino, contamination=0.05)
+
+    estavel = det.score(vitals.prepare(_patient("novo_estavel", 120)))
+    grave = det.score(vitals.prepare(_patient("novo_grave", 120, onset=90)))
+
+    taxa_estavel = estavel["is_anomaly"].mean()
+    taxa_grave = grave["is_anomaly"].mean()
+
+    assert taxa_estavel <= 0.10, "paciente estável não pode viver em alerta"
+    assert taxa_grave > taxa_estavel, "quem deteriora tem de alertar mais que o estável"
+
+
+def test_alerta_do_paciente_grave_se_concentra_na_deterioracao():
+    """O alerta tem de cair perto do evento, não espalhado pela internação."""
+    treino, _ = vitals.split_cohorts(_coorte(n_estaveis=16, n_sepse=2))
+    det = vitals.fit(treino, contamination=0.05)
+
+    grave = det.score(vitals.prepare(_patient("novo_grave", 120, onset=90)))
+    alertas = grave.loc[grave["is_anomaly"] == 1, "hour"]
+    assert len(alertas) > 0
+    # a deterioração sintética começa 6 h antes do onset (hora 84)
+    assert ((alertas >= 80) & (alertas < 90)).any()
+
+
+def test_modelo_salvo_e_recarregado_pontua_igual(tmp_path):
+    """O modelo persistido tem de produzir exatamente o mesmo alerta."""
+    treino, teste = vitals.split_cohorts(_coorte())
+    det = vitals.fit(treino)
+
+    caminho = vitals.save(det, tmp_path / "detector.joblib")
+    recarregado = vitals.load(caminho)
+
+    assert recarregado.threshold == det.threshold
+    assert recarregado.features == det.features
+    pd.testing.assert_series_equal(det.score(teste)["is_anomaly"],
+                                   recarregado.score(teste)["is_anomaly"])
+
+
+def test_load_sem_modelo_orienta_a_treinar():
+    with pytest.raises(FileNotFoundError, match="--train"):
+        vitals.load(pathlib.Path("nao/existe/detector.joblib"))
+
+
+def test_score_nao_usa_o_rotulo():
+    """
+    O SepsisLabel não pode influenciar a pontuação.
+
+    Embaralhar o rótulo tem de deixar os alertas idênticos — se mudar, o rótulo vazou
+    para dentro do modelo.
+    """
+    treino, teste = vitals.split_cohorts(_coorte())
+    det = vitals.fit(treino)
+
+    original = det.score(teste)["is_anomaly"].reset_index(drop=True)
+    embaralhado = teste.copy()
+    embaralhado["SepsisLabel"] = RNG.permutation(embaralhado["SepsisLabel"].values)
+    depois = det.score(embaralhado)["is_anomaly"].reset_index(drop=True)
+
+    pd.testing.assert_series_equal(original, depois)
 
 
 def test_evaluate_devolve_metricas_coerentes():
-    df = vitals.prepare(pd.concat(
-        [_patient(f"p{i}", 120, onset=90 if i < 3 else None) for i in range(8)],
-        ignore_index=True))
-    m = vitals.evaluate(vitals.detect(df))
+    treino, teste = vitals.split_cohorts(_coorte())
+    det = vitals.fit(treino)
+    m = vitals.evaluate(det.score(teste))
     assert 0.0 <= m["roc_auc"] <= 1.0
     assert 0.0 <= m["auprc"] <= 1.0
-    assert m["patients"] == 8
-    assert m["sepsis_patients"] == 3
+    assert m["sepsis_patients"] == 4
 
 
 # ------------------------------------------------------------------ prescrições

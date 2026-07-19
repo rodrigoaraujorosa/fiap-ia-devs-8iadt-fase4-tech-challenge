@@ -96,9 +96,22 @@ def build_report(vitals: dict, movement: dict, prescriptions: dict,
     if _img(figures.get("vitals")):
         add(f"![Série de vitais com alertas]({_img(figures['vitals'])})")
         add("")
-    add(f"Base analisada: **{v['patients']} pacientes**, {v['rows']} horas-paciente, "
-        f"{v['sepsis_patients']} com sepse confirmada "
+    add(f"O detector é **treinado em {v['train_patients']} pacientes que nunca "
+        f"desenvolveram sepse** ({v['train_hours']} horas) e avaliado em "
+        f"**{v['patients']} pacientes retidos**, que não aparecem no treino — "
+        f"{v['rows']} horas, {v['sepsis_patients']} com sepse "
         f"(prevalência horária {_pct(v['prevalence'])}).")
+    add("")
+    add("A coorte de treino exclui pacientes sépticos de propósito: é o padrão de "
+        "normalidade que o detector deve aprender. Mantê-los no treino ensinaria ao "
+        "modelo que a deterioração é normal. As métricas abaixo são, portanto, de "
+        "**generalização** — o que o detector faz com séries que nunca viu.")
+    add("")
+    add(f"O limiar de alerta é **absoluto** ({v['threshold']:.4f}), fixado no percentil "
+        f"{v['contamination']:.0%} dos scores do treino, e não um percentil calculado "
+        f"dentro de cada paciente. A diferença é operacional: com corte percentual por "
+        f"paciente, todo paciente recebe alerta por construção — sempre existe um "
+        f"\"5% pior\" — e a taxa deixa de ser comparável entre pacientes.")
     add("")
     add(f"- AUC {_num(v['roc_auc'], 4)} e AUPRC {_num(v['auprc'], 4)}, contra uma "
         f"prevalência de {_num(v['prevalence'], 4)}.")
@@ -131,9 +144,11 @@ def build_report(vitals: dict, movement: dict, prescriptions: dict,
     add("")
     add("### Limitações medidas")
     add("")
-    add("- O limiar por paciente é percentual: com orçamento de 5% das horas, só rende "
-        "um alerta a partir de 20 horas de internação. Os pacientes com sepse que "
-        "ficaram sem alerta têm estadias de 8 a 19 horas.")
+    add("- **Menos da metade dos pacientes com sepse é avisada dentro da janela.** É a "
+        "consequência direta de usar um limiar absoluto: ele não garante alerta para "
+        "todo paciente, ao contrário do corte percentual por paciente, que garantia mas "
+        "não era um detector aplicável. Baixar o limiar aumenta a cobertura ao custo de "
+        "mais alarme falso — a escolha depende de quanto ruído a equipe tolera.")
     add("- `EtCO2` consta do schema mas tem **0% de cobertura** no training set A; a "
         "coluna é descartada automaticamente.")
     add("- O `SepsisLabel` marca a janela em que a sepse é considerada instalada, e não "

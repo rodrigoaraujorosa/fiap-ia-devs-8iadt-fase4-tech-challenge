@@ -98,17 +98,22 @@ python -m src.audio.consultations --root data/audio/consultas --case RES0001 --p
 
 ## 2. PhysioNet/CinC Challenge 2019 — sinais vitais
 
-**Download (escolha uma opção):**
+**Download — use o mirror S3, é o caminho rápido:**
 
 ```bash
-# Opção A: wget recursivo (Linux/Mac)
-wget -r -N -c -np https://physionet.org/files/challenge-2019/1.0.0/
-
-# Opção B: zips diretos
-wget https://physionet.org/static/published-projects/challenge-2019/training_setA.zip
-wget https://physionet.org/static/published-projects/challenge-2019/training_setB.zip
-unzip training_setA.zip -d challenge2019/
+mkdir -p data/anomaly/challenge2019
+aws s3 sync --no-sign-request \
+  s3://physionet-open/challenge-2019/1.0.0/training/ data/anomaly/challenge2019/
 ```
+
+O bucket é público (`--no-sign-request` dispensa credenciais) e traz os dois conjuntos
+de treino: `training_setA/` (20.336 pacientes) e `training_setB/` (20.000).
+
+> ⚠️ **Os zips do PhysioNet não existem mais.** `training_setA.zip` e `training_setB.zip`
+> em `physionet.org/static/published-projects/...` respondem **404** — os arquivos hoje
+> são servidos individualmente, um `.psv` por paciente. Baixar por HTTP significa 40.336
+> requisições; o `wget -r -N -c -np https://physionet.org/files/challenge-2019/1.0.0/`
+> ainda funciona, mas é muito mais lento que o `aws s3 sync`.
 
 Página oficial: https://physionet.org/content/challenge-2019/1.0.0/
 
@@ -121,7 +126,11 @@ Cada linha = 1 hora de internação. 40 variáveis + `SepsisLabel`.
 - Demografia (6): `Age, Gender, Unit1, Unit2, HospAdmTime, ICULOS`
 - Rótulo: `SepsisLabel` (0/1) — deterioração clínica, serve de ground-truth.
 
-Use `src/anomaly/load_challenge2019.py` para carregar e rodar o baseline.
+> ⚠️ **`EtCO2` tem 0% de cobertura.** A coluna consta do schema oficial mas nunca é
+> medida no training set A. O loader a descarta automaticamente — sem isso, entra no
+> modelo como constante zero e só dilui a distância entre as amostras.
+
+Use `python -m src.anomaly.cli` (ver `src/anomaly/README.md`).
 
 ---
 
@@ -130,10 +139,15 @@ Use `src/anomaly/load_challenge2019.py` para carregar e rodar o baseline.
 **Download:**
 
 ```bash
-wget https://archive.ics.uci.edu/static/public/240/human+activity+recognition+using+smartphones.zip
-unzip human+activity+recognition+using+smartphones.zip
-unzip "UCI HAR Dataset.zip" -d uci_har/
+mkdir -p data/anomaly/uci_har && cd data/anomaly/uci_har
+curl -L -o har.zip \
+  "https://archive.ics.uci.edu/static/public/240/human+activity+recognition+using+smartphones.zip"
+unzip -q har.zip && unzip -q "UCI HAR Dataset.zip"   # o zip vem aninhado
+rm -rf __MACOSX har.zip "UCI HAR Dataset.zip"
 ```
+
+O download traz um zip **dentro** de outro: o externo contém `UCI HAR Dataset.zip` e um
+`.names`. Extrair só o externo deixa a pasta sem os dados.
 
 Página oficial: https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones
 
@@ -152,30 +166,40 @@ UCI HAR Dataset/
   test/  (mesma estrutura)
 ```
 
-Use `src/anomaly/load_uci_har.py` para carregar e rodar o baseline.
+Use `python -m src.anomaly.cli --only movement`.
 
-**Enquadramento como anomalia de movimentação:** trate atividades esperadas
-(ex.: LAYING/SITTING durante internação) como "normal" e sinalize transições
-bruscas ou atividades inesperadas (ex.: queda ~ pico de aceleração) como anomalia.
+**Enquadramento como anomalia de movimentação:** o modelo é treinado **só** com as
+atividades de repouso (`LAYING`, `SITTING`, `STANDING`), que é o esperado em leito, e
+nunca vê marcha no treino. As três atividades de marcha funcionam como ground-truth de
+anomalia no teste.
 
 ---
 
-## 4. Evolução de prescrições
+## 4. Evolução de prescrições — variável derivada (decidido)
 
-Sem fonte pública aberta granular (a boa vem do MIMIC, que exige credenciamento).
-Duas saídas defensáveis na banca:
+Não existe fonte pública aberta e granular de prescrições hospitalares: a base de
+referência é o MIMIC-IV, que exige curso CITI e Data Use Agreement. **Não há dataset
+novo a baixar nesta subtarefa.**
 
-**Opção A — Synthea (sintético, recomendado):**
-```bash
-git clone https://github.com/synthetichealth/synthea.git
-cd synthea && ./run_synthea -p 1000
-# gera output/csv/medications.csv com START, STOP, PATIENT, CODE, DESCRIPTION
-```
-Site: https://synthetichealth.github.io/synthea/ — gera registros clínicos realistas,
-incluindo série temporal de prescrições por paciente.
+**Decisão do grupo: variável derivada do próprio Challenge 2019, usando a `FiO2`**
+(fração inspirada de oxigênio). Ao contrário dos demais campos do dataset, que são
+*medições* do paciente, a FiO2 é um **valor prescrito e titulado pela equipe** — sua
+série ao longo das horas é uma série de doses, que é o objeto da subtarefa. É também o
+campo de melhor cobertura entre os não-vitais (14,2%).
 
-**Opção B — variável derivada:** trate intervenções/doses registradas ao longo
-das horas no Challenge 2019 como a série monitorada e detecte mudanças bruscas.
+Anomalia = degrau de 0,15 ou mais entre coletas consecutivas. Só **aumentos** alertam:
+reduzir a FiO2 é desmame, sinal de melhora.
+
+A alternativa considerada e descartada foi o **Synthea** (gerador sintético que produz
+`medications.csv` com `START, STOP, PATIENT, CODE, DESCRIPTION`). Seria mais fiel ao
+enunciado, mas exige Java JDK e geração local, e as duas opções precisam da mesma
+ressalva na banca — nenhuma é prescrição real de paciente real. A variável derivada
+mantém uma única fonte de dados na entrega e preserva o mesmo ground-truth
+(`SepsisLabel`).
+
+**Ressalva a declarar:** é uma *proxy* de prescrição, não a prescrição registrada em
+prontuário. O escalonamento de oxigênio é uma decisão terapêutica real, mas cobre apenas
+um eixo do que uma base de prescrições traria.
 
 ---
 
@@ -197,9 +221,10 @@ python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4  
 python -m src.audio.consultations --root data/audio/consultas --summary
 python -m src.audio.transcribe --report
 
-# Entrega 3 — anomalias
-python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019
-python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Dataset"
+# Entrega 3 — anomalias (roda local, não custa nada)
+python -m src.anomaly.cli                       # três subtarefas + relatório
+python -m src.anomaly.cli --only movement       # uma subtarefa
+python -m src.anomaly.cli --limit 5000          # mais pacientes do Challenge 2019
 ```
 
 > Os datasets ficam em `data/`, que é gitignored — cada um precisa baixar os seus.
