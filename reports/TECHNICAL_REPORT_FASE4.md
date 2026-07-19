@@ -224,12 +224,12 @@ física publicado abertamente no Zenodo.
 | Repetições | 1.072 (568 corretas, 504 incorretas) |
 | Licença | CC BY-NC 4.0 (uso acadêmico) |
 
-**Justificativa da escolha.** O dataset originalmente previsto (KIMORE) tornou-se
-indisponível (servidor da instituição fora do ar) e, além disso, os *mirrors* disponíveis
-continham apenas dados de esqueleto (sem RGB), o que inviabilizaria o uso do OpenPose. O
-REHAB24-6 supera o KIMORE para o objetivo desta entrega: fornece **vídeo RGB** e, crucialmente,
-**rótulos explícitos de execução correta/incorreta**, que servem como *ground-truth* para
-validar quantitativamente os desvios detectados.
+**Justificativa da escolha.** O dataset atende às duas exigências da modalidade. Fornece
+**vídeo RGB**, que é o que o OpenPose consome — bases de reabilitação que distribuem apenas
+dados de esqueleto já pré-extraídos não permitiriam demonstrar a estimação de pose. E traz
+**rótulos explícitos de execução correta/incorreta** por repetição, que servem de
+*ground-truth* para validar quantitativamente os desvios detectados, em vez de apenas
+exibi-los.
 
 **Rótulos (`Segmentation.csv`).** Cada repetição é descrita por `video_id`,
 `repetition_number`, `exercise_id`, intervalo de frames (`first_frame`, `last_frame`),
@@ -1483,25 +1483,19 @@ invocado por linha de comando e grava keypoints em JSON. Todo o restante é Pyth
 isola a dependência pesada, torna o pipeline portátil e simplifica os
 testes (keypoints sintéticos).
 
-### 7.2 Troca de Dataset: KIMORE → REHAB24-6
-
-O KIMORE ficou indisponível (servidor fora do ar) e os *mirrors* traziam apenas esqueleto
-(sem RGB), inviabilizando o OpenPose. O REHAB24-6 fornece RGB e rótulos de correção — melhor
-para o objetivo — e é aberto no Zenodo.
-
-### 7.3 Subamostragem de Frames para Viabilizar a GPU Local
+### 7.2 Subamostragem de Frames para Viabilizar a GPU Local
 
 A GPU local (MX330, 2 GB) processa a ~1,2 s/frame. Subamostrar 1 a cada 3 frames reduz o
 tempo em ~3x, adequado ao movimento lento do agachamento, preservando o mapeamento de frames
 para validação.
 
-### 7.4 Detecção de Anomalias Local, por Indisponibilidade de Serviço Gerenciado
+### 7.3 Detecção de Anomalias Local, por Indisponibilidade de Serviço Gerenciado
 
 Nem o Azure Anomaly Detector nem o Amazon Lookout for Metrics podem ser provisionados
 (ambos descontinuados — ver 6.2). Mantém-se o
 IsolationForest local, tecnicamente adequado e reprodutível.
 
-### 7.5 Baseline IsolationForest Comum às Entregas 1 e 3
+### 7.4 Baseline IsolationForest Comum às Entregas 1 e 3
 
 O IsolationForest é reutilizado como detector não-supervisionado tanto sobre os ângulos
 posturais (vídeo) quanto sobre os sinais vitais e a movimentação (anomalias), padronizando a
@@ -1736,7 +1730,6 @@ inglês porque é assim que constam nos datasets e no código.
 | **REHAB24-6** | vídeo | Exercícios de reabilitação em RGB, com rótulo de execução correta/incorreta por repetição (3.2) |
 | **UCI HAR** | movimentação | *Human Activity Recognition* — 561 features de acelerômetro e giroscópio, 6 atividades, 30 sujeitos (5.2) |
 | **Challenge 2019** | sinais vitais | PhysioNet/CinC — 40.336 pacientes de UTI, séries horárias, com `SepsisLabel` (5.2) |
-| **KIMORE** | — | Dataset de reabilitação previsto no plano inicial, **descartado**: o servidor saiu do ar e os espelhos não traziam vídeo RGB (7.2) |
 
 ### 11.5 Termos de infraestrutura
 
