@@ -1236,11 +1236,17 @@ triagem descrito acima.
 
 ### 5.8 Interface Web de Demonstração (`app.py`)
 
-A fila de alertas também é exposta em uma app web local (Gradio,
+As três subtarefas são expostas em uma app web local (Gradio,
 `python -m src.anomaly.app`, porta 7861 — ao lado da porta 7860 da Entrega 1, para que as
 duas fiquem abertas na demonstração). Como na Entrega 1, a app **não reimplementa nada**:
-chama `alerts.score_cohort`, `alerts.build_queue` e `report.plot_monitor`, as mesmas
-funções que o CLI usa. O equivalente em terminal é `python -m src.anomaly.cli --alerts`.
+chama as mesmas funções que o CLI usa. O equivalente em terminal é
+`python -m src.anomaly.cli --alerts` para a fila e `--monitor-subject` para a movimentação.
+
+A app tem **duas abas, uma por fonte de dados**, e a separação não é decisão de layout: os
+pacientes do Challenge 2019 e os sujeitos do UCI HAR não são as mesmas pessoas (5.2). Uma
+fila única sugeriria que o hospital monitora as três séries do mesmo paciente, o que a
+origem dos dados não sustenta. O texto de cada aba declara de onde vêm os dados, e a
+unidade muda junto: *paciente* em uma, *sujeito* na outra.
 
 A diferença está no gesto que a interface permite. No terminal, ver a fila e abrir um
 paciente são dois comandos desconectados; na app, **clicar numa linha abre a série daquele
@@ -1267,8 +1273,25 @@ referência o gráfico não se lê de relance — ver a frequência respiratóri
 > partir da hora 94, ambos dentro da janela. Abaixo do gráfico, a leitura do caso e a
 > conferência contra o `SepsisLabel`, que **não** participa da detecção.
 
-Os controles são dois: o tamanho da coorte (200 a 5.000 pacientes) e quais prioridades
-exibir. O filtro de prioridade não repontua nada — opera sobre a fila já em memória.
+Os controles da aba de leitos são dois: o tamanho da coorte (200 a 5.000 pacientes) e
+quais prioridades exibir. O filtro de prioridade não repontua nada — opera sobre a fila já
+em memória.
+
+A segunda aba monitora a **movimentação**, por sujeito. A visualização aqui é diferente da
+Figura 9: em vez da taxa de alerta agregada por atividade, mostra a **sequência** — cada
+janela de leitura vira uma coluna, com a atividade real em cima e o alerta embaixo.
+
+![Aba de movimentação com o sujeito 9 monitorado](figures/screenshots/gradio_anomaly_movimentacao.png)
+
+> **Figura 16.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
+> superior, a atividade real, azul para repouso e vermelha para marcha; no inferior, uma
+> faixa contínua em que vermelho indica alerta disparado e cinza, silêncio. A
+> correspondência entre os dois painéis é o resultado: os quatro blocos de marcha acendem
+> **por inteiro**, e as regiões de repouso ficam quase todas cinza. Os riscos vermelhos
+> isolados sobre o fundo cinza são os falsos alarmes — 12,0% em `SITTING`, 8,9% em
+> `STANDING` e 6,0% em `LAYING` neste sujeito, acima da média de 5,00% do conjunto (5.3),
+> o que mostra que a taxa varia entre indivíduos. A tabela abaixo do gráfico traz o
+> **total** de janelas por atividade, não a posição no eixo.
 
 ### 5.9 Testes
 
@@ -1348,7 +1371,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 16.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 17.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
