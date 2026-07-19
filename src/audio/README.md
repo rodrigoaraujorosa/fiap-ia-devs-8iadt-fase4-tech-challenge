@@ -1,14 +1,19 @@
 # 🎙️ Entrega 2 — Análise de Áudio (AWS)
 
-Processar áudios de participantes e detectar alterações vocais/respiratórias
-(cansaço, dificuldades respiratórias), transcrever a fala e extrair entidades clínicas.
+Processar áudios de consultas médicas, transcrever a fala e extrair os achados clínicos
+relatados pelo paciente, produzindo um relatório para a equipe médica.
 
 ## Pipeline
 
-1. **Amazon Transcribe** — transcrição da fala.
-2. **Amazon Comprehend Medical** — entidades clínicas (sintomas, medicações, anatomia)
-   sobre a transcrição.
-3. **Biomarcadores acústicos** (librosa) — jitter, shimmer, F0, MFCC sobre o áudio bruto.
+```
+consulta (.mp3) ──► S3 ──► Transcribe ──► diarização ──► Comprehend Medical ──► relatório
+                                                                                bilíngue
+```
+
+1. **Amazon Transcribe** — transcrição da fala, com diarização de 2 falantes.
+2. **Amazon Comprehend Medical** — entidades clínicas tipadas (sintomas, anatomia,
+   medicações) com traços como `NEGATION` e `PERTAINS_TO_FAMILY`.
+3. **Amazon Translate** — tradução dos achados para o relatório bilíngue.
 
 > **Provedor de nuvem: AWS.** O plano original usava Azure Cognitive Services, mas não
 > havia cota disponível. Com a liberação da AWS, o pipeline passou a usar Transcribe +
@@ -19,60 +24,69 @@ Processar áudios de participantes e detectar alterações vocais/respiratórias
 `src/common/config.py`. O Transcribe **exige que o áudio esteja no S3** — não aceita upload
 direto na chamada.
 
-## Dataset: Coswara
+## Módulos
 
-Áudios de respiração, tosse, vogais sustentadas e contagem de números, com metadados de
-sintomas e comorbidades. Cada participante contribui com **nove** gravações.
+| Módulo | Papel |
+|---|---|
+| `consultations.py` | loader do dataset: lista casos, separa turnos por falante, isola a fala do paciente |
+| `transcribe.py` | upload ao S3, job do Transcribe, diarização e medição de WER contra a referência humana |
+| `comprehend.py` | extração de entidades clínicas e comparação entre as duas transcrições |
+| `report.py` | relatório bilíngue para a equipe médica |
+
+## Dataset: consultas médicas simuladas
 
 | Item | Valor |
 |---|---|
-| Fonte | [github.com/iiscleap/Coswara-Data](https://github.com/iiscleap/Coswara-Data) |
-| Participantes | 2.746 (`combined_data.csv`) |
-| Tamanho total | ~28 GB (45 lotes) — baixamos apenas 2 lotes, ~1,7 GB |
-| Licença | Open-access, não-comercial |
+| Fonte | [figshare, DOI 10.6084/m9.figshare.16550013.v1](https://doi.org/10.6084/m9.figshare.16550013.v1) |
+| Conteúdo | 272 consultas em formato OSCE, com áudio e **transcrição humana revisada** |
+| Áudio | MP3 16 kHz mono, 11-15 min por consulta |
+| Especialidades | 213 respiratórias (78,3%), 46 musculoesqueléticas, 13 outras |
+| Licença | CC0 (domínio público) |
 
-O dataset traz **rótulos de qualidade por gravação** (`annotations/`), avaliados por escuta
-manual: 0 ruim, 1 boa, 2 excelente. Filtrar por eles evita mandar áudio inaudível para a
-nuvem — o que custa dinheiro e polui o resultado.
+A **transcrição humana** é ground-truth: permite medir o erro do Transcribe em vez de
+apenas exibir o resultado.
 
-### Lotes usados
-
-| Lote | Tamanho | Papel |
-|---|---|---|
-| `20220224` | 1.369 MB | rico em sintomáticos (114 com áudio de fala bom) |
-| `20210406` | 317 MB | reforça o grupo de controle (mais 40 saudáveis) |
+> ⚠️ **Armadilha de codificação.** Dois dos 213 casos respiratórios (`RES0002` e
+> `RES0054`) estão em UTF-16, o resto em UTF-8. Ler tudo como UTF-8 não levanta erro —
+> devolve texto corrompido, e o caso aparece silenciosamente com zero turnos de fala. O
+> loader detecta a codificação pelo BOM.
 
 ## Uso
 
 ```bash
-# estatísticas dos metadados (não precisa do áudio)
-python -m src.audio.dataset --root data/audio/coswara --summary
+# estatísticas do dataset (não chama a AWS)
+python -m src.audio.consultations --root data/audio/consultas --summary
 
-# monta a coorte equilibrada e salva em CSV
-python -m src.audio.dataset --root data/audio/coswara --cohort \
-    --batches 20220224 20210406 --per-group 30 --out reports/audio_cohort.csv
+# só as falas do paciente de um caso
+python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
 
-# junta as partes .tar.gz.a* e extrai um lote
-python -m src.audio.dataset --root data/audio/coswara --extract 20220224
+# transcrição (CUSTA — cacheia em reports/transcriptions/)
+python -m src.audio.transcribe --cases RES0029
+
+# métricas do que já está em cache, sem tocar na AWS
+python -m src.audio.transcribe --report --out reports/wer_consultations.csv
+
+# entidades clínicas; --compare mede humano vs AWS
+python -m src.audio.comprehend --cases RES0029
+python -m src.audio.comprehend --cases RES0029 --compare
+
+# relatório final para a equipe médica
+python -m src.audio.report --case RES0029
 ```
 
-## Definição dos grupos
+## Por que só a fala do paciente
 
-- **sintomático** — relata `bd` (dificuldade respiratória) **ou** `ftg` (fadiga), que são
-  exatamente os sintomas do enunciado do desafio.
-- **saudável** — `covid_status == healthy` **e nenhum sintoma relatado**.
+As perguntas do médico ("any fever?", "do you have a cough?") contêm termos clínicos, mas
+são hipóteses sendo investigadas — não achados do paciente. Incluí-las produziria uma
+lista de sintomas que o paciente nunca relatou.
 
-A segunda condição não é redundante: **121 dos 1.433 participantes declarados `healthy`
-relatam algum sintoma**, sendo 12 com dificuldade respiratória e 12 com fadiga. Usar apenas
-o `covid_status` contaminaria o grupo de controle com casos que pertencem ao outro grupo.
+Na transcrição humana a separação vem dos rótulos `D:`/`P:`; na da AWS, da diarização. O
+papel do paciente é identificado por dois sinais independentes — quem fala mais e quem
+*não* abre a consulta — e o código recusa-se a decidir se eles discordarem.
 
-## Estrutura dos dados (`data/audio/coswara/`, gitignored)
+## Controle de custo
 
-```
-combined_data.csv          metadados de todos os participantes
-csv_labels_legend.json     legenda das colunas abreviadas (bd, ftg, ...)
-folder_csv/<lote>.csv      mapa participante -> lote (necessário: record_date não serve)
-annotations/*_labels.csv   qualidade por gravação
-raw/<lote>/*.tar.gz.a*     partes baixadas
-extracted/<lote>/<id>/     áudio extraído, um .wav por som
-```
+Transcribe, Comprehend Medical e Translate cobram por volume. Todo resultado é **cacheado**
+(`reports/transcriptions/`, `reports/entities/`, `reports/translations.json`) e nenhum caso
+é reprocessado sem `--force`. O modo `--report` recalcula métricas do cache **sem chamar a
+AWS**. Os JSON brutos são versionados, permitindo auditar os resultados sem credenciais.

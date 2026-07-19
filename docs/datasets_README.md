@@ -5,19 +5,15 @@ Datasets **públicos de download imediato** (sem credenciamento), por modalidade
 | Entrega | Subtarefa | Dataset | Acesso | Tamanho |
 |---|---|---|---|---|
 | 1 — Análise de Vídeo | Análise postural (reabilitação) | REHAB24-6 | Aberto (Zenodo) | ~2,7 GB (vídeos) |
-| 2 — Análise de Áudio | Fala clínica (transcrição + entidades) | Consultas médicas simuladas | Aberto (figshare, CC0) | 986 MB |
-| 2 — Análise de Áudio | Biomarcadores acústicos | Coswara | Open-access (não-comercial) | ~28 GB total, **usamos 1,7 GB** |
+| 2 — Análise de Áudio | Consultas médicas (transcrição + entidades clínicas) | Consultas médicas simuladas | Aberto (figshare, CC0) | 986 MB |
 | 3 — Detecção de Anomalias | Séries temporais de sinais vitais | PhysioNet/CinC Challenge 2019 (Sepsis) | Aberto | ~42 MB |
 | 3 — Detecção de Anomalias | Padrões de movimentação do paciente | UCI HAR (Human Activity Recognition) | Aberto | ~60 MB |
 | 3 — Detecção de Anomalias | Evolução de prescrições | Synthea (sintético) | Aberto | variável |
 
-**Por que a Entrega 2 usa dois datasets.** Não é redundância: cada um cobre uma metade que
-o outro não tem. Jitter, shimmer e F0 são medidas de perturbação ciclo a ciclo da vibração
-das pregas vocais e exigem **fonação sustentada** — não se calculam de forma confiável em
-conversa espontânea, com dois interlocutores e sobreposição de fala. O Coswara tem vogais
-sustentadas e respiração, com sintoma rotulado por participante, mas sua única fala é
-**contar números**, o que não gera linguagem clínica para o Comprehend Medical extrair. As
-consultas simuladas dão exatamente essa linguagem, e não têm fonação sustentada.
+A Entrega 2 usa consultas médicas reais em formato simulado, com **fala clínica
+espontânea** — o paciente descrevendo sintomas em linguagem natural, que é a matéria-prima
+do Amazon Comprehend Medical. A transcrição humana que acompanha cada consulta serve de
+ground-truth para medir o erro do Amazon Transcribe.
 
 ---
 
@@ -100,77 +96,7 @@ python -m src.audio.consultations --root data/audio/consultas --case RES0001 --p
 
 ---
 
-## 2. Coswara — biomarcadores acústicos (Entrega 2)
-
-Respiração (profunda/rasa), tosse (pesada/rasa), vogais sustentadas (/a/, /e/, /o/) e
-contagem de números (rápida/normal): **nove gravações por participante**, com metadados de
-sintomas e comorbidades.
-
-**Download seletivo (o repositório inteiro tem ~28 GB):**
-
-```bash
-mkdir -p data/audio/coswara
-BASE=https://raw.githubusercontent.com/iiscleap/Coswara-Data/master
-
-# 1) Metadados (~2 MB) — permitem desenhar o recorte antes de baixar áudio
-curl -L -o data/audio/coswara/combined_data.csv       "$BASE/combined_data.csv"
-curl -L -o data/audio/coswara/csv_labels_legend.json  "$BASE/csv_labels_legend.json"
-
-# 2) Rótulos de qualidade por gravação (escuta manual: 0 ruim, 1 boa, 2 excelente)
-mkdir -p data/audio/coswara/annotations
-for s in breathing-deep breathing-shallow cough-heavy cough-shallow \
-         counting-fast counting-normal vowel-a vowel-e vowel-o; do
-  curl -L -o "data/audio/coswara/annotations/${s}_labels.csv" \
-    "$BASE/annotations/${s}_labels.csv"
-done
-
-# 3) CSV de cada lote — mapeia participante -> lote (necessário: record_date NÃO serve)
-mkdir -p data/audio/coswara/folder_csv
-# (um curl por lote; ver src/audio/dataset.py)
-
-# 4) Áudio: só os lotes escolhidos, em partes de 100 MB
-mkdir -p data/audio/coswara/raw/20220224
-for p in aa ab ac ad ae af ag ah ai aj ak al am an ao; do
-  curl -L -o "data/audio/coswara/raw/20220224/20220224.tar.gz.$p" \
-    "$BASE/20220224/20220224.tar.gz.$p"
-done
-python -m src.audio.dataset --root data/audio/coswara --extract 20220224
-```
-
-Página oficial: https://github.com/iiscleap/Coswara-Data (open-access, **não-comercial**).
-Artigo: https://arxiv.org/abs/2005.10548
-
-**Lotes usados neste trabalho:**
-
-| Lote | Tamanho | Papel |
-|---|---|---|
-| `20220224` | 1.369 MB (15 partes) | rico em sintomáticos |
-| `20210406` | 317 MB (4 partes) | reforça o grupo de controle |
-
-**Metadados relevantes** (legenda completa em `csv_labels_legend.json`): `bd` = dificuldade
-respiratória, `ftg` = fadiga — exatamente os sintomas do enunciado do desafio. Também
-`cough`, `fever`, `st` (dor de garganta), `asthma`, `cld` (doença pulmonar crônica),
-`covid_status`.
-
-> ⚠️ **`covid_status == healthy` não basta para o grupo de controle.** 121 dos 1.433
-> participantes assim declarados relatam algum sintoma — 12 deles justamente dificuldade
-> respiratória ou fadiga, que definem o grupo oposto. O loader exige, além do status,
-> **ausência de qualquer sintoma relatado**.
-
-> 💡 Os `.tar.gz` vêm fatiados em partes de 100 MB porque o GitHub limita o tamanho de
-> arquivo. Elas precisam ser concatenadas antes de descompactar — `--extract` faz isso.
-
-Use `src/audio/dataset.py`:
-
-```bash
-python -m src.audio.dataset --root data/audio/coswara --summary
-python -m src.audio.dataset --root data/audio/coswara --cohort \
-    --batches 20220224 20210406 --per-group 30
-```
-
----
-
-## 3. PhysioNet/CinC Challenge 2019 — sinais vitais
+## 2. PhysioNet/CinC Challenge 2019 — sinais vitais
 
 **Download (escolha uma opção):**
 
@@ -199,7 +125,7 @@ Use `src/anomaly/load_challenge2019.py` para carregar e rodar o baseline.
 
 ---
 
-## 4. UCI HAR — movimentação do paciente
+## 3. UCI HAR — movimentação do paciente
 
 **Download:**
 
@@ -234,7 +160,7 @@ bruscas ou atividades inesperadas (ex.: queda ~ pico de aceleração) como anoma
 
 ---
 
-## 5. Evolução de prescrições
+## 4. Evolução de prescrições
 
 Sem fonte pública aberta granular (a boa vem do MIMIC, que exige credenciamento).
 Duas saídas defensáveis na banca:
@@ -269,7 +195,7 @@ python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4  
 
 # Entrega 2 — áudio
 python -m src.audio.consultations --root data/audio/consultas --summary
-python -m src.audio.dataset   --root data/audio/coswara  --summary
+python -m src.audio.transcribe --report
 
 # Entrega 3 — anomalias
 python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019

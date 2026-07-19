@@ -10,9 +10,7 @@ São 272 consultas em formato OSCE, cada uma com o áudio (MP3 16 kHz mono, 11-1
     RES0001.mp3  ->  caso respiratório nº 1
 
 Papel na entrega: é a fonte de **fala clínica espontânea**, que alimenta o Amazon
-Transcribe e, na sequência, o Comprehend Medical. O Coswara (ver ``dataset.py``) cobre a
-outra metade — fonação sustentada e respiração, que a consulta não tem e sem as quais não
-se calcula jitter/shimmer de forma confiável.
+Transcribe e, na sequência, o Comprehend Medical.
 
 A transcrição humana é **ground-truth**: permite medir o erro do Transcribe em vez de
 apenas exibir o resultado.

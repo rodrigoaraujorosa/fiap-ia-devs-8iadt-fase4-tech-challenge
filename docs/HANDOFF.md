@@ -8,7 +8,7 @@
 | Entrega | Estado |
 |---|---|
 | 1 — Análise de Vídeo (OpenPose) | **Completa e validada** em 3 experimentos (PM_008, PM_034, PM_006) + app Gradio com linguagem para equipe médica + screenshots no relatório |
-| 2 — Análise de Áudio (**AWS**) | **Em andamento** na branch `feature/entrega-2-audio`. Dois datasets baixados e com loader validado; falta Transcribe, Comprehend Medical e biomarcadores |
+| 2 — Análise de Áudio (**AWS**) | **Completa** na branch `feature/entrega-2-audio`: Transcribe (WER 5,37%), Comprehend Medical, Translate e relatório clínico bilíngue |
 | 3 — Detecção de Anomalias | **Baseline pronto** (loaders Challenge 2019 + UCI HAR); falta rodar/documentar |
 
 ## Decisões-chave (não reabrir sem motivo)
@@ -71,18 +71,17 @@ python -m src.video.cli --video data/video/rehab24-6/PM_034-Camera17-30fps.mp4 \
 python -m src.video.app            # http://localhost:7860
 
 # --- Entrega 2 (áudio) ---
-# Coswara: estatísticas e coorte equilibrada
-python -m src.audio.dataset --root data/audio/coswara --summary
-python -m src.audio.dataset --root data/audio/coswara --cohort \
-    --batches 20220224 20210406 --per-group 30
-
-# Consultas médicas: estatísticas e recorte
+# Consultas médicas: estatísticas e falas do paciente
 python -m src.audio.consultations --root data/audio/consultas --summary
 python -m src.audio.consultations --root data/audio/consultas --case RES0001 --patient-only
 
 # Transcrição (CUSTA DINHEIRO — cacheia em reports/transcriptions/)
 python -m src.audio.transcribe --cases RES0029
 python -m src.audio.transcribe --report --out reports/wer_consultations.csv  # só do cache
+
+# Entidades clínicas e relatório final
+python -m src.audio.comprehend --cases RES0029 --compare
+python -m src.audio.report --case RES0029
 
 # Verificação do ambiente AWS (não custa nada)
 python -m src.common.config
@@ -137,32 +136,11 @@ pytest
 - `CLAUDE.md` é gitignored — **manter como está** (não editar).
 - Commits frequentes, mensagens em PT-BR, terminando com `Co-Authored-By: Claude ...`.
 
-## Entrega 2 — Áudio (`src/audio/`, branch `feature/entrega-2-audio`)
-
-**Duas fontes, por necessidade técnica** — não é redundância:
-
-| Dataset | O que fornece | Alimenta |
-|---|---|---|
-| **Coswara** (`dataset.py`) | fonação sustentada, respiração e tosse, com sintoma por participante | biomarcadores (librosa) |
-| **Consultas simuladas** (`consultations.py`) | fala clínica espontânea + transcrição humana | Transcribe → Comprehend Medical |
-
-Jitter/shimmer/F0 exigem **vogal sustentada** — não se calcula de forma confiável em
-conversa espontânea com dois falantes. E o Coswara só tem gente **contando números**, que
-não gera linguagem clínica para o Comprehend Medical extrair. Nenhum substitui o outro.
-
-- Coswara: 2 lotes baixados (20220224 e 20210406, 1,7 GB). Coorte equilibrada 30+30.
-  **Controle exige ausência de sintomas**, não só `covid_status == healthy` (121 dos 1.433
-  "healthy" relatam sintoma).
-- Consultas: 272 casos (213 respiratórios), CC0, figshare DOI 10.6084/m9.figshare.16550013.
-  As transcrições humanas são **ground-truth para medir o WER do Transcribe**.
-  Armadilha tratada: 2 arquivos estão em UTF-16, o resto em UTF-8.
-
 ## Próximos passos
 
 1. ~~Vídeo curto sem pessoa ao fundo para o demo~~ — **resolvido: PM_034.** Entrega 1 fechada.
-2. **Entrega 2:** `pip install boto3` **no venv** (pendente); criar bucket S3 e definir a
-   região (`us-east-1` sugerida — confirmar disponibilidade do Comprehend Medical); depois
-   escrever upload S3 → Transcribe → Comprehend Medical e os biomarcadores.
+2. **Entrega 2:** concluída. Falta ampliar a amostra de transcrição (hoje 1 caso) e
+   fazer o merge da branch na `main`.
 3. **Entrega 3:** baixar Challenge 2019 + UCI HAR, rodar e documentar; Synthea p/ prescrições.
 4. **Relatório técnico**: completar as seções **[Em desenvolvimento]**. Atenção: as seções
    **4 e 6 ainda descrevem o pipeline Azure** — reescrever para AWS quando a Entrega 2

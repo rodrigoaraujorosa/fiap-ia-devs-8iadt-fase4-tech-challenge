@@ -1,9 +1,8 @@
 """
 Relatório clínico da análise de áudio (Entrega 2).
 
-Junta as três peças da entrega num documento para a **equipe médica**: os achados
-clínicos extraídos pelo Comprehend Medical, a qualidade da transcrição que os produziu e,
-quando disponíveis, os biomarcadores acústicos.
+Reúne o resultado da entrega num documento para a **equipe médica**: os achados clínicos
+extraídos pelo Comprehend Medical e a qualidade da transcrição que os produziu.
 
 **Bilíngue por necessidade, não por estilo.** O áudio-fonte é em inglês. Traduzir sem
 mostrar o original impediria a equipe de conferir contra a gravação; mostrar só o inglês
@@ -17,7 +16,6 @@ informação ruim.
 
 Uso:
     python -m src.audio.report --case RES0029
-    python -m src.audio.report --case RES0029 --biomarkers reports/biomarkers.csv
     python -m src.audio.report --case RES0029 --no-translate     # sem chamar a AWS
 """
 from __future__ import annotations
@@ -107,7 +105,6 @@ def build_report(
     root: str | Path,
     region: str,
     translate_enabled: bool = True,
-    biomarkers_csv: str | Path | None = None,
 ) -> str:
     """Monta o relatório em Markdown para um caso."""
     ents_path = entities_cache_path(case, "human")
@@ -238,21 +235,6 @@ def build_report(
     else:
         L.append("Transcrição automática não disponível para este caso.\n")
 
-    # --- Biomarcadores ---
-    if biomarkers_csv and Path(biomarkers_csv).exists():
-        import pandas as pd
-        bio = pd.read_csv(biomarkers_csv)
-        L.append("## Biomarcadores acústicos (coorte)\n")
-        L.append("Medidas extraídas de vogal sustentada, comparando participantes com "
-                 "sintomas respiratórios e controles.\n")
-        L.append(f"- Participantes analisados: {len(bio)}")
-        if "group" in bio.columns:
-            for g, n in bio["group"].value_counts().items():
-                L.append(f"  - {g}: {n}")
-        L.append("")
-        L.append("**Nenhuma medida separou os grupos de forma estatisticamente "
-                 "confiável.** O achado é negativo e está detalhado no relatório técnico.\n")
-
     L.append("---\n")
     L.append("Relatório gerado automaticamente a partir de: Amazon Transcribe "
              "(transcrição), Amazon Comprehend Medical (extração de entidades clínicas) "
@@ -265,7 +247,6 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Relatório clínico bilíngue da análise de áudio.")
     ap.add_argument("--root", default="data/audio/consultas", help="raiz do dataset")
     ap.add_argument("--case", required=True, help="caso a reportar (ex.: RES0029)")
-    ap.add_argument("--biomarkers", help="CSV de biomarcadores a incluir")
     ap.add_argument("--no-translate", action="store_true",
                     help="não chama o Amazon Translate (usa o cache ou o original)")
     ap.add_argument("--out", help="arquivo de saída (padrão: reports/audio_<caso>.md)")
@@ -273,8 +254,7 @@ def main() -> None:
 
     cfg = get_aws_config()
     md = build_report(args.case, args.root, cfg["region"],
-                      translate_enabled=not args.no_translate,
-                      biomarkers_csv=args.biomarkers)
+                      translate_enabled=not args.no_translate)
 
     out = Path(args.out) if args.out else ROOT_DIR / "reports" / f"audio_{args.case}.md"
     out.parent.mkdir(parents=True, exist_ok=True)

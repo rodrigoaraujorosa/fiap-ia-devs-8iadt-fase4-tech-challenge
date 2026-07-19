@@ -28,7 +28,7 @@ alertas automáticos para a equipe médica.
 
 A solução integra três entregas técnicas independentes, unidas pelo cenário clínico:
 análise de vídeo de sessões de reabilitação (estimação de pose e detecção de desvios
-posturais), análise de áudio de consultas (transcrição e biomarcadores vocais) e detecção
+posturais), análise de áudio de consultas (transcrição e extração de achados clínicos) e detecção
 de anomalias em sinais vitais, prescrições e padrões de movimentação.
 
 > **AVISO — Uso exclusivamente acadêmico.** Este sistema não deve ser utilizado para
@@ -43,7 +43,7 @@ Desenvolver um sistema que:
 1. Processe vídeos clínicos e detecte movimentos/eventos fora do padrão esperado (análise
    postural com OpenPose), gerando relatórios automáticos de desvios
 2. Processe áudios de consultas, transcreva a fala (Amazon Transcribe) e identifique
-   termos críticos (Amazon Comprehend Medical), além de biomarcadores acústicos
+   termos críticos e achados clínicos (Amazon Comprehend Medical)
 3. Aplique técnicas de detecção de anomalias em séries temporais de sinais vitais,
    evolução de prescrições e padrões de movimentação
 4. Integre serviços gerenciados em nuvem (AWS — ver 4.2 sobre a troca de provedor) e
@@ -63,7 +63,7 @@ Desenvolver um sistema que:
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços | Estado |
 |:--|:--|:--|:--|:--|:--|
 | 1 | Análise de Vídeo | Detectar desvios posturais em vídeos de reabilitação | REHAB24-6 (RGB + rótulos correto/incorreto) | OpenPose (BODY_25), IsolationForest, z-score robusto | Implementada e validada |
-| 2 | Análise de Áudio | Transcrever a fala, extrair achados clínicos e medir biomarcadores | Consultas simuladas + Coswara | Amazon Transcribe, Comprehend Medical, Translate; Praat/librosa | Implementada |
+| 2 | Análise de Áudio | Transcrever a fala e extrair os achados clínicos relatados | Consultas médicas simuladas | Amazon Transcribe, Comprehend Medical, Translate | Implementada |
 | 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR, Synthea | IsolationForest (baseline) | Baseline implementado |
 
 ### 1.4 Datasets Utilizados
@@ -71,7 +71,7 @@ Desenvolver um sistema que:
 | Modalidade | Dataset | Acesso | Observação |
 |:--|:--|:--|:--|
 | Vídeo | REHAB24-6 | Aberto (Zenodo, ~2,7 GB) | RGB + rótulos de execução correta/incorreta |
-| Áudio | Coswara | Open-access (não-comercial) | Respiração, tosse, vogais, dígitos + metadados |
+| Áudio | Consultas médicas simuladas | Aberto (figshare, CC0) | 272 consultas com áudio e transcrição humana |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | 40.336 pacientes de UTI, séries horárias |
 | Movimentação | UCI HAR | Aberto (~60 MB) | 561 features (acelerômetro + giroscópio), 6 atividades |
 | Prescrições | Synthea (sintético) | Aberto | Gerador de registros clínicos sintéticos |
@@ -88,7 +88,7 @@ interpretável que pode disparar um alerta à equipe médica.
 [Vídeo: reabilitação]  ── OpenPose ──► keypoints ──► ângulos ──► desvios ─┐
                                                                           │
 [Áudio: consulta]  ── Transcribe ──► transcrição ──► Comprehend Medical ─┤
-                     └─ Praat/librosa ──► biomarcadores acústicos         ├─► fusão / alerta
+                                                                          ├─► fusão / alerta
                                                                           │    à equipe médica
 [Sinais vitais / movimentação / prescrições]  ── IsolationForest ────────┘
 ```
@@ -98,7 +98,7 @@ interpretável que pode disparar um alerta à equipe médica.
 | Modalidade | Entrada | Processamento | Saída |
 |:--|:--|:--|:--|
 | Vídeo | vídeo RGB (.mp4) | OpenPose (BODY_25) → ângulos articulares → detecção de desvios | relatório + vídeo anotado |
-| Áudio | consulta (.mp3) e fonação (.wav) | Amazon Transcribe + Comprehend Medical + biomarcadores (Praat) | transcrição + achados clínicos + medidas vocais |
+| Áudio | consulta (.mp3) | Amazon Transcribe + Comprehend Medical | transcrição + achados clínicos tipados |
 | Anomalias | séries temporais (.psv/.txt/.csv) | IsolationForest + z-score | frames/horas anômalas + alertas |
 
 ### 2.2 Princípio de Projeto: Desacoplamento
@@ -516,14 +516,13 @@ anomalias injetadas e a renderização do overlay.
 
 ### 4.1 Visão Geral
 
-O pipeline de áudio processa gravações de consultas médicas e de fonação, transcreve a
-fala, extrai os achados clínicos mencionados e mede biomarcadores vocais, produzindo um
-relatório para a equipe médica.
+O pipeline de áudio processa gravações de consultas médicas, transcreve a fala e extrai
+os achados clínicos mencionados pelo paciente, produzindo um relatório para a equipe
+médica.
 
 ```
-consulta (.mp3) ──► S3 ──► Transcribe ──► diarização ──► Comprehend Medical ──┐
-                                                                              ├─► relatório
-vogal sustentada (.wav) ──► Praat/librosa ──► jitter, shimmer, HNR, MFCC ─────┘   bilíngue
+consulta (.mp3) ──► S3 ──► Transcribe ──► diarização ──► Comprehend Medical ──► relatório
+                                                                                bilíngue
 ```
 
 ### 4.2 Troca de Provedor: Azure → AWS
@@ -542,33 +541,36 @@ O Comprehend Medical devolve as entidades já **tipadas e qualificadas por traç
 (`NEGATION`, `PERTAINS_TO_FAMILY`, `HYPOTHETICAL`), o que carrega para o serviço parte da
 lógica clínica que, de outro modo, teria de ser implementada localmente.
 
-### 4.3 Duas Fontes de Dados, por Necessidade Técnica
+### 4.3 Dataset: Consultas Médicas Simuladas
 
-A entrega usa **dois datasets**, e a divisão não é arbitrária:
+*A dataset of simulated patient-physician medical interviews with a focus on respiratory
+cases* (figshare, DOI 10.6084/m9.figshare.16550013.v1, licença CC0).
 
-| Dataset | Fornece | Alimenta |
-|:--|:--|:--|
-| Consultas simuladas (figshare, CC0) | fala clínica espontânea + transcrição humana | Transcribe → Comprehend Medical |
-| Coswara (IISc, open-access) | fonação sustentada e respiração, com sintoma rotulado | biomarcadores (Praat/librosa) |
+| Item | Descrição |
+|:--|:--|
+| Conteúdo | 272 consultas em formato OSCE, com áudio e transcrição humana revisada |
+| Áudio | MP3 16 kHz mono, 11-15 min por consulta |
+| Especialidades | 213 respiratórias (78,3%), 46 musculoesqueléticas, 13 outras |
+| Rótulos de fala | turnos marcados `D:` (médico) e `P:` (paciente) |
+| Licença | CC0 (domínio público) |
 
-**Jitter e shimmer medem a perturbação ciclo a ciclo da vibração das pregas vocais** e só
-são calculáveis sobre fonação sustentada — uma vogal mantida por alguns segundos. Em
-conversa espontânea, com dois interlocutores e sobreposição de fala, não há ciclos
-comparáveis. O Coswara tem essa fonação; as consultas, não.
+**Justificativa da escolha.** O dataset atende às duas exigências do enunciado para a
+modalidade: é **áudio de consulta médica** e traz **fala clínica espontânea**, em que o
+paciente descreve sintomas em linguagem natural — matéria-prima do Comprehend Medical.
+A concentração em casos respiratórios (78,3%) dialoga diretamente com o sintoma-alvo do
+desafio, "dificuldades respiratórias e cansaço".
 
-Na direção oposta, a única fala do Coswara é a **contagem de números**, que não produz
-linguagem clínica para o Comprehend Medical extrair. As consultas produzem. Nenhum dos
-dois substitui o outro.
+A **transcrição humana revisada** é o que permite medir o erro do Transcribe (4.4) em vez
+de apenas exibir seu resultado.
 
-**Detalhes dos datasets.** As consultas somam 272 casos (213 respiratórios, 78,3%), MP3
-16 kHz mono de 11-15 min, com transcrição humana revisada. Do Coswara foram usados 2 dos
-45 lotes (1,7 GB de ~28 GB), com 9 gravações por participante e rótulos de qualidade por
-escuta manual.
+> **Nota sobre a contagem.** O artigo do dataset informa 214 casos respiratórios (78,7%);
+> a contagem sobre os arquivos efetivamente distribuídos resulta em **213**. Este
+> relatório usa o número medido.
 
-> **Definição do grupo de controle.** `covid_status == healthy` **não basta**: 121 dos
-> 1.433 participantes assim declarados relatam algum sintoma, sendo 12 com dificuldade
-> respiratória e 12 com fadiga — exatamente os sintomas que definem o grupo oposto. O
-> controle exige, além do status, ausência de qualquer sintoma relatado.
+> **Armadilha de codificação.** Dois dos 213 casos respiratórios (`RES0002` e `RES0054`)
+> estão em UTF-16, enquanto o restante está em UTF-8. Ler todos como UTF-8 não levanta
+> exceção — devolve texto corrompido, e o caso aparece silenciosamente com zero turnos de
+> fala. O loader detecta a codificação pelo BOM.
 
 ### 4.4 Transcrição (`transcribe.py`)
 
@@ -634,41 +636,7 @@ Em sentido oposto, o serviço extraiu `head was fine` como achado positivo, quan
 paciente afirmava justamente estar bem — falso positivo que fica registrado como
 limitação.
 
-### 4.6 Biomarcadores Acústicos (`biomarkers.py`)
-
-Jitter, shimmer e HNR vêm do **Praat** (via `parselmouth`), implementação de referência
-dessas medidas, calculadas ciclo a ciclo sobre os pulsos glotais. O rastreamento de F0 por
-frame de bibliotecas como o librosa permitiria apenas uma aproximação, e usar o nome
-"jitter" para ela seria impreciso; o librosa fica com os MFCC e a leitura de áudio.
-
-**Resultado: negativo.** Com 30 participantes por grupo, sobre a vogal /a/ sustentada,
-**nenhuma medida separou sintomáticos de saudáveis** (todos os p > 0,05, Mann-Whitney U).
-
-A única diferença aparente — F0 mais baixa nos sintomáticos (158 vs 187 Hz) — é
-**confundida por sexo**: a F0 mediana é 219,9 Hz em mulheres e 130,7 Hz em homens, e os
-grupos estão desbalanceados (sintomáticos 21H/9M, saudáveis 17H/13M). Estratificando por
-sexo, a diferença desaparece (p = 0,60 em homens, p = 0,13 em mulheres).
-
-Replicando nas três vogais, o **shimmer é maior nos sintomáticos em todas elas**:
-
-| Vogal | Sintomáticos | Saudáveis | p |
-|:--|:--:|:--:|:--:|
-| /a/ | 0,065 | 0,053 | 0,167 |
-| /e/ | 0,063 | 0,051 | 0,751 |
-| /o/ | 0,067 | 0,043 | **0,006** |
-
-O resultado em /o/ mantém o sinal nos dois sexos (p = 0,028 em homens, p = 0,061 em
-mulheres). Foram, porém, **15 testes** (5 medidas × 3 vogais), e o limiar de Bonferroni é
-0,0033 — **o achado não sobrevive à correção para múltiplas comparações**. A consistência
-de direção nas três vogais é sugestiva e justifica amostra maior; não constitui
-biomarcador demonstrado.
-
-**Interpretação do resultado negativo.** Duas explicações são plausíveis e não excludentes:
-os sintomas do Coswara são **autorrelatados**, o que introduz ruído no rótulo; e jitter,
-shimmer e HNR medem a **laringe**, sendo tradicionalmente aplicados a disfonias, enquanto
-"dificuldade respiratória e fadiga" afetam sobretudo o sistema respiratório.
-
-### 4.7 Relatório Clínico Bilíngue (`report.py`)
+### 4.6 Relatório Clínico Bilíngue (`report.py`)
 
 O relatório destina-se à equipe médica e é **bilíngue por necessidade**: o áudio-fonte é em
 inglês, e traduzir sem mostrar o original impediria a conferência contra a gravação.
@@ -695,7 +663,7 @@ O relatório informa também o **WER da transcrição que originou os achados**:
 perfeita sobre transcrição ruim continua sendo informação ruim, e a equipe precisa desse
 contexto para calibrar a confiança.
 
-### 4.8 Controle de Custo e Credenciais
+### 4.7 Controle de Custo e Credenciais
 
 Transcribe, Comprehend Medical e Translate cobram por volume processado. Todo resultado é
 **cacheado em disco** (`reports/transcriptions/`, `reports/entities/`,
@@ -783,7 +751,6 @@ antes de qualquer chamada.
 |:--|:--|:--|
 | Vídeo (Entrega 1) | OpenPose local | Não há serviço gerenciado equivalente para pose clínica; a extração de keypoints é feita pelo binário do OpenPose |
 | Anomalias (Entrega 3) | IsolationForest local | Ver nota abaixo |
-| Biomarcadores (Entrega 2) | Praat/librosa local | Jitter e shimmer são medidas de sinal, não de linguagem; nenhum serviço gerenciado das nuvens avaliadas as oferece |
 
 **Nota sobre serviços gerenciados de anomalia.** Os dois serviços que seriam o encaixe
 natural para séries temporais foram descontinuados pelos respectivos provedores:
@@ -824,7 +791,7 @@ automático de alerta ainda não estão implementados. O desenho previsto consom
 anomalia de cada pipeline (desvio postural, achado clínico, anomalia em sinal vital) e
 encaminha o alerta à equipe.
 
-O relatório clínico bilíngue (4.7) já constitui a **saída legível** desse fluxo: reúne os
+O relatório clínico bilíngue (4.6) já constitui a **saída legível** desse fluxo: reúne os
 achados, sua origem na fala do paciente e a confiabilidade da transcrição que os produziu.
 O que falta é a automação do disparo.
 
@@ -907,7 +874,6 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
 | Gradio | App web local de demonstração (Entrega 1) |
 | AWS (Transcribe, Comprehend Medical, Translate, S3) | Serviços gerenciados da Entrega 2 |
-| Praat (via `parselmouth`) | Jitter, shimmer e HNR (Entrega 2) |
 
 ### 9.2 Bibliotecas Python
 
@@ -918,7 +884,6 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 | `matplotlib`, `seaborn` | Gráficos e relatórios |
 | `opencv-python` | Leitura de vídeo e overlay do esqueleto |
 | `boto3` | Amazon Transcribe e Comprehend Medical (Entrega 2) |
-| `librosa`, `soundfile` | Biomarcadores acústicos (Entrega 2) |
 | `python-dotenv` | Carregamento de credenciais da nuvem |
 | `pytest` | Testes automatizados |
 
@@ -1022,7 +987,6 @@ pytest -q
 | GPU local fraca (MX330, 2 GB) | OpenPose lento (~1,2 s/frame) | Subamostragem (`--frame-step`) |
 | Datasets de modalidades distintas | Não há paciente comum entre vídeo, áudio e vitais | Prática acadêmica padrão; documentado |
 | Serviços gerenciados de anomalia descontinuados (Azure Anomaly Detector e Amazon Lookout for Metrics) | Sem opção gerenciada direta para séries clínicas | Detecção local (IsolationForest); avaliar CloudWatch |
-| Biomarcadores sem separação estatística | Sintomas autorrelatados e medidas laríngeas para sintoma respiratório (4.6) | Amostra maior; medidas sobre a respiração, não só a fonação |
 | Fusão multimodal e alerta automático ausentes | As três modalidades não convergem num alerta único | Implementar a camada de fusão (6.4) |
 | Detecção não-supervisionada | Limiares definidos empiricamente | Calibração com os rótulos disponíveis |
 | Referência = mediana global do vídeo | Em movimentos de grande amplitude (agachamento), a execução correta também se afasta da mediana e a separação cai para 1,4x (3.8) | Referência por fase do movimento em vez de mediana única |
@@ -1069,7 +1033,6 @@ e a camada de integração em nuvem estão em desenvolvimento.
 
 4. Anguita, D., et al. (2013). A Public Domain Dataset for Human Activity Recognition Using Smartphones (UCI HAR). *ESANN 2013*.
 
-5. Sharma, N., et al. (2020). Coswara — A Database of Breathing, Cough, and Voice Sounds for COVID-19 Diagnosis. [github.com/iiscleap/Coswara-Data](https://github.com/iiscleap/Coswara-Data)
+5. Fareez, F., et al. (2022). *A dataset of simulated patient-physician medical interviews with a focus on respiratory cases.* figshare. [doi.org/10.6084/m9.figshare.16550013.v1](https://doi.org/10.6084/m9.figshare.16550013.v1)
 
 6. Amazon Web Services. Amazon Transcribe, Amazon Comprehend Medical e Amazon Translate — documentação. [docs.aws.amazon.com](https://docs.aws.amazon.com/)
-7. Boersma, P., & Weenink, D. *Praat: doing phonetics by computer.* [praat.org](https://www.fon.hum.uva.nl/praat/)

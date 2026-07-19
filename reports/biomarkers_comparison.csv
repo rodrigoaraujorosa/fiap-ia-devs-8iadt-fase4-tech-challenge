@@ -1,6 +1,0 @@
-measure,label_pt,symptomatic_median,healthy_median,n_symptomatic,n_healthy,p_value,effect_size
-f0_mean,F0 média (Hz),158.1626,186.8433,30,30,0.0877,-0.2578
-jitter_local,jitter local,0.0052,0.0077,30,30,0.1373,-0.2244
-shimmer_local,shimmer local,0.0647,0.0528,30,30,0.1669,0.2089
-f0_sd,desvio de F0 (Hz),9.8031,16.5585,30,30,0.3403,-0.1444
-hnr,relação harmônico-ruído (dB),19.5212,19.0352,30,30,0.9941,0.0022

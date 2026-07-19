@@ -1,6 +1,6 @@
 # Relatório de análise de áudio — consulta RES0029
 
-*Gerado em 18/07/2026 às 20:42. Documento de apoio: não substitui a avaliação clínica.*
+*Gerado em 18/07/2026 às 21:12. Documento de apoio: não substitui a avaliação clínica.*
 
 O áudio original está em inglês. Cada termo e cada trecho aparecem no **original**, seguidos da **tradução para o português**.
 
@@ -88,16 +88,6 @@ A transcrição automática (Amazon Transcribe) foi comparada com a transcriçã
 - Turnos de fala identificados: 65 (referência humana: 69)
 
 Os erros de transcrição concentram-se em convenções de escrita e palavras funcionais, não em termos clínicos.
-
-## Biomarcadores acústicos (coorte)
-
-Medidas extraídas de vogal sustentada, comparando participantes com sintomas respiratórios e controles.
-
-- Participantes analisados: 60
-  - healthy: 30
-  - symptomatic: 30
-
-**Nenhuma medida separou os grupos de forma estatisticamente confiável.** O achado é negativo e está detalhado no relatório técnico.
 
 ---
 

@@ -24,7 +24,7 @@ não são os mesmos pacientes nas 3 fontes).
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços |
 |---|---------|----------|---------|--------------------|
 | 1 | 🎥 **Análise de Vídeo** | Detectar movimentos/eventos fora do padrão em vídeos clínicos | REHAB24-6 (reabilitação, RGB + rótulos correto/incorreto) | OpenPose (BODY_25) |
-| 2 | 🎙️ **Análise de Áudio** | Detectar alterações vocais/respiratórias (fadiga, disartria) | Coswara | Azure Speech-to-Text · Azure Text Analytics · biomarcadores acústicos |
+| 2 | 🎙️ **Análise de Áudio** | Transcrever consultas e extrair os achados clínicos relatados | Consultas médicas simuladas (figshare) | Amazon Transcribe · Comprehend Medical · Translate |
 | 3 | 📈 **Detecção de Anomalias** | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019 · UCI HAR · Synthea | IsolationForest (baseline) |
 
 ---
@@ -234,7 +234,7 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 | Modalidade | Dataset | Acesso | Link |
 |------------|---------|--------|------|
 | Vídeo | REHAB24-6 (reabilitação física, RGB) | Aberto (Zenodo, ~2,7 GB) | https://zenodo.org/records/13305826 |
-| Áudio | Coswara | Open-access | https://github.com/iiscleap/Coswara-Data |
+| Áudio | Consultas médicas simuladas | Aberto (CC0) | https://doi.org/10.6084/m9.figshare.16550013.v1 |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | https://physionet.org/content/challenge-2019/1.0.0/ |
 | Movimentação | UCI HAR | Aberto (~60 MB) | https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones |
 | Prescrições | Synthea (sintético) | Aberto | https://github.com/synthetichealth/synthea |
