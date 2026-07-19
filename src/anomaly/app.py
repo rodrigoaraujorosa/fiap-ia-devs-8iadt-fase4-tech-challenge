@@ -191,7 +191,10 @@ def carregar_movimentacao(sujeito: int, progress=gr.Progress()):
     L = [f"### Sujeito {s['subject']} — {s['windows']} janelas de leitura", ""]
     L.append(f"**{s['alerts']} janelas em alerta** ({s['alert_rate']:.1%} das leituras).")
     L.append("")
-    L.append("| Atividade | Classe | Janelas | Em alerta |")
+    # "Janelas" como cabeçalho se confunde com o índice do eixo x, que também se chama
+    # "janela de leitura" — lido assim, "WALKING_DOWNSTAIRS | 42" parece dizer que na
+    # janela 42 o sujeito descia escada, quando são 42 janelas no total.
+    L.append("| Atividade | Classe | Total de janelas | Em alerta |")
     L.append("|---|---|---:|---:|")
     for atividade, linha in por_atividade.iterrows():
         classe = "repouso" if atividade in movement.REST_ACTIVITIES else "**marcha**"
@@ -201,6 +204,11 @@ def carregar_movimentacao(sujeito: int, progress=gr.Progress()):
     if s["recall_movement"] is not None:
         L.append(f"**Recall sobre marcha {s['recall_movement']:.1%}** · "
                  f"falso alarme no repouso {s['false_alarm_rate']:.1%}")
+        L.append("")
+        L.append("*A contagem é o total de janelas da atividade, não a posição no eixo do "
+                 "gráfico. Os disparos isolados sobre o fundo cinza são os falsos alarmes "
+                 "em repouso — comportamento esperado, ajustável pelo parâmetro de "
+                 "contaminação.*")
     return fig, "\n".join(L)
 
 
