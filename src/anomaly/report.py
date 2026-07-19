@@ -170,12 +170,20 @@ def plot_subject_timeline(res: pd.DataFrame, subject: int, out_path: str) -> str
                 loc="lower center", bbox_to_anchor=(0.5, 1.06), ncol=2, fontsize=8,
                 frameon=False)
 
-    # painel de baixo: o que o detector disparou
-    ax_b.bar(x, res["is_anomaly"], width=1.0, color="#c0392b", linewidth=0)
-    ax_b.set_yticks([0, 1])
-    ax_b.set_yticklabels(["sem alerta", "ALERTA"], fontsize=8)
-    ax_b.set_ylim(-0.1, 1.1)
+    # Painel de baixo: faixa contínua, uma coluna por janela — vermelha se o alerta
+    # disparou, cinza se não. A versão anterior desenhava barras de altura 0 ou 1 com o
+    # eixo rotulado "sem alerta"/"ALERTA", e cada barra parecia abranger uma faixa entre
+    # os dois estados. Aqui a altura não codifica nada: só a cor informa.
+    ax_b.bar(x, 1, width=1.0, linewidth=0,
+             color=["#c0392b" if a else "#dfe6e9" for a in res["is_anomaly"]])
+    ax_b.set_yticks([])
+    ax_b.set_ylim(0, 1)
+    ax_b.set_ylabel("alerta", fontsize=9)
     ax_b.set_xlabel("janela de leitura (ordem de aquisição)")
+    ax_b.legend(handles=[Patch(color="#c0392b", label="alerta disparado"),
+                         Patch(color="#dfe6e9", label="sem alerta")],
+                loc="lower center", bbox_to_anchor=(0.5, -0.85), ncol=2, fontsize=8,
+                frameon=False)
 
     fig.tight_layout()
     caminho = Path(out_path)
