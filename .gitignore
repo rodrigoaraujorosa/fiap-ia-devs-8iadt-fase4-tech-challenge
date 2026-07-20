@@ -108,3 +108,12 @@ CLAUDE.md
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Modelos treinados (artefato de build; regerar com: python -m src.anomaly.cli --train)
+models/
+
+# Figuras geradas sob demanda pelo app/monitoramento. As duas usadas no relatório
+# (monitor_p001123 e monitor_p000188) já estão versionadas — o gitignore não afeta
+# arquivo já rastreado.
+reports/figures/timeline_sujeito_*.png
+reports/figures/monitor_*.png

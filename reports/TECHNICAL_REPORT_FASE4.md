@@ -13,8 +13,11 @@
 
 ---
 
-> **Documento vivo.** As seções marcadas com **[Em desenvolvimento]** serão completadas
-> conforme as entregas avançam. Este relatório acompanha o estado atual da implementação.
+> **Nota de transparência.** O desenvolvimento deste trabalho contou com apoio de
+> ferramenta de IA generativa (Claude Code, modelo Claude Opus 4.8), segundo a metodologia
+> **20/60/20** adotada pelo grupo: 20% de especificação, 60% de geração assistida e 20% de
+> revisão e teste. A especificação e a revisão permaneceram decisão do grupo — escolha dos
+> datasets, critérios de validação e conferência de todos os resultados apresentados.
 
 ---
 
@@ -56,7 +59,8 @@ Desenvolver um sistema que:
 | Este Relatório | `reports/TECHNICAL_REPORT_FASE4.md` |
 | Repositório | https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge |
 | Vídeo (até 15 min) | (a publicar — YouTube/Vimeo) |
-| App de demonstração (Gradio) | `python -m src.video.app` |
+| App de demonstração — vídeo (Gradio) | `python -m src.video.app` (porta 7860) |
+| App de demonstração — alertas (Gradio) | `python -m src.anomaly.app` (porta 7861) |
 
 ### 1.3 Visão Geral das Três Entregas
 
@@ -64,15 +68,16 @@ Desenvolver um sistema que:
 |:--|:--|:--|:--|:--|:--|
 | 1 | Análise de Vídeo | Detectar desvios posturais em vídeos de reabilitação | REHAB24-6 (RGB + rótulos correto/incorreto) | OpenPose (BODY_25), IsolationForest, z-score robusto | **Implementada e validada** (3 vídeos, contra os rótulos de execução) |
 | 2 | Análise de Áudio | Transcrever a fala, extrair achados clínicos e analisar o sentimento | Consultas médicas simuladas (transcrição humana como referência) | Amazon Transcribe, Comprehend Medical, Comprehend, Translate | **Implementada e validada** (4 consultas, contra a transcrição humana) |
-| 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR, Synthea | IsolationForest (baseline) | Baseline implementado, **ainda não executado com dados reais** |
+| 3 | Detecção de Anomalias | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019, UCI HAR | IsolationForest (vitais e movimentação), regra de degrau (dose) | **Implementada e validada** (5.000 pacientes e 9 sujeitos retidos, contra `SepsisLabel` e rótulos de atividade) |
 
 > **Critério de "validada".** Uma entrega é considerada validada quando seus resultados
 > são **medidos contra um ground-truth independente**, e não apenas exibidos. Na Entrega 1,
 > os desvios posturais são cruzados com os rótulos de execução correta/incorreta do
 > REHAB24-6 (3.8); na Entrega 2, a transcrição automática é medida contra a transcrição
 > humana revisada do dataset (WER, 4.4) e a extração clínica é comparada entre as duas
-> origens (recall, 4.5). A Entrega 3 dispõe de ground-truth (`SepsisLabel` e os rótulos de
-> atividade), mas ainda não foi executada com os dados reais.
+> origens (recall, 4.5); na Entrega 3, os alertas são medidos contra o `SepsisLabel` e
+> contra a atividade real do UCI HAR, sempre sobre indivíduos que não participaram do
+> treino (5.3 a 5.5).
 
 ### 1.4 Datasets Utilizados
 
@@ -82,39 +87,60 @@ Desenvolver um sistema que:
 | Áudio | Consultas médicas simuladas | Aberto (figshare, CC0) | 272 consultas com áudio e transcrição humana |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | 40.336 pacientes de UTI, séries horárias |
 | Movimentação | UCI HAR | Aberto (~60 MB) | 561 features (acelerômetro + giroscópio), 6 atividades |
-| Prescrições | Synthea (sintético) | Aberto | Gerador de registros clínicos sintéticos |
+| Prescrições | variável derivada do Challenge 2019 (`FiO2`) | — sem dataset adicional | Único campo *prescrito*, e não medido; ver 5.5 |
+
+Os datasets **não descrevem os mesmos indivíduos** — não há paciente comum entre vídeo,
+áudio e sinais vitais. É a prática usual quando cada modalidade tem sua fonte aberta, e a
+consequência para a arquitetura está em 2.2.
 
 ---
 
 ## 2. Arquitetura Geral do Sistema
 
-O sistema é composto por três pipelines independentes (um por modalidade) que convergem
-para uma camada de fusão e alerta. Cada modalidade produz um sinal de anomalia
-interpretável que pode disparar um alerta à equipe médica.
+O sistema é composto por **três pipelines independentes**, um por modalidade, cada um com
+seu próprio entregável. O vídeo e o áudio produzem relatórios; a detecção de anomalias
+produz, além do relatório, a **fila de alerta à equipe médica** — que é onde o enunciado
+pede alerta automático (item 3).
 
 ```
-[Vídeo: reabilitação]  ── OpenPose ──► keypoints ──► ângulos ──► desvios ─┐
-                                                                          │
-[Áudio: consulta]  ── Transcribe ──► transcrição ──► Comprehend Medical ─┤
-                                                                          ├─► fusão / alerta
-                                                                          │    à equipe médica
-[Sinais vitais / movimentação / prescrições]  ── IsolationForest ────────┘
+[Vídeo: reabilitação]  ── OpenPose ──► ângulos ──► desvios ──────► relatório + vídeo anotado
+
+[Áudio: consulta]  ── Transcribe ──► Comprehend Medical ─────────► relatório clínico bilíngue
+
+[Sinais vitais]      ── IsolationForest ──┐
+[Movimentação]       ── IsolationForest ──┼─► fila de plantão ──► alerta à equipe médica
+[Prescrições (dose)] ── regra de degrau ──┘
 ```
+
+As três modalidades **não se fundem num sinal único**, e a razão é dos dados: os datasets
+descrevem populações distintas, sem paciente comum entre vídeo, áudio e sinais vitais
+(1.4). Uma camada de fusão exigiria correspondência de indivíduos que as fontes abertas não
+oferecem — e o enunciado não a requer. O que integra o trabalho é a arquitetura comum:
+mesma estrutura de módulos, mesma disciplina de validação contra *ground-truth* e o mesmo
+baseline não-supervisionado onde cabe.
 
 ### 2.1 Componentes por Modalidade
 
 | Modalidade | Entrada | Processamento | Saída |
 |:--|:--|:--|:--|
-| Vídeo | vídeo RGB (.mp4) | OpenPose (BODY_25) → ângulos articulares → detecção de desvios | relatório + vídeo anotado |
-| Áudio | consulta (.mp3) | Amazon Transcribe + Comprehend Medical | transcrição + achados clínicos tipados |
-| Anomalias | séries temporais (.psv/.txt/.csv) | IsolationForest + z-score | frames/horas anômalas + alertas |
+| Vídeo | vídeo RGB (`.mp4`) | OpenPose (BODY_25) → ângulos articulares → detecção de desvios | relatório + vídeo anotado |
+| Áudio | consulta (`.mp3`) | Amazon Transcribe → Comprehend Medical + Comprehend + Translate | relatório clínico bilíngue |
+| Sinais vitais | séries horárias (`.psv`) | z-score por MAD contra a linha de base do paciente → IsolationForest | horas em alerta |
+| Movimentação | janelas de sensor (`.txt`) | IsolationForest treinado só em repouso | janelas em alerta |
+| Prescrições | série de dose, derivada (`.psv`) | regra de degrau na FiO2 | escalonamentos de dose |
+
+As três últimas convergem para a fila de plantão (5.7), que é o alerta pedido no item 3 do
+enunciado.
 
 ### 2.2 Princípio de Projeto: Desacoplamento
 
-Cada modalidade é autocontida e independe das demais para executar. A integração ocorre na
-camada de alerta, que consome os sinais de anomalia de cada pipeline. Esse desacoplamento
-permite desenvolver, testar e avaliar cada entrega separadamente — coerente com a natureza
-dos datasets (fontes distintas, sem pacientes compartilhados).
+Cada modalidade é autocontida e independe das demais para executar. Esse desacoplamento
+permite desenvolver, testar e avaliar cada entrega separadamente — e é coerente com a
+natureza dos datasets, que vêm de fontes distintas e não compartilham pacientes.
+
+Dentro da Entrega 3, sinais vitais e prescrições **descrevem o mesmo paciente** e por isso
+compõem uma fila única; a movimentação vem de outro dataset e é monitorada por sujeito, em
+comando e aba próprios (5.6, 5.8).
 
 ---
 
@@ -128,7 +154,9 @@ dos datasets (fontes distintas, sem pacientes compartilhados).
 | Áudio (texto) | extração de entidades clínicas | **Amazon Comprehend Medical** (`DetectEntitiesV2`) | serviço gerenciado |
 | Áudio (texto) | classificação de sentimento | **Amazon Comprehend** (`DetectSentiment`, `BatchDetectSentiment`) | serviço gerenciado |
 | Áudio (texto) | tradução en→pt | **Amazon Translate** (`TranslateText`) | serviço gerenciado |
-| **Séries temporais** | detecção de anomalia | **IsolationForest** (`contamination` ajustado por subtarefa) | algoritmo clássico, implementado localmente |
+| **Séries de sinais vitais** | detecção de anomalia | **IsolationForest** (`contamination = 0.05`) sobre desvios normalizados por paciente, treinado em coorte sem sepse e persistido | algoritmo clássico, implementado localmente |
+| **Séries de movimentação** | detecção de anomalia | **IsolationForest** (`contamination = 0.05`) treinado apenas em atividades de repouso | algoritmo clássico, implementado localmente |
+| **Série de dose prescrita** | mudança abrupta | **regra de degrau** (variação ≥ 0,15 na FiO2, só aumentos) | determinístico, sem aprendizado |
 
 **Uma diferença que vale explicitar.** No vídeo, o modelo é **nomeado e auditável**: a
 arquitetura BODY_25 é pública, os pesos são distribuídos, e é possível inspecionar os 25
@@ -159,6 +187,9 @@ mas participam da decisão e por isso constam aqui):
 | WER por distância de edição | `audio/transcribe.py` | mede o erro da transcrição contra a referência |
 | Identificação do falante-paciente | `audio/transcribe.py` | dois sinais independentes, recusa-se a decidir se discordarem |
 | Filtro de achados clínicos | `audio/comprehend.py` | descarta negados, hipotéticos, de familiares e abaixo de 0,70 |
+| Normalização por linha de base | `anomaly/vitals.py` | converte cada série no desvio contra as 8 primeiras horas do próprio paciente |
+| Separação treino/teste por paciente | `anomaly/vitals.py` | garante que nenhum paciente avaliado tenha participado do treino |
+| Regra de prioridade da fila | `anomaly/alerts.py` | pondera as modalidades pela confiabilidade medida e eleva a ALTA quando duas séries concordam |
 
 ---
 
@@ -195,12 +226,12 @@ física publicado abertamente no Zenodo.
 | Repetições | 1.072 (568 corretas, 504 incorretas) |
 | Licença | CC BY-NC 4.0 (uso acadêmico) |
 
-**Justificativa da escolha.** O dataset originalmente previsto (KIMORE) tornou-se
-indisponível (servidor da instituição fora do ar) e, além disso, os *mirrors* disponíveis
-continham apenas dados de esqueleto (sem RGB), o que inviabilizaria o uso do OpenPose. O
-REHAB24-6 supera o KIMORE para o objetivo desta entrega: fornece **vídeo RGB** e, crucialmente,
-**rótulos explícitos de execução correta/incorreta**, que servem como *ground-truth* para
-validar quantitativamente os desvios detectados.
+**Justificativa da escolha.** O dataset atende às duas exigências da modalidade. Fornece
+**vídeo RGB**, que é o que o OpenPose consome — bases de reabilitação que distribuem apenas
+dados de esqueleto já pré-extraídos não permitiriam demonstrar a estimação de pose. E traz
+**rótulos explícitos de execução correta/incorreta** por repetição, que servem de
+*ground-truth* para validar quantitativamente os desvios detectados, em vez de apenas
+exibi-los.
 
 **Rótulos (`Segmentation.csv`).** Cada repetição é descrita por `video_id`,
 `repetition_number`, `exercise_id`, intervalo de frames (`first_frame`, `last_frame`),
@@ -558,9 +589,16 @@ A sequência abaixo mostra o fluxo completo do ponto de vista de quem usa a ferr
 
 ### 3.12 Testes
 
-O pipeline é coberto por testes automatizados que usam **keypoints sintéticos** (sem
-necessidade de OpenPose nem do dataset): validam o cálculo de ângulos, a detecção de
-anomalias injetadas e a renderização do overlay.
+`tests/test_video.py` cobre a entrega com 9 testes sobre **keypoints sintéticos**, sem
+exigir o binário do OpenPose nem o dataset baixado: um esqueleto em pé com ruído leve e,
+no meio da sequência, frames com o joelho bruscamente flexionado.
+
+Os testes verificam o cálculo dos ângulos, a detecção dos desvios injetados, a estrutura do
+relatório e a renderização do overlay. Fixam também as duas decisões que, se revertidas,
+corrompem os resultados em silêncio: a **seleção da pessoa principal**, que deve preferir a
+figura grande em primeiro plano à pessoa ao fundo (3.5), e o **mapeamento de `frame_step`**,
+que converte o índice do frame subamostrado no frame original — sem ele, o cruzamento com
+os rótulos do `Segmentation.csv` desalinha e a validação mede a repetição errada (3.8).
 
 ---
 
@@ -885,47 +923,421 @@ ambiente antes de qualquer chamada paga.
 
 ### 5.1 Visão Geral
 
-Aplicar detecção de anomalias em três subtarefas: séries temporais de sinais vitais,
-padrões de movimentação e evolução de prescrições. O baseline utiliza **IsolationForest**,
-treinado de forma não-supervisionada, com os rótulos disponíveis servindo apenas para
-validação.
+O pipeline de anomalias monitora três séries do paciente internado — **sinais vitais**,
+**evolução da dose prescrita** e **padrões de movimentação** — e sinaliza os instantes que
+fogem do padrão esperado, produzindo o insumo da camada de alerta.
 
-### 5.2 Sinais Vitais — PhysioNet/CinC Challenge 2019
+A decisão de arquitetura central: **o modelo aprende apenas o padrão de normalidade e é
+aplicado a séries que não participaram do treino**. Em ambos os detectores a coorte de
+treino é restrita ao comportamento esperado — só atividades de repouso, na movimentação;
+só pacientes que nunca desenvolveram sepse, nos vitais — e os rótulos do dataset entram
+exclusivamente na avaliação. O modelo treinado é persistido, o que permite pontuar um
+paciente por vez, como o sistema operaria em leito.
+
+```
+TREINO (uma vez)     padrão de normalidade ──► models/*.joblib (modelo + limiar)
+INFERÊNCIA (por pac.) série de um indivíduo ──► instantes em alerta
+```
+
+| Subtarefa | Dataset | Ground-truth | Modelo |
+|:--|:--|:--|:--|
+| Movimentação | UCI HAR | atividade real | IsolationForest treinado em repouso |
+| Sinais vitais | Challenge 2019 | `SepsisLabel` | IsolationForest sobre desvios por paciente |
+| Prescrições | Challenge 2019 (derivada) | `SepsisLabel` | regra de degrau na dose |
+
+### 5.2 Datasets
+
+**Sinais vitais e prescrições — PhysioNet/CinC Challenge 2019.**
 
 | Item | Descrição |
 |:--|:--|
-| Dados | 40.336 pacientes de UTI, séries horárias (1 `.psv` por paciente) |
-| Variáveis | 8 sinais vitais + 26 laboratoriais + demografia |
-| Ground-truth | `SepsisLabel` (0/1) — deterioração clínica |
-| Baseline | IsolationForest sobre os 8 sinais vitais (`contamination = 0.02`) |
-| Implementação | `src/anomaly/load_challenge2019.py` (testado) |
+| Fonte | [physionet.org/content/challenge-2019/1.0.0](https://physionet.org/content/challenge-2019/1.0.0/) |
+| Acesso | Aberto, sem credenciamento |
+| Conteúdo | 40.336 pacientes de UTI, um arquivo `.psv` por paciente, uma linha por hora |
+| Variáveis | 8 sinais vitais, 26 laboratoriais, 6 de demografia |
+| Rótulo | `SepsisLabel` (0/1) — deterioração clínica confirmada |
+| Licença | Open Data Commons ODbL 1.0 |
 
-O loader imputa a mediana nos vitais (muitos `NaN`), treina o IsolationForest e gera, por
-paciente, um gráfico dos sinais com as horas sinalizadas como anomalia.
-
-### 5.3 Movimentação do Paciente — UCI HAR
+**Movimentação — UCI HAR (Human Activity Recognition).**
 
 | Item | Descrição |
 |:--|:--|
-| Dados | Vetores de 561 features (acelerômetro + giroscópio), 6 atividades |
-| Enquadramento | Repouso (LAYING/SITTING/STANDING) = normal; movimento inesperado = anomalia |
-| Baseline | IsolationForest treinado apenas em atividades de repouso (`contamination = 0.05`) |
-| Implementação | `src/anomaly/load_uci_har.py` (testado) |
+| Fonte | [archive.ics.uci.edu/dataset/240](https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones) |
+| Acesso | Aberto, sem credenciamento |
+| Conteúdo | 10.299 janelas de acelerômetro e giroscópio, 30 sujeitos |
+| Variáveis | 561 features já extraídas por janela |
+| Rótulos | 6 atividades: `WALKING`, `WALKING_UPSTAIRS`, `WALKING_DOWNSTAIRS`, `SITTING`, `STANDING`, `LAYING` |
+| Licença | CC BY 4.0 |
 
-O modelo é treinado somente nas atividades de repouso e sinaliza como anomalia as amostras
-que fogem desse padrão (ex.: movimento intenso, análogo a uma queda).
+**Justificativa da escolha.** Ambos são abertos e trazem rótulo utilizável como
+*ground-truth*, o que permite medir a detecção em vez de apenas exibi-la. O Challenge 2019
+foi preferido ao MIMIC-IV, mais rico, porque este exige curso CITI e Data Use Agreement,
+com tramitação incompatível com o prazo do trabalho.
 
-### 5.4 Evolução de Prescrições — Synthea
+> **Nota de acesso.** Os arquivos `training_setA.zip` e `training_setB.zip` citados na
+> documentação do PhysioNet **não existem mais** — respondem 404, e os dados passaram a ser
+> servidos individualmente, um `.psv` por paciente. O download por HTTP exigiria 40.336
+> requisições. O caminho usado é o espelho público em S3:
+> `aws s3 sync --no-sign-request s3://physionet-open/challenge-2019/1.0.0/training/`.
 
-Sem fonte pública aberta granular de prescrições, adota-se o **Synthea** (gerador sintético)
-para produzir séries temporais de medicações por paciente (`START`, `STOP`, `PATIENT`,
-`CODE`, `DESCRIPTION`), documentando na banca o uso de dados sintéticos por indisponibilidade
-de fonte aberta. **[Em desenvolvimento]**
+> **Os dois datasets não descrevem os mesmos indivíduos.** Não existe correspondência entre
+> um paciente do Challenge 2019 e um sujeito do UCI HAR. É a prática usual quando cada
+> modalidade tem sua fonte aberta, mas tem uma consequência concreta no sistema: o
+> monitoramento de um paciente de UTI reúne sinais vitais e dose prescrita, que vêm da mesma
+> fonte, enquanto a movimentação é monitorada por sujeito, em comando separado (5.6).
 
-### 5.5 Geração de Alertas
+### 5.3 Movimentação do Paciente (`movement.py`)
 
-As horas/amostras sinalizadas como anomalia alimentam a camada de alerta (Seção 6). **[Em
-desenvolvimento]**
+**Enquadramento.** Durante a internação, o esperado é o paciente em repouso — deitado,
+sentado ou em pé parado. Marcha, sobretudo subir e descer escada, é movimentação
+inesperada em leito e deve gerar alerta.
+
+O modelo é treinado **apenas** nas 4.067 amostras de repouso do conjunto de treino e nunca
+vê marcha; as três atividades de marcha do conjunto de teste funcionam como *ground-truth*
+de anomalia. Os 30 sujeitos são divididos pelo próprio dataset em 21 para treino e 9 para
+teste, sem sobreposição.
+
+**Resultados quantitativos.** Sobre as 2.947 amostras de teste, com
+`contamination = 0.05` e `random_state = 42`:
+
+| Métrica | Valor |
+|:--|:--:|
+| Precisão | 0,947 |
+| Recall | 1,000 |
+| F1 | 0,973 |
+| AUC | 0,9999 |
+| Falso alarme sobre repouso | 5,00% (78 de 1.560) |
+
+A taxa de alerta por atividade real mostra onde o detector acerta e onde erra:
+
+| Atividade | Classe | Taxa de alerta |
+|:--|:--|:--:|
+| `WALKING` | movimento | 100,0% |
+| `WALKING_UPSTAIRS` | movimento | 100,0% |
+| `WALKING_DOWNSTAIRS` | movimento | 100,0% |
+| `STANDING` | repouso | 7,0% |
+| `LAYING` | repouso | 4,5% |
+| `SITTING` | repouso | 3,5% |
+
+A separação é praticamente completa: **nenhuma das 1.387 amostras de marcha escapou**, e o
+custo é um alarme falso a cada vinte leituras de repouso — proporção controlada pelo
+parâmetro de contaminação. Um paciente que deveria estar em repouso e começa a deambular é
+detectado sem exceção.
+
+O erro se concentra em `STANDING` (7,0%), o dobro de `SITTING` (3,5%). É coerente com a
+natureza do sinal: estar em pé parado envolve micro-oscilações de equilíbrio que aproximam
+a leitura do início de uma marcha, enquanto deitado e sentado são posturas estáveis.
+
+### 5.4 Sinais Vitais (`vitals.py`)
+
+O detector opera sobre os 8 sinais vitais horários, com três decisões de modelagem.
+
+**Normalização contra a linha de base do próprio paciente.** Um IsolationForest ajustado
+sobre os valores brutos aprende "o que é raro na população", e não "o que mudou neste
+paciente" — que é a pergunta do alerta de leito. Cada série vira desvio robusto (z-score
+por mediana e MAD) contra as primeiras 8 horas daquele paciente, a mesma técnica da
+Entrega 1 (3.7).
+
+**Coorte de treino restrita à normalidade.** A separação treino/teste é feita **por
+paciente**, e o treino recebe apenas pacientes que nunca desenvolveram sepse — mantê-los
+ensinaria ao modelo que a deterioração faz parte do padrão normal.
+
+**Limiar absoluto.** O corte é o percentil 5 dos *scores* do treino, guardado junto com o
+modelo. A alternativa — sinalizar as 5% piores horas *de cada paciente* — foi implementada
+e descartada: com corte individual, todo paciente recebe alertas por construção, inclusive
+o estável, e a taxa deixa de ser comparável entre pacientes.
+
+**Resultados quantitativos.** Sobre 5.000 pacientes — 3.187 sem sepse no treino, 1.813
+retidos para teste (76.888 horas, 446 com sepse):
+
+| Métrica | Valor |
+|:--|:--:|
+| AUC | 0,555 |
+| AUPRC | 0,068 (prevalência horária 0,056) |
+| Avisados na janela de 48 h que antecede o início | 111 de 446 |
+| Antecedência mediana do aviso | 30 horas |
+
+O desempenho hora a hora é **fraco** — a AUC fica pouco acima do acaso. Os sinais vitais
+isolados não separam bem a hora de sepse da hora estável; o valor prático aparece no nível
+do paciente, quando o alerta ocorre com antecedência útil. Só contam alertas nas 48 horas
+anteriores ao início: medir a partir do primeiro alerta da internação inteira produziria
+"antecedências" de centenas de horas para eventos sem relação com o alerta.
+
+**Onde está o sinal.** Para verificar se o desempenho fraco vem do método ou das
+variáveis, o mesmo modelo foi aplicado a três conjuntos de features:
+
+| Conjunto | Nº features | AUC | AUPRC |
+|:--|:--:|:--:|:--:|
+| Sinais vitais | 7 | 0,571 | 0,029 |
+| Marcadores de laboratório | 8 | 0,628 | 0,034 |
+| Vitais + laboratório | 15 | 0,628 | 0,035 |
+
+Os marcadores de laboratório discriminam melhor **apesar de terem cobertura muito menor**
+— de 4% a 14% das horas, contra 83% a 91% dos vitais. É coerente com a prática clínica:
+lactato e leucócitos são marcadores diretos de sepse, enquanto a alteração dos vitais é
+tardia. A entrega mantém os vitais como objeto, conforme o escopo, e registra a comparação
+como limitação medida.
+
+**Limitações medidas.**
+
+- **Menos da metade dos pacientes com sepse é avisada na janela** (111 de 446), consequência
+  do limiar absoluto, que não garante alerta para todo paciente. Baixá-lo aumenta a
+  cobertura ao custo de mais alarme falso.
+- **A agregação multivariada dilui o desvio de uma variável isolada.** O paciente
+  `p000188` (Figura 12) tem a frequência respiratória subindo de 16 para 33 ao longo da
+  internação — uma deterioração inequívoca. A normalização por paciente **captura** esse
+  movimento: o z-score mediano da `Resp` vai de −0,67 nas primeiras 40 horas para 4,89 no
+  bloco que antecede o início da sepse, com pico de 8,09. O alerta, porém, não dispara: o
+  IsolationForest avalia as 7 variáveis em conjunto, e um ponto extremo em um único eixo,
+  com os outros seis dentro da faixa, não se isola no espaço multivariado. O score mais
+  anômalo do paciente fica em −0,4423 contra um limiar de −0,4694 — a **0,027** de
+  disparar. O sinal existia e foi medido; perdeu-se na agregação.
+
+- **`EtCO2` tem 0% de cobertura no *training set A*** (7,6% no *set B*) — consta do schema
+  e nunca é medida. É descartada automaticamente; mantida, entraria como constante.
+- **O `SepsisLabel` marca a janela em que a sepse é considerada instalada**, não "hora
+  anormal": um alerta fora dela não é necessariamente falso. A precisão hora a hora é
+  conservadora por construção.
+
+### 5.5 Evolução de Prescrições (`prescriptions.py`)
+
+Não existe fonte pública aberta e granular de prescrições hospitalares — a referência é o
+MIMIC-IV, que exige credenciamento. A subtarefa usa, no lugar, a **`FiO2`** (fração
+inspirada de oxigênio) do próprio Challenge 2019: ao contrário dos demais campos, que são
+*medições* do paciente, a FiO2 é um valor **prescrito e titulado pela equipe**, e sua série
+ao longo das horas é uma série de doses. A alternativa era gerar dados sintéticos com o
+Synthea, que exige Java JDK e geração local e demanda a mesma ressalva.
+
+**Detecção.** Anomalia é um degrau de 0,15 ou mais entre coletas consecutivas, numa escala
+que vai de 0,21 (ar ambiente) a 1,0. Apenas **aumentos** alertam: reduzir a dose indica
+que o paciente precisa de menos suporte, isto é, melhora. O dataset mistura duas notações — percentual (21 a 100) e fração (0,21 a
+1,0) — e o loader converte tudo para fração antes de medir a variação.
+
+**Resultados quantitativos.** Sobre os mesmos 5.000 pacientes, dos quais 2.942 têm ao menos
+três registros de dose (cobertura da FiO2: 14,2% das horas), foram detectados 963
+escalonamentos e 2.374 reduções de dose:
+
+| Grupo | Desenvolveram sepse |
+|:--|:--:|
+| Escalonaram a dose | 17,9% |
+| Não escalonaram | 10,5% |
+
+O sinal é modesto mas consistente: escalonar a oferta de oxigênio **quase dobra** a
+probabilidade de o paciente desenvolver sepse.
+
+> **É uma proxy de prescrição, não a prescrição de prontuário.** O escalonamento de
+> oxigênio é uma decisão terapêutica real e registrada, mas cobre um único eixo do que uma
+> base de prescrições traria: não há classe de medicamento, posologia nem interações. A
+> subtarefa demonstra o método sobre série de doses; a generalização para prescrição
+> farmacológica depende de fonte que o projeto não teve.
+
+### 5.6 Monitoramento de um Indivíduo (`cli.py`)
+
+Os modelos treinados são persistidos em `models/` e aplicados a séries individuais. Como os
+dois datasets não descrevem os mesmos indivíduos (5.2), o monitoramento tem dois comandos:
+
+```bash
+python -m src.anomaly.cli --train                 # treina e salva os dois detectores
+python -m src.anomaly.cli --monitor p001123       # vitais + prescrições de um paciente
+python -m src.anomaly.cli --monitor-subject 2     # movimentação de um sujeito
+```
+
+O primeiro reúne as duas subtarefas do Challenge 2019, que descrevem o mesmo paciente; o
+segundo cobre a movimentação. Em ambos, o modelo não viu o indivíduo durante o treino, e o
+rótulo é exibido apenas na seção de conferência — nunca entra na pontuação.
+
+![Treino dos dois detectores](figures/screenshots/cli_anomaly_train.png)
+
+> **Figura 8.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
+> de normalidade: 3.187 pacientes sem sepse (117.947 horas) para os sinais vitais e 4.067
+> amostras de repouso para a movimentação. A saída informa o que foi retido para teste —
+> 1.813 pacientes e 9 sujeitos, estes últimos identificados um a um — e o limiar de alerta
+> aprendido (−0,4694), que é guardado junto com o modelo. Das 8 colunas de sinais vitais,
+> 7 entram no modelo: a `EtCO2` é descartada por não ter cobertura (5.4).
+
+**Caso 1 — os sinais vitais detectam (`p001123`).**
+
+![Monitoramento do paciente p001123](figures/screenshots/cli_anomaly_p001123.png)
+
+> **Figura 9.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
+> (5,2%) — 46, 55, 63, 66 e 86 — e a conferência mostra sepse registrada a partir da hora
+> 88, ou seja, **42 horas de antecedência**. Note que os alertas se adensam à medida que o
+> evento se aproxima. A dose prescrita foi monitorada (97 registros, entre 0,30 e 0,40) e
+> não apresentou escalonamento brusco: aqui quem avisa são os vitais.
+
+![Série temporal do paciente p001123](figures/monitor_p001123.png)
+
+> **Figura 10.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
+> antecede o início da sepse (linha roxa tracejada, hora 88) e as faixas vermelhas marcam
+> as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
+> de oxigênio, estável em 0,30 desde a hora 26 — sem escalonamento, coerente com a saída do
+> comando.
+
+**Caso 2 — os sinais vitais silenciam e a prescrição detecta (`p000188`).**
+
+![Monitoramento do paciente p000188](figures/screenshots/cli_anomaly_p000188.png)
+
+> **Figura 11.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
+> nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
+> prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
+> primeiro deles **24 horas antes** do início. As duas reduções de dose detectadas não
+> geram alerta, por indicarem melhora.
+
+![Série temporal do paciente p000188](figures/monitor_p000188.png)
+
+> **Figura 12.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
+> superior — o detector de vitais ficou em silêncio —, enquanto os dois triângulos do painel
+> inferior marcam os escalonamentos de dose nas horas 51 e 53, ambos dentro da janela. A
+> figura expõe algo que a saída de texto não mostra: a frequência respiratória (verde) sobe
+> de forma contínua ao longo da internação, uma deterioração visível que o alerta não
+> capturou. A seção 5.4 detalha por quê.
+
+O contraste entre as Figuras 9 e 10 é a ilustração concreta do que a comparação de features
+da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
+séries do mesmo paciente podem avisar antes. É também o argumento para que a camada de
+alerta combine as modalidades em vez de depender de uma só (5.7).
+
+**Movimentação.**
+
+![Monitoramento do sujeito 2](figures/screenshots/cli_anomaly_subject_2.png)
+
+> **Figura 13.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
+> 157 delas (52,0%), e a conferência mostra por quê: as três atividades de marcha são
+> detectadas **integralmente** (100,0% cada), enquanto o repouso permanece quase todo em
+> silêncio — `LAYING` sem nenhum alerta, `SITTING` em 2,2% e `STANDING` em 3,7%. O recall
+> sobre marcha é de 100,0% com 2,0% de falso alarme no repouso, coerente com os números
+> agregados da seção 5.3.
+
+### 5.7 Geração de Alertas
+
+Os instantes sinalizados alimentam a camada de alerta descrita na Seção 6. A execução
+completa das três subtarefas produz, além do relatório para a equipe médica, o conjunto de
+métricas que orienta o peso de cada modalidade:
+
+![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
+
+> **Figura 14.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
+> lado a lado com os respectivos tempos: movimentação (4,1 s), sinais vitais (39,2 s) e
+> prescrições (0,8 s) — o restante do tempo é a leitura dos 5.000 arquivos `.psv`. A saída
+> explicita a separação treino/teste dos vitais (3.187 pacientes sem sepse no treino contra
+> 1.813 retidos) e inclui a comparação entre vitais e marcadores de laboratório discutida
+> em 5.4.
+
+Os resultados sugerem **pesos distintos por modalidade**, e não um limiar comum:
+
+- **Movimentação** (AUC 0,9999) — a separação entre marcha e repouso é praticamente
+  completa, com falso alarme conhecido e ajustável. Precisão suficiente para alerta
+  automático.
+- **Prescrições** — sinal fraco mas consistente, e derivado de uma decisão terapêutica
+  explícita. Adequado como fator de risco agregado, não como gatilho isolado.
+- **Sinais vitais** (AUC 0,555) — deve ser tratado como **triagem para revisão humana**, e
+  não como diagnóstico. A antecedência mediana de 30 horas é clinicamente útil quando o
+  alerta ocorre, mas menos da metade dos pacientes com sepse é avisada dentro da janela.
+
+**Por que os desempenhos são tão diferentes.** A distância entre AUC 0,9999 e 0,555 não
+decorre de diferença de implementação — o modelo, o `random_state` e o parâmetro de
+contaminação são os mesmos. Marcha e repouso são estados fisicamente distintos, medidos por
+sensores de alta frequência e cobertura quase total: a fronteira entre as classes é nítida
+no espaço de features. Deterioração clínica é um processo lento e contínuo, ao qual o
+`SepsisLabel` impõe um corte binário, medido por variáveis esparsas e de reação tardia.
+
+O ponto relevante para o sistema é que **um mesmo baseline não-supervisionado produz
+qualidade muito diferente conforme a modalidade**. Reportar apenas a subtarefa mais
+favorável daria uma impressão falsa da confiabilidade do monitoramento como um todo.
+
+**A fila de plantão (`alerts.py`).** É a camada que transforma anomalia em alerta
+acionável: varre a coorte retida e ordena os pacientes por prioridade.
+
+| Prioridade | Condição |
+|:--|:--|
+| ALTA | sinais vitais **e** dose prescrita alteraram |
+| MEDIA | apenas uma das duas séries alterou |
+
+A regra de prioridade máxima é a **corroboração**: são medições independentes, e a
+concordância entre elas carrega informação que nenhuma traz sozinha. Dentro da mesma
+prioridade, ordena-se pelo alerta mais recente.
+
+A fila expõe também a **taxa de alerta** (horas sinalizadas sobre horas de internação),
+porque a ordenação sozinha não distingue o evento agudo do paciente cronicamente fora do
+padrão. Na coorte de 1.000 pacientes há casos em alerta 86% da internação: são pacientes
+para os quais o detector perde valor discriminante, e que sem essa coluna ocupariam o topo
+da fila com a mesma aparência de quem disparou três vezes em cem horas. O sistema **não**
+os rebaixa automaticamente — expõe o número para a decisão humana, coerente com o papel de
+triagem descrito acima.
+
+### 5.8 Interface Web de Demonstração (`app.py`)
+
+As três subtarefas são expostas em uma app web local (Gradio,
+`python -m src.anomaly.app`, porta 7861 — ao lado da porta 7860 da Entrega 1, para que as
+duas fiquem abertas na demonstração). Como na Entrega 1, a app **não reimplementa nada**:
+chama as mesmas funções que o CLI usa. O equivalente em terminal é
+`python -m src.anomaly.cli --alerts` para a fila e `--monitor-subject` para a movimentação.
+
+A app tem **duas abas, uma por fonte de dados**, e a separação não é decisão de layout: os
+pacientes do Challenge 2019 e os sujeitos do UCI HAR não são as mesmas pessoas (5.2). Uma
+fila única sugeriria que o hospital monitora as três séries do mesmo paciente, o que a
+origem dos dados não sustenta. O texto de cada aba declara de onde vêm os dados, e a
+unidade muda junto: *paciente* em uma, *sujeito* na outra.
+
+A diferença está no gesto que a interface permite. No terminal, ver a fila e abrir um
+paciente são dois comandos desconectados; na app, **clicar numa linha abre a série daquele
+paciente** — que é o gesto do plantonista ao decidir se um alerta merece atenção. A coorte
+é pontuada uma vez e mantida em memória, de modo que abrir cada paciente é imediato; sem
+isso, cada clique custaria a releitura dos arquivos.
+
+Abaixo da fila há uma **legenda** com as siglas (`HR`, `SBP`, `Resp`, `O2Sat`, `FiO2`) e
+suas faixas usuais de adulto. O público da tela é a equipe clínica, e sem as faixas de
+referência o gráfico não se lê de relance — ver a frequência respiratória subir de 16 para
+33 só significa alguma coisa para quem sabe que o usual é 12 a 20.
+
+![Painel de plantão com o paciente p000795 aberto](figures/screenshots/gradio_anomaly_alerts.png)
+
+> **Figura 15.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
+> de plantão: 132 pacientes com alerta entre os 363 retidos (21 de prioridade ALTA, 111
+> MEDIA), ordenados por prioridade e, dentro dela, pelo alerta mais recente. A coluna
+> **Taxa** é o que distingue o evento agudo do paciente cronicamente fora do padrão —
+> compare o `p000754` (86% da internação em alerta) com o `p000795` (12%). À direita, a
+> série do paciente selecionado: as faixas vermelhas são as horas em alerta, a faixa
+> laranja é a janela de 48 h que antecede o início da sepse (linha roxa, hora 128) e os
+> triângulos do painel inferior marcam os escalonamentos de dose. No `p000795` as duas
+> séries convergem — a dose escalona na hora 93 e os sinais vitais passam a alertar a
+> partir da hora 94, ambos dentro da janela. Abaixo do gráfico, a leitura do caso e a
+> conferência contra o `SepsisLabel`, que **não** participa da detecção.
+
+Os controles da aba de leitos são dois: o tamanho da coorte (200 a 5.000 pacientes) e
+quais prioridades exibir. O filtro de prioridade não repontua nada — opera sobre a fila já
+em memória.
+
+A segunda aba monitora a **movimentação**, por sujeito. A visualização aqui é diferente da
+Figura 9: em vez da taxa de alerta agregada por atividade, mostra a **sequência** — cada
+janela de leitura vira uma coluna, com a atividade real em cima e o alerta embaixo.
+
+![Aba de movimentação com o sujeito 9 monitorado](figures/screenshots/gradio_anomaly_movimentacao.png)
+
+> **Figura 16.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
+> superior, a atividade real, azul para repouso e vermelha para marcha; no inferior, uma
+> faixa contínua em que vermelho indica alerta disparado e cinza, silêncio. A
+> correspondência entre os dois painéis é o resultado: os quatro blocos de marcha acendem
+> **por inteiro**, e as regiões de repouso ficam quase todas cinza. Os riscos vermelhos
+> isolados sobre o fundo cinza são os falsos alarmes — 12,0% em `SITTING`, 8,9% em
+> `STANDING` e 6,0% em `LAYING` neste sujeito, acima da média de 5,00% do conjunto (5.3),
+> o que mostra que a taxa varia entre indivíduos. A tabela abaixo do gráfico traz o
+> **total** de janelas por atividade, não a posição no eixo.
+
+### 5.9 Testes
+
+`tests/test_anomaly.py` cobre a entrega com 28 testes sobre séries sintéticas, sem exigir
+os datasets baixados. Além do caminho feliz, os testes fixam as decisões que, se revertidas,
+produzem números melhores do que a realidade sem levantar erro: a separação entre treino e
+teste (nenhum paciente aparece nos dois, nenhum paciente séptico entra no treino), a
+identidade entre o modelo salvo e o recarregado, a exigência de que embaralhar o
+`SepsisLabel` não altere nenhum alerta, a janela do cálculo de antecedência, a normalização
+de escala da FiO2 e a redução de dose que não deve alertar.
+
+A fila de plantão tem testes próprios: a regra de corroboração, a identificação da origem
+do alerta, a ordenação por prioridade, o cálculo da taxa que separa o caso agudo do
+crônico, e a exigência de que a ressalva "não constituem diagnóstico" apareça na tela — não
+basta estar no relatório, precisa estar diante de quem decide.
 
 ---
 
@@ -990,7 +1402,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 8.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 17.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura — o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
@@ -1004,14 +1416,63 @@ registra cada chamada `DetectEntitiesV2`.
 
 ### 6.4 Fluxo de Alerta à Equipe Médica
 
-**[Em desenvolvimento]** — a camada de fusão entre as três modalidades e o disparo
-automático de alerta ainda não estão implementados. O desenho previsto consome o sinal de
-anomalia de cada pipeline (desvio postural, achado clínico, anomalia em sinal vital) e
-encaminha o alerta à equipe.
+O enunciado pede alerta automático em um ponto específico: no item 3, "gerar alertas
+automáticos para a equipe médica com base nas anomalias detectadas". O alerta é, portanto,
+consequência da **detecção de anomalias** — não uma camada de fusão entre as três
+modalidades, que o desafio não requer. As Entregas 1 e 2 produzem relatórios, e é esse o
+entregável delas.
 
-O relatório clínico bilíngue (4.7) já constitui a **saída legível** desse fluxo: reúne os
-achados, sua origem na fala do paciente e a confiabilidade da transcrição que os produziu.
-O que falta é a automação do disparo.
+```
+detecção          priorização              apresentação
+IsolationForest ─► fila de plantão ──────► painel (app.py)
+regra de degrau    (alerts.py)             CLI (--alerts)
+```
+
+**Detecção.** Cada subtarefa da Entrega 3 produz instantes sinalizados: horas de
+internação, para sinais vitais e dose prescrita; janelas de leitura, para movimentação
+(5.3 a 5.5).
+
+**Priorização.** `alerts.py` converte esses instantes em uma fila ordenada, atribuindo
+prioridade pela confiabilidade **medida** de cada modalidade e elevando a ALTA os
+pacientes em que duas séries independentes concordam (5.7). É aqui que o sistema evita o
+erro mais provável de um alerta multimodal: tratar um detector de AUC 0,555 como se
+valesse o mesmo que um de AUC 0,9999.
+
+**Apresentação.** A fila chega à equipe pelo painel de plantão, em interface web ou
+terminal, com a série do paciente a um clique (5.8). Cada alerta informa **o que**
+disparou, **quando** e **com que frequência**, porque um alerta que não diz isso obriga
+quem o recebe a reabrir o caso para descobrir.
+
+O fluxo roda **localmente**. Não é omissão de nuvem: a camada de alerta consome a saída do
+detector, que é local pelas razões da seção 6.2 — os dois serviços gerenciados dedicados a
+anomalia em séries temporais foram retirados do mercado. Enviar para a nuvem um sinal
+produzido localmente apenas para reimportá-lo não acrescentaria capacidade.
+
+**O que está implementado e o que uma operação real exigiria:**
+
+| Etapa | Neste trabalho | Em produção |
+|:--|:--|:--|
+| Aquisição | séries gravadas, lidas de arquivo | telemetria contínua dos monitores de leito |
+| Detecção | modelo treinado e persistido, aplicado a séries novas | o mesmo, reavaliado periodicamente |
+| Priorização | fila por confiabilidade medida e corroboração | idem, com histórico e reincidência |
+| Entrega | painel em tela | notificação ativa (e-mail, SMS, pager) além do painel |
+| Registro | nenhum | trilha de auditoria: quem viu, quando, o que fez |
+
+**Limitações declaradas.**
+
+- **Não é tempo real.** O desafio descreve alertar "em tempo real"; o sistema opera sobre
+  séries **já gravadas**, em lote. A diferença é de infraestrutura de aquisição, não de
+  método: o detector pontua uma hora de internação isoladamente e serviria a um fluxo
+  contínuo sem alteração — mas nada aqui foi exercitado contra telemetria ao vivo.
+- **A entrega é passiva.** O alerta aparece para quem abre o painel; não há notificação
+  que alcance a equipe fora dele. Um tópico do **Amazon SNS** seria o encaixe direto e
+  fecharia essa lacuna, mas não foi implementado.
+- **Não há estado entre execuções.** Cada execução recalcula a fila do zero; alertas não
+  são marcados como vistos, atendidos ou descartados. Numa operação real, essa ausência
+  faria o mesmo alerta reaparecer indefinidamente.
+- **Sinais vitais não disparam ação automática.** Com AUC 0,555 e menos da metade dos
+  pacientes avisados dentro da janela (5.4), a fila é explicitamente de **triagem para
+  revisão humana**. A ressalva aparece na própria tela, e não apenas neste relatório.
 
 ---
 
@@ -1024,25 +1485,19 @@ invocado por linha de comando e grava keypoints em JSON. Todo o restante é Pyth
 isola a dependência pesada, torna o pipeline portátil e simplifica os
 testes (keypoints sintéticos).
 
-### 7.2 Troca de Dataset: KIMORE → REHAB24-6
-
-O KIMORE ficou indisponível (servidor fora do ar) e os *mirrors* traziam apenas esqueleto
-(sem RGB), inviabilizando o OpenPose. O REHAB24-6 fornece RGB e rótulos de correção — melhor
-para o objetivo — e é aberto no Zenodo.
-
-### 7.3 Subamostragem de Frames para Viabilizar a GPU Local
+### 7.2 Subamostragem de Frames para Viabilizar a GPU Local
 
 A GPU local (MX330, 2 GB) processa a ~1,2 s/frame. Subamostrar 1 a cada 3 frames reduz o
 tempo em ~3x, adequado ao movimento lento do agachamento, preservando o mapeamento de frames
 para validação.
 
-### 7.4 Detecção de Anomalias Local, por Indisponibilidade de Serviço Gerenciado
+### 7.3 Detecção de Anomalias Local, por Indisponibilidade de Serviço Gerenciado
 
 Nem o Azure Anomaly Detector nem o Amazon Lookout for Metrics podem ser provisionados
 (ambos descontinuados — ver 6.2). Mantém-se o
 IsolationForest local, tecnicamente adequado e reprodutível.
 
-### 7.5 Baseline IsolationForest Comum às Entregas 1 e 3
+### 7.4 Baseline IsolationForest Comum às Entregas 1 e 3
 
 O IsolationForest é reutilizado como detector não-supervisionado tanto sobre os ângulos
 posturais (vídeo) quanto sobre os sinais vitais e a movimentação (anomalias), padronizando a
@@ -1068,8 +1523,11 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   └── app.py              # app web (Gradio) para o vídeo-demo
 │   ├── audio/                  # Entrega 2 — análise de áudio (AWS)
 │   └── anomaly/                # Entrega 3 — detecção de anomalias
-│       ├── load_challenge2019.py   # loader + baseline (sinais vitais)
-│       └── load_uci_har.py         # loader + baseline (movimentação)
+│       ├── movement.py            # movimentação do paciente (UCI HAR)
+│       ├── vitals.py              # sinais vitais de UTI (Challenge 2019)
+│       ├── prescriptions.py       # evolução de doses (FiO2, variável derivada)
+│       ├── report.py              # relatório para a equipe médica
+│       └── cli.py                 # pipeline fim-a-fim (único ponto de entrada)
 ├── data/                       # datasets baixados localmente (não versionado)
 ├── docs/                       # enunciado + guias (datasets, setup do OpenPose)
 ├── reports/                    # relatório técnico e figuras
@@ -1184,9 +1642,22 @@ de uso, na **seção 3.11**.
 ### 10.4 Execução — Entrega 3 (Detecção de Anomalias)
 
 ```bash
-python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019 --patient p000001
-python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Dataset"
+# 1. Treina os dois detectores no padrão de normalidade e salva em models/
+python -m src.anomaly.cli --train --limit 5000
+
+# 2. Monitoramento de um indivíduo — o modelo não viu estas séries
+python -m src.anomaly.cli --monitor p000188        # vitais + prescrições
+python -m src.anomaly.cli --monitor-subject 2      # movimentação
+
+# 3. Avaliação completa das três subtarefas + relatório em reports/anomalias.md
+python -m src.anomaly.cli --limit 5000
+
+# Subtarefa isolada
+python -m src.anomaly.cli --only movement
 ```
+
+O passo 1 leva cerca de 1 minuto e o passo 3 cerca de 3 minutos, com 5.000 pacientes.
+O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 
 ### 10.5 Testes
 
@@ -1194,63 +1665,80 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 pytest -q
 ```
 
+São **37 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 28
+da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles exige os
+datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
+automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
+o dataset (4.4).
+
 ---
 
-## 11. Limitações e Trabalhos Futuros
+## 11. Glossário
 
-### 11.1 Limitações Atuais
+Siglas e termos que aparecem ao longo do relatório. As variáveis clínicas mantêm o nome em
+inglês porque é assim que constam nos datasets e no código.
 
-| Limitação | Impacto | Mitigação Possível |
+### 11.1 Métricas de avaliação
+
+| Termo | Significado |
+|:--|:--|
+| **WER** | *Word Error Rate* — taxa de erro de palavra: (substituições + inserções + deleções) ÷ palavras da referência. Métrica central da Entrega 2 (4.4) |
+| **AUC** | Área sob a curva ROC. Equivale à probabilidade de o modelo pontuar um caso positivo acima de um negativo sorteado ao acaso. **0,5 é o acaso**; 1,0 é a separação perfeita |
+| **AUPRC** | Área sob a curva precisão-recall. Em bases desbalanceadas diz mais que a AUC, mas só tem sentido **comparada à prevalência** — que é o valor de um sorteio |
+| **Precisão** | Entre os casos sinalizados, a fração que era de fato positiva |
+| **Recall** | Entre os casos positivos, a fração que o detector sinalizou |
+| **F1** | Média harmônica de precisão e recall |
+| **Prevalência** | Fração de positivos na base. É a referência contra a qual a AUPRC deve ser lida |
+| **Falso alarme** | Fração dos casos negativos que o detector sinalizou por engano |
+| ***Lead time*** | Antecedência entre o alerta e o evento. Neste trabalho, só conta dentro de uma janela de 48 h antes do início da sepse (5.4) |
+| ***Ground-truth*** | Rótulo de referência do dataset, usado para **medir** o resultado. Nunca entra na detecção |
+
+### 11.2 Sinais clínicos e variáveis dos datasets
+
+| Sigla | Significado | Faixa usual (adulto) |
 |:--|:--|:--|
-| GPU local fraca (MX330, 2 GB) | OpenPose lento (~1,2 s/frame) | Subamostragem (`--frame-step`) |
-| Datasets de modalidades distintas | Não há paciente comum entre vídeo, áudio e vitais | Prática acadêmica padrão; documentado |
-| Serviços gerenciados de anomalia descontinuados (Azure Anomaly Detector e Amazon Lookout for Metrics) | Sem opção gerenciada direta para séries clínicas | Detecção local (IsolationForest); avaliar CloudWatch |
-| Fusão multimodal e alerta automático ausentes | As três modalidades não convergem num alerta único | Implementar a camada de fusão (6.4) |
-| Detecção não-supervisionada | Limiares definidos empiricamente | Calibração com os rótulos disponíveis |
-| Referência = mediana global do vídeo | Em movimentos de grande amplitude (agachamento), a execução correta também se afasta da mediana e a separação cai para 1,4x (3.8) | Referência por fase do movimento em vez de mediana única |
-| Sensibilidade às condições de captura | Em condições adversas (pouca luz, meio-perfil, pessoa ao fundo), a margem cai de 10,5x para 2,8x, por falsos positivos em execuções corretas (3.8) | Rastreamento de identidade entre frames; máscara da região de interesse; normalização por iluminação |
+| **HR** | *heart rate* — frequência cardíaca | 60–100 bpm |
+| **SBP** | *systolic blood pressure* — pressão arterial sistólica | 90–140 mmHg |
+| **DBP** | *diastolic blood pressure* — pressão arterial diastólica | 60–90 mmHg |
+| **MAP** | *mean arterial pressure* — pressão arterial média | 70–100 mmHg |
+| **Resp** | frequência respiratória | 12–20 irpm |
+| **O2Sat** | saturação periférica de oxigênio | ≥ 95% |
+| **Temp** | temperatura corporal | ~36,5–37,5 °C |
+| **EtCO2** | *end-tidal CO2* — gás carbônico ao fim da expiração. Consta do schema do Challenge 2019 mas **não é medida** no *training set A* (5.4) | 35–45 mmHg |
+| **FiO2** | *fraction of inspired oxygen* — fração inspirada de oxigênio. É **prescrita**, não medida, e por isso serve de série de doses (5.5) | 0,21 (ar ambiente) a 1,0 |
+| **UTI** | unidade de terapia intensiva | — |
+| **Sepse** | disfunção orgânica causada por resposta desregulada do organismo a uma infecção. É o desfecho usado como *ground-truth* na Entrega 3 | — |
+| **`SepsisLabel`** | coluna 0/1 do Challenge 2019 que marca, hora a hora, quando a sepse é considerada instalada | — |
 
-### 11.2 Trabalhos Futuros
+### 11.3 Técnicas e modelos
 
-1. Implementar a camada de fusão multimodal e o disparo automático de alerta (6.4)
-2. Adotar uma referência **por fase do movimento** (em vez da mediana global) para recuperar
-   a separação em exercícios de grande amplitude — a limitação mais clara medida em 3.8
-3. Implementar a camada de fusão e o fluxo de alerta em nuvem
-4. Calibrar os limiares de anomalia com os *ground-truths* disponíveis
-5. Processar mais vídeos/exercícios do REHAB24-6 para robustez (hoje: 3 experimentos,
-   2 exercícios, 2 sujeitos)
-6. **Isolar os fatores de degradação** com pares de vídeos que variem uma variável por vez
-   (iluminação, orientação da câmera, presença de terceiros) — o REHAB24-6 tem metadados
-   para montar esse desenho, que a comparação atual (3.3) não permite
-7. Avaliar modelos temporais (LSTM/autoencoder) para as séries de sinais vitais
+| Termo | Significado |
+|:--|:--|
+| **OpenPose** | Estimador de pose humana a partir de imagem. Executado como binário externo, gera um JSON por frame (3.4) |
+| **BODY_25** | Arquitetura do OpenPose usada aqui: 25 pontos articulares (*keypoints*) 2D com confiança |
+| **IsolationForest** | Algoritmo não-supervisionado de detecção de anomalia. Isola pontos raros por partições aleatórias; quanto menos partições para isolar um ponto, mais anômalo |
+| **Contaminação** | Parâmetro do IsolationForest: fração das amostras que o modelo trata como anômalas. Neste trabalho, 0,03 no vídeo e 0,05 nas anomalias |
+| **MAD** | *Median Absolute Deviation* — mediana dos desvios absolutos em torno da mediana. Medida de dispersão **resistente a valores extremos**, ao contrário do desvio-padrão |
+| **Z-score robusto** | Desvio padronizado por mediana e MAD: (valor − mediana) ÷ (1,4826 × MAD). O fator 1,4826 torna a escala comparável à do desvio-padrão numa distribuição normal |
+| **Não-supervisionado** | O modelo aprende sem ver rótulos. Aqui, treina no **padrão de normalidade** e sinaliza o que se afasta dele |
+| **Diarização** | Separação de "quem falou quando" numa gravação com mais de um interlocutor (4.4) |
+| **`NEGATION`** | Traço devolvido pelo Comprehend Medical indicando que a entidade foi **negada** pelo falante ("não tenho febre"). Ver também `PERTAINS_TO_FAMILY` e `HYPOTHETICAL` (4.5) |
+| **`NEGATIVE`** | Rótulo de sentimento do Amazon Comprehend, sem relação com `NEGATION` (4.6) |
 
----
+### 11.4 Datasets
 
-## 12. Conclusão
+| Nome | Modalidade | Conteúdo |
+|:--|:--|:--|
+| **REHAB24-6** | vídeo | Exercícios de reabilitação em RGB, com rótulo de execução correta/incorreta por repetição (3.2) |
+| **UCI HAR** | movimentação | *Human Activity Recognition* — 561 features de acelerômetro e giroscópio, 6 atividades, 30 sujeitos (5.2) |
+| **Challenge 2019** | sinais vitais | PhysioNet/CinC — 40.336 pacientes de UTI, séries horárias, com `SepsisLabel` (5.2) |
 
-**[Em desenvolvimento — a consolidar ao final das três entregas.]**
+### 11.5 Termos de infraestrutura
 
-Até o momento, a Entrega 1 (Análise de Vídeo) está implementada e validada: o pipeline
-OpenPose → ângulos posturais → detecção de desvios → relatório e vídeo anotado foi executado
-sobre o vídeo PM_008 do REHAB24-6 (agachamentos), e a validação contra os rótulos de execução
-mostrou taxa média de desvio de **0,614 nas repetições incorretas contra 0,430 nas corretas**
-— separação consistente na direção esperada, com os desvios mais severos coincidindo com as
-repetições rotuladas como incorretas. A Entrega 3 (Detecção de Anomalias) possui baseline
-funcional (IsolationForest) para sinais vitais e movimentação. A Entrega 2 (Análise de Áudio)
-e a camada de integração em nuvem estão em desenvolvimento.
-
----
-
-## Referências
-
-1. REHAB24-6: A multi-modal dataset of physical rehabilitation exercises. Zenodo. [zenodo.org/records/13305826](https://zenodo.org/records/13305826)
-
-2. Cao, Z., Hidalgo, G., Simon, T., Wei, S.-E., & Sheikh, Y. (2019). OpenPose: Realtime Multi-Person 2D Pose Estimation Using Part Affinity Fields. *IEEE TPAMI*.
-
-3. Reyna, M. A., et al. (2019). Early Prediction of Sepsis from Clinical Data: The PhysioNet/Computing in Cardiology Challenge 2019. [physionet.org/content/challenge-2019](https://physionet.org/content/challenge-2019/1.0.0/)
-
-4. Anguita, D., et al. (2013). A Public Domain Dataset for Human Activity Recognition Using Smartphones (UCI HAR). *ESANN 2013*.
-
-5. Fareez, F., et al. (2022). *A dataset of simulated patient-physician medical interviews with a focus on respiratory cases.* figshare. [doi.org/10.6084/m9.figshare.16550013.v1](https://doi.org/10.6084/m9.figshare.16550013.v1)
-
-6. Amazon Web Services. Amazon Transcribe, Amazon Comprehend Medical e Amazon Translate — documentação. [docs.aws.amazon.com](https://docs.aws.amazon.com/)
+| Sigla | Significado |
+|:--|:--|
+| **CLI** | *command-line interface* — interface de linha de comando; nesta entrega, o ponto de entrada de cada pipeline |
+| **VRAM** | Memória dedicada da placa de vídeo. Limita a resolução de rede do OpenPose (3.4) |
+| **CUDA** | Plataforma da NVIDIA para computação em GPU, exigida pelo OpenPose |
+| **S3** | *Amazon Simple Storage Service* — armazenamento de objetos. O Transcribe não aceita upload direto e lê o áudio de lá (6.1) |
+| **UTF-8 / UTF-16** | Codificações de texto. Dois casos do dataset de áudio estão em UTF-16 e, lidos como UTF-8, devolvem texto corrompido **sem levantar erro** (4.3) |

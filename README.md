@@ -51,8 +51,11 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── cache.py                 #   cache dos resultados pagos
 │   │   └── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
 │   └── anomaly/                     # Entrega 3 — detecção de anomalias (local)
-│       ├── load_challenge2019.py    #   loader + baseline (sinais vitais)
-│       └── load_uci_har.py          #   loader + baseline (movimentação)
+│       ├── movement.py              #   movimentação do paciente (UCI HAR)
+│       ├── vitals.py                #   sinais vitais de UTI (Challenge 2019)
+│       ├── prescriptions.py         #   evolução de doses (FiO2, variável derivada)
+│       ├── report.py                #   relatório para a equipe médica
+│       └── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
 ├── data/                            # datasets baixados localmente (NÃO versionado)
 │   ├── video/rehab24-6/             #   REHAB24-6 (vídeos + Segmentation.csv)
 │   ├── audio/consultas/             #   consultas médicas simuladas
@@ -266,13 +269,36 @@ citado aparecem no original em inglês seguidos da tradução para o português 
 ### Entrega 3 — Detecção de Anomalias
 
 ```bash
-# Sinais vitais (PhysioNet Challenge 2019)
-python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019
-python src/anomaly/load_challenge2019.py --data ./data/anomaly/challenge2019 --patient p000001
+# 1. Treina os dois detectores no padrão de normalidade e salva em models/
+python -m src.anomaly.cli --train --limit 5000
 
-# Movimentação do paciente (UCI HAR)
-python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Dataset"
+# 2. Monitoramento de UM indivíduo que o modelo não viu (é a demonstração)
+python -m src.anomaly.cli --monitor p000188        # vitais + prescrições
+python -m src.anomaly.cli --monitor-subject 2      # movimentação
+
+# 3. Avaliação completa + relatório em reports/anomalias.md
+python -m src.anomaly.cli --limit 5000
+python -m src.anomaly.cli --only movement
 ```
+
+Roda **inteiramente local** — não chama a nuvem e não custa nada. Detecção
+não-supervisionada (IsolationForest); os rótulos do dataset entram só na avaliação.
+
+O modelo é treinado no **padrão de normalidade** — só pacientes que nunca desenvolveram
+sepse — persistido em disco, e depois aplicado a pacientes retidos, um por vez. As
+métricas são de generalização:
+
+| Subtarefa | Ground-truth | Resultado |
+|---|---|---|
+| Movimentação | atividade real | **F1 0,973 · AUC 0,9999** · recall 100% · falso alarme 5,0% |
+| Sinais vitais | `SepsisLabel` | AUC 0,555 · 111/446 avisados na janela de 48 h · lead mediano **30 h** |
+| Prescrições | `SepsisLabel` | sepse **17,9%** entre os que escalonaram a dose vs **10,5%** entre os que não |
+
+Os três desempenhos são muito diferentes, e a diferença é informativa: marcha e repouso
+são estados fisicamente distintos e quase separáveis, enquanto deterioração clínica é um
+processo lento e ruidoso — os sinais vitais reagem **depois** dos marcadores de
+laboratório. Detalhes e limitações medidas em
+[`src/anomaly/README.md`](src/anomaly/README.md).
 
 ---
 
@@ -284,7 +310,7 @@ python src/anomaly/load_uci_har.py --data "./data/anomaly/uci_har/UCI HAR Datase
 | Áudio | Consultas médicas simuladas | Aberto (CC0) | https://doi.org/10.6084/m9.figshare.16550013.v1 |
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | https://physionet.org/content/challenge-2019/1.0.0/ |
 | Movimentação | UCI HAR | Aberto (~60 MB) | https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones |
-| Prescrições | Synthea (sintético) | Aberto | https://github.com/synthetichealth/synthea |
+| Prescrições | variável derivada da `FiO2` (Challenge 2019) | — sem dataset extra | ver [`docs/datasets_README.md`](docs/datasets_README.md) §4 |
 
 ---
 
