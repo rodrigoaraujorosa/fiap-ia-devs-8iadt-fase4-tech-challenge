@@ -1214,13 +1214,13 @@ executado localmente.
 
 ### 6.1 Serviços Utilizados
 
-| Serviço | Papel | Estado |
-|:--|:--|:--|
-| **Amazon S3** | armazenamento do áudio — o Transcribe não aceita upload direto | Em uso |
-| **Amazon Transcribe** | transcrição da fala, com diarização de 2 falantes | Em uso |
-| **Amazon Comprehend Medical** | extração de entidades clínicas tipadas (`DetectEntitiesV2`) | Em uso |
-| **Amazon Comprehend** | análise de sentimento do relato (`DetectSentiment`) | Em uso |
-| **Amazon Translate** | tradução dos achados para o relatório bilíngue | Em uso |
+| Serviço | Papel |
+|:--|:--|
+| **Amazon S3** | armazenamento do áudio — o Transcribe não aceita upload direto |
+| **Amazon Transcribe** | transcrição da fala, com diarização de 2 falantes |
+| **Amazon Comprehend Medical** | extração de entidades clínicas tipadas (`DetectEntitiesV2`) |
+| **Amazon Comprehend** | análise de sentimento do relato (`DetectSentiment`) |
+| **Amazon Translate** | tradução dos achados para o relatório bilíngue |
 
 Região: `us-east-1`. A escolha não é indiferente, o **Comprehend Medical não está
 disponível em todas as regiões**, e o comando de verificação do ambiente confere isso
