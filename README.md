@@ -18,7 +18,7 @@ Plataforma que monitora continuamente pacientes em ambiente hospitalar / UTI a p
 ## 🎯 Visão geral das entregas
 
 O projeto é composto por **3 entregas técnicas independentes**, unidas pelo cenário clínico.
-Cada modalidade usa um **dataset público de download imediato** (prática acadêmica padrão —
+Cada modalidade usa um **dataset público de download imediato** (prática acadêmica padrão,
 não são os mesmos pacientes nas 3 fontes).
 
 | # | Entrega | Objetivo | Dataset | Modelos / Serviços |
@@ -132,10 +132,6 @@ cp .env.example .env
 A Entrega 2 usa **serviços gerenciados em nuvem** e, por isso, **não roda sem uma conta
 AWS própria**. As Entregas 1 e 3 são inteiramente locais e não precisam de nada disto.
 
-> 💡 O plano original usava Azure Cognitive Services. A troca para AWS está justificada no
-> [relatório técnico](reports/TECHNICAL_REPORT_FASE4.md); o **Amazon Comprehend Medical**
-> acabou sendo um encaixe melhor, por devolver entidades clínicas já tipadas.
-
 ### 1️⃣ Conta e permissões
 
 Crie uma conta em [aws.amazon.com](https://aws.amazon.com/) e um usuário IAM com acesso
@@ -149,13 +145,8 @@ programático. As permissões mínimas são:
 | **Amazon Comprehend** | analisar o sentimento do relato | `comprehend:DetectSentiment`, `comprehend:BatchDetectSentiment` |
 
 As políticas gerenciadas `AmazonS3FullAccess`, `AmazonTranscribeFullAccess` e
-`ComprehendMedicalFullAccess` cobrem tudo — são mais amplas que o necessário, aceitável
+`ComprehendMedicalFullAccess` cobrem tudo, são mais amplas que o necessário, aceitável
 para um trabalho acadêmico, **não** para produção.
-
-> 💰 **Custo.** Transcribe e Comprehend Medical são pagos por volume processado e têm
-> camada gratuita nos primeiros meses. O recorte usado aqui é pequeno (poucas consultas),
-> mas **confira os preços e as cotas vigentes na sua conta antes de processar em lote** —
-> as 272 consultas somam ~54 h de áudio.
 
 ### 2️⃣ Região
 
@@ -290,22 +281,6 @@ python -m src.anomaly.cli --only movement
 Roda **inteiramente local** — não chama a nuvem e não custa nada. Detecção
 não-supervisionada (IsolationForest); os rótulos do dataset entram só na avaliação.
 
-O modelo é treinado no **padrão de normalidade** — só pacientes que nunca desenvolveram
-sepse — persistido em disco, e depois aplicado a pacientes retidos, um por vez. As
-métricas são de generalização:
-
-| Subtarefa | Ground-truth | Resultado |
-|---|---|---|
-| Movimentação | atividade real | **F1 0,973 · AUC 0,9999** · recall 100% · falso alarme 5,0% |
-| Sinais vitais | `SepsisLabel` | AUC 0,555 · 111/446 avisados na janela de 48 h · lead mediano **30 h** |
-| Prescrições | `SepsisLabel` | sepse **17,9%** entre os que escalonaram a dose vs **10,5%** entre os que não |
-
-Os três desempenhos são muito diferentes, e a diferença é informativa: marcha e repouso
-são estados fisicamente distintos e quase separáveis, enquanto deterioração clínica é um
-processo lento e ruidoso — os sinais vitais reagem **depois** dos marcadores de
-laboratório. Detalhes e limitações medidas em
-[`src/anomaly/README.md`](src/anomaly/README.md).
-
 ---
 
 ## 📦 Datasets
@@ -317,16 +292,6 @@ laboratório. Detalhes e limitações medidas em
 | Sinais vitais | PhysioNet/CinC Challenge 2019 | Aberto (~42 MB) | https://physionet.org/content/challenge-2019/1.0.0/ |
 | Movimentação | UCI HAR | Aberto (~60 MB) | https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones |
 | Prescrições | variável derivada da `FiO2` (Challenge 2019) | — sem dataset extra | ver [`docs/datasets_README.md`](docs/datasets_README.md) §4 |
-
----
-
-## 📝 Entregáveis da Fase 4
-
-- ✅ **Repositório Git** com código-fonte completo
-- 📄 **Relatório técnico** ([`reports/`](reports/)): fluxo multimodal, modelos por tipo de
-  dado, resultados e exemplos de anomalias detectadas
-- 🎬 **Vídeo** (até 15 min, YouTube/Vimeo) demonstrando o processamento multimodal, a
-  detecção/resposta a anomalias, a integração com a AWS e o fluxo de alerta à equipe médica
 
 ---
 

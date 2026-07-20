@@ -7,8 +7,8 @@ relatados pelo paciente, produzindo um relatório para a equipe médica.
 
 ```
                                         ┌─► Comprehend Medical ──► achados ─┐
-consulta (.mp3) ──► S3 ──► Transcribe ──┤                                   ├─► relatório
-                          (diarização)  └─► Comprehend ────────► sentimento ┘   bilíngue
+consulta (.mp3) ──► S3 ──► Transcribe ──┤                                   ├─► Translate ─► relatório clínico bilíngue
+                          (diarização)  └─► Comprehend ────────► sentimento ┘
 ```
 
 1. **Amazon Transcribe** — transcrição da fala, com diarização de 2 falantes.
