@@ -2,7 +2,7 @@
 
 > **Tech Challenge — Fase 4** · PosTech FIAP · IA para DEVs (turma 8IADT)
 
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![Status](https://img.shields.io/badge/status-3%20entregas%20conclu%C3%ADdas-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.10%20ou%20superior-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![OpenPose](https://img.shields.io/badge/OpenPose-BODY__25-00FFFF)
@@ -25,7 +25,7 @@ não são os mesmos pacientes nas 3 fontes).
 |---|---------|----------|---------|--------------------|
 | 1 | 🎥 **Análise de Vídeo** | Detectar movimentos/eventos fora do padrão em vídeos clínicos | REHAB24-6 (reabilitação, RGB + rótulos correto/incorreto) | OpenPose (BODY_25) |
 | 2 | 🎙️ **Análise de Áudio** | Transcrever consultas, extrair achados clínicos e analisar o sentimento do relato | Consultas médicas simuladas (figshare) | Amazon Transcribe · Comprehend Medical · Comprehend · Translate |
-| 3 | 📈 **Detecção de Anomalias** | Anomalias em sinais vitais, prescrições e movimentação | PhysioNet Challenge 2019 · UCI HAR · Synthea | IsolationForest (baseline) |
+| 3 | 📈 **Detecção de Anomalias** | Anomalias em sinais vitais, prescrições e movimentação, com alerta à equipe | PhysioNet Challenge 2019 · UCI HAR | IsolationForest · regra de degrau (dose) |
 
 ---
 
@@ -54,14 +54,18 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │       ├── movement.py              #   movimentação do paciente (UCI HAR)
 │       ├── vitals.py                #   sinais vitais de UTI (Challenge 2019)
 │       ├── prescriptions.py         #   evolução de doses (FiO2, variável derivada)
-│       ├── report.py                #   relatório para a equipe médica
-│       └── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
+│       ├── alerts.py                #   fila de plantão, priorizada por confiabilidade
+│       ├── report.py                #   relatório para a equipe médica + figuras
+│       ├── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
+│       └── app.py                   #   painel de plantão (Gradio)
+├── models/                          # detectores treinados (.joblib, NÃO versionado)
 ├── data/                            # datasets baixados localmente (NÃO versionado)
 │   ├── video/rehab24-6/             #   REHAB24-6 (vídeos + Segmentation.csv)
 │   ├── audio/consultas/             #   consultas médicas simuladas
 │   └── anomaly/                     #   Challenge 2019 e UCI HAR
 ├── reports/                         # resultados e relatório técnico
 │   ├── TECHNICAL_REPORT_FASE4.md    #   o relatório da fase
+│   ├── anomalias.md                 #   saída da Entrega 3 para a equipe médica
 │   ├── relatorio_PM_*.md            #   relatórios de desvio postural (Entrega 1)
 │   ├── validacao_PM_*.csv           #   validação por repetição (Entrega 1)
 │   ├── audio_RES*.md audio_MSK*.md  #   relatórios clínicos bilíngues (Entrega 2)
@@ -72,7 +76,9 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── docs/
 │   ├── datasets_README.md           # download e schema de cada dataset
 │   └── openpose_setup.md            # instalação do binário do OpenPose
-├── tests/test_video.py              # testes com keypoints sintéticos (sem OpenPose nem AWS)
+├── tests/                           # 37 testes, sem exigir datasets nem credenciais
+│   ├── test_video.py                #   9 testes, keypoints sintéticos
+│   └── test_anomaly.py              #   28 testes, séries sintéticas
 ├── requirements.txt                 # pisos de versão
 ├── requirements-lock.txt            # versões exatas, para auditar os resultados
 ├── .env.example                     # modelo de configuração da AWS (sem segredos)

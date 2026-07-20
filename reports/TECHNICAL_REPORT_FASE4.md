@@ -1510,32 +1510,54 @@ abordagem e facilitando a comparação.
 ```
 fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── src/
-│   ├── common/                 # config e utilitários compartilhados (AWS, caminhos)
-│   ├── video/                  # Entrega 1 — análise de vídeo (OpenPose)
-│   │   ├── keypoints.py        # parser dos JSON BODY_25
-│   │   ├── posture.py          # ângulos articulares por frame
-│   │   ├── anomaly.py          # detecção de desvios (z-score + IsolationForest)
-│   │   ├── report.py           # relatório Markdown + gráfico
-│   │   ├── overlay.py          # vídeo anotado (esqueleto + desvios)
-│   │   ├── validate.py         # validação contra os rótulos do REHAB24-6
-│   │   ├── run_openpose.py     # invocação do binário OpenPose (com progresso)
-│   │   ├── cli.py              # pipeline fim-a-fim (barra de progresso no terminal)
-│   │   └── app.py              # app web (Gradio) para o vídeo-demo
+│   ├── common/config.py        # caminhos, credenciais AWS e verificação do ambiente
+│   ├── video/                  # Entrega 1 — análise de vídeo (OpenPose, local)
+│   │   ├── run_openpose.py     #   invocação do binário, com progresso
+│   │   ├── keypoints.py        #   parser dos JSON BODY_25 + seleção da pessoa principal
+│   │   ├── posture.py          #   ângulos articulares por frame
+│   │   ├── anomaly.py          #   desvios (z-score robusto ∪ IsolationForest)
+│   │   ├── validate.py         #   validação contra os rótulos do REHAB24-6
+│   │   ├── report.py           #   relatório Markdown + gráfico
+│   │   ├── overlay.py          #   vídeo anotado (esqueleto + desvios)
+│   │   ├── cli.py              #   pipeline fim-a-fim
+│   │   └── app.py              #   app web (Gradio), porta 7860
 │   ├── audio/                  # Entrega 2 — análise de áudio (AWS)
-│   └── anomaly/                # Entrega 3 — detecção de anomalias
-│       ├── movement.py            # movimentação do paciente (UCI HAR)
-│       ├── vitals.py              # sinais vitais de UTI (Challenge 2019)
-│       ├── prescriptions.py       # evolução de doses (FiO2, variável derivada)
-│       ├── report.py              # relatório para a equipe médica
-│       └── cli.py                 # pipeline fim-a-fim (único ponto de entrada)
+│   │   ├── consultations.py    #   loader do dataset; separa médico e paciente
+│   │   ├── transcribe.py       #   S3 + Transcribe + medição de WER
+│   │   ├── comprehend.py       #   entidades clínicas e sentimento
+│   │   ├── report.py           #   relatório clínico bilíngue (Translate)
+│   │   ├── cache.py            #   cache dos resultados pagos
+│   │   └── cli.py              #   pipeline fim-a-fim (único ponto de entrada)
+│   └── anomaly/                # Entrega 3 — detecção de anomalias (local)
+│       ├── vitals.py           #   sinais vitais; treino, persistência e inferência
+│       ├── movement.py         #   movimentação do paciente (UCI HAR)
+│       ├── prescriptions.py    #   evolução de doses (FiO2, variável derivada)
+│       ├── alerts.py           #   fila de plantão, priorizada por confiabilidade
+│       ├── report.py           #   relatório para a equipe médica + figuras
+│       ├── cli.py              #   pipeline fim-a-fim (único ponto de entrada)
+│       └── app.py              #   app web (Gradio), porta 7861
+├── tests/
+│   ├── test_video.py           # 9 testes, keypoints sintéticos
+│   └── test_anomaly.py         # 28 testes, séries sintéticas
+├── models/                     # detectores treinados (.joblib, não versionado)
 ├── data/                       # datasets baixados localmente (não versionado)
-├── docs/                       # enunciado + guias (datasets, setup do OpenPose)
-├── reports/                    # relatório técnico e figuras
-├── tests/                      # testes automatizados
-├── requirements.txt
+├── docs/                       # enunciado, guia de datasets e setup do OpenPose
+├── reports/                    # relatórios, figuras e o cache bruto da AWS
+│   ├── TECHNICAL_REPORT_FASE4.md
+│   ├── anomalias.md            #   saída da Entrega 3 para a equipe médica
+│   ├── audio_*.md              #   relatórios clínicos bilíngues (Entrega 2)
+│   ├── relatorio_PM_*.md       #   relatórios de desvio postural (Entrega 1)
+│   ├── transcriptions/ entities/  #   respostas brutas da AWS (versionadas)
+│   └── figures/                #   gráficos + screenshots/ do relatório
+├── requirements.txt            # pisos de versão
+├── requirements-lock.txt       # versões exatas, para auditar os resultados
 ├── pyproject.toml
+├── LICENSE                     # MIT (código); cada dataset tem licença própria
 └── README.md
 ```
+
+Cada entrega tem um `README.md` próprio em `src/<modalidade>/`, com os comandos, os
+resultados medidos e as armadilhas já tratadas naquele pipeline.
 
 ---
 
