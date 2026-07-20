@@ -66,6 +66,7 @@ reports/figures/*
 *.pt
 *.pth
 *.onnx
+*.docx
 models/
 
 # Exceção: gráficos de relatório são evidências/deliverables (versionados)

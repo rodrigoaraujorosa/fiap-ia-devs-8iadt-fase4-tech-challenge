@@ -57,8 +57,6 @@ Desenvolver um sistema que:
 | Este Relatório | `reports/TECHNICAL_REPORT_FASE4.md` |
 | Repositório | https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge |
 | Vídeo (até 15 min) | (a publicar — YouTube/Vimeo) |
-| App de demonstração — análise de vídeo (Gradio) | `python -m src.video.app` (porta 7860) |
-| App de demonstração — alertas de séries temporais (Gradio) | `python -m src.anomaly.app` (porta 7861) |
 
 ### 1.3 Visão Geral das Três Entregas
 
