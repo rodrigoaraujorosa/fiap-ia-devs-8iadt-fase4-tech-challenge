@@ -829,6 +829,18 @@ Uma consequência prática: com os casos em cache a app roda **sem credenciais d
 que permite reproduzir a demonstração inteira sem conta na nuvem — coerente com a decisão
 de versionar os JSON brutos do serviço (4.10).
 
+![Interface Gradio com a consulta RES0029 processada](figures/screenshots/gradio_audio_RES0029.png)
+
+> **Figura 8.** A app após processar o RES0029. No alto, os dois controles: o seletor, que
+> declara o caso como *em cache (sem custo)*, e a caixa de chamadas pagas, **desmarcada** —
+> abaixo deles, o aviso que antecede o clique confirma que nenhuma chamada será cobrada. A
+> linha de tempos mostra o efeito: as quatro etapas somam 00:00.813, porque tudo veio do
+> disco; o mesmo caso processado na AWS leva cerca de 1 minuto. À esquerda, o player do MP3
+> original e o quadro de qualidade da transcrição (WER 5,37%, com o balanço de 20
+> substituições, 16 inserções e 6 remoções sobre 782 palavras de referência); à direita, os
+> achados clínicos com a confiança de cada um. Abaixo — fora do enquadramento — seguem o
+> sentimento e o relatório bilíngue completo.
+
 O quadro de achados na tela segue as mesmas regras do relatório (4.7), inclusive a
 supressão da negação conflitante: um termo afirmado numa fala e negado em outra permanece
 entre os achados, com ressalva, e **não** aparece como negado — listar a queixa principal
@@ -1011,7 +1023,7 @@ como limitação medida.
   do limiar absoluto, que não garante alerta para todo paciente. Baixá-lo aumenta a
   cobertura ao custo de mais alarme falso.
 - **A agregação multivariada dilui o desvio de uma variável isolada.** O paciente
-  `p000188` (Figura 12) tem a frequência respiratória subindo de 16 para 33 ao longo da
+  `p000188` (Figura 13) tem a frequência respiratória subindo de 16 para 33 ao longo da
   internação, uma deterioração inequívoca. A normalização por paciente **captura** esse
   movimento: o z-score mediano da `Resp` vai de −0,67 nas primeiras 40 horas para 4,89 no
   bloco que antecede o início da sepse, com pico de 8,09. O alerta, porém, não dispara: o
@@ -1074,7 +1086,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Treino dos dois detectores](figures/screenshots/cli_anomaly_train.png)
 
-> **Figura 8.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
+> **Figura 9.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
 > de normalidade: 3.187 pacientes sem sepse (117.947 horas) para os sinais vitais e 4.067
 > amostras de repouso para a movimentação. A saída informa o que foi retido para teste —
 > 1.813 pacientes e 9 sujeitos, estes últimos identificados um a um e o limiar de alerta
@@ -1085,7 +1097,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Monitoramento do paciente p001123](figures/screenshots/cli_anomaly_p001123.png)
 
-> **Figura 9.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
+> **Figura 10.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
 > (5,2%) — 46, 55, 63, 66 e 86 — e a conferência mostra sepse registrada a partir da hora
 > 88, ou seja, **42 horas de antecedência**. Note que os alertas se adensam à medida que o
 > evento se aproxima. A dose prescrita foi monitorada (97 registros, entre 0,30 e 0,40) e
@@ -1093,7 +1105,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Série temporal do paciente p001123](figures/monitor_p001123.png)
 
-> **Figura 10.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
+> **Figura 11.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
 > antecede o início da sepse (linha roxa tracejada, hora 88) e as faixas vermelhas marcam
 > as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
 > de oxigênio, estável em 0,30 desde a hora 26 — sem escalonamento, coerente com a saída do
@@ -1103,7 +1115,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Monitoramento do paciente p000188](figures/screenshots/cli_anomaly_p000188.png)
 
-> **Figura 11.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
+> **Figura 12.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
 > nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
 > prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
 > primeiro deles **24 horas antes** do início. As duas reduções de dose detectadas não
@@ -1111,14 +1123,14 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Série temporal do paciente p000188](figures/monitor_p000188.png)
 
-> **Figura 12.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
+> **Figura 13.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
 > superior, o detector de vitais ficou em silêncio, enquanto os dois triângulos do painel
 > inferior marcam os escalonamentos de dose nas horas 51 e 53, ambos dentro da janela. A
 > figura expõe algo que a saída de texto não mostra: a frequência respiratória (verde) sobe
 > de forma contínua ao longo da internação, uma deterioração visível que o alerta não
 > capturou. A seção 5.4 detalha por quê.
 
-O contraste entre as Figuras 9 e 10 é a ilustração concreta do que a comparação de features
+O contraste entre as Figuras 10 e 12 é a ilustração concreta do que a comparação de features
 da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
 séries do mesmo paciente podem avisar antes. É também o argumento para que a camada de
 alerta combine as modalidades em vez de depender de uma só (5.7).
@@ -1127,7 +1139,7 @@ alerta combine as modalidades em vez de depender de uma só (5.7).
 
 ![Monitoramento do sujeito 2](figures/screenshots/cli_anomaly_subject_2.png)
 
-> **Figura 13.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
+> **Figura 14.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
 > 157 delas (52,0%), e a conferência mostra por quê: as três atividades de marcha são
 > detectadas **integralmente** (100,0% cada), enquanto o repouso permanece quase todo em
 > silêncio, `LAYING` sem nenhum alerta, `SITTING` em 2,2% e `STANDING` em 3,7%. O recall
@@ -1142,7 +1154,7 @@ métricas que orienta o peso de cada modalidade:
 
 ![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
 
-> **Figura 14.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
+> **Figura 15.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
 > lado a lado com os respectivos tempos: movimentação (4,1 s), sinais vitais (39,2 s) e
 > prescrições (0,8 s) — o restante do tempo é a leitura dos 5.000 arquivos `.psv`. A saída
 > explicita a separação treino/teste dos vitais (3.187 pacientes sem sepse no treino contra
@@ -1195,7 +1207,7 @@ referência o gráfico não se lê de relance, ver a frequência respiratória s
 
 ![Painel de plantão com o paciente p000795 aberto](figures/screenshots/gradio_anomaly_alerts.png)
 
-> **Figura 15.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
+> **Figura 16.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
 > de plantão: 132 pacientes com alerta entre os 363 retidos (21 de prioridade ALTA, 111
 > MEDIA), ordenados por prioridade e, dentro dela, pelo alerta mais recente. A coluna
 > **Taxa** é o que distingue o evento agudo do paciente cronicamente fora do padrão, 
@@ -1211,12 +1223,12 @@ Os controles da aba de leitos são dois: o tamanho da coorte (200 a 5.000 pacien
 quais prioridades exibir.
 
 A segunda aba monitora a **movimentação**, por sujeito. A visualização aqui é diferente da
-Figura 9: em vez da taxa de alerta agregada por atividade, mostra a **sequência**, cada
+Figura 14: em vez da taxa de alerta agregada por atividade, mostra a **sequência**, cada
 janela de leitura vira uma coluna, com a atividade real em cima e o alerta embaixo.
 
 ![Aba de movimentação com o sujeito 9 monitorado](figures/screenshots/gradio_anomaly_movimentacao.png)
 
-> **Figura 16.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
+> **Figura 17.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
 > superior, a atividade real, azul para repouso e vermelha para marcha; no inferior, uma
 > faixa contínua em que vermelho indica alerta disparado e cinza, silêncio. A
 > correspondência entre os dois painéis é o resultado: os quatro blocos de marcha acendem
@@ -1303,7 +1315,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 17.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 18.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura, o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
