@@ -161,6 +161,49 @@ mas participam da decisão e por isso constam aqui):
 | Separação treino/teste por paciente | `anomaly/vitals.py` | garante que nenhum paciente avaliado tenha participado do treino |
 | Regra de prioridade da fila | `anomaly/alerts.py` | pondera as modalidades pela confiabilidade medida e eleva a ALTA quando duas séries concordam |
 
+### 2.4 A Tela do Sistema
+
+O sistema tem uma **interface única para a equipe médica** (`python -m src.dashboard.app`,
+porta 7863): o ponto por onde o profissional acompanha o paciente internado, com uma aba
+por modalidade de monitoramento.
+
+Cada entrega também tem a sua própria interface (3.11, 4.9 e 5.8). Elas continuam
+existindo, nas portas 7860, 7862 e 7861, como **pontos de entrada por entrega** — úteis
+para desenvolver e para demonstrar uma modalidade isolada. Para o usuário do sistema,
+porém, o sistema é esta tela.
+
+**A tela abre na aba de alertas**, e não na primeira entrega. Quem abre um sistema de
+monitoramento em plantão quer saber, antes de tudo, se há paciente precisando de atenção;
+as demais abas são consultadas a partir de uma pergunta que o profissional já tem,
+enquanto o alerta chega sem ser pedido. A *ordem* das abas continua sendo a das entregas,
+para preservar a correspondência com o enunciado e com este relatório.
+
+**A tela não funde as modalidades**, e aqui a razão da seção 2.2 deixa de ser um argumento
+de arquitetura e passa a ser de segurança clínica: como os datasets descrevem populações
+distintas (1.4), uma tela que somasse as três séries num único "paciente" levaria a equipe
+a ler como um histórico o que são pessoas diferentes. Daí as regras:
+
+| Regra | Por quê |
+|:--|:--|
+| Uma aba por modalidade, nunca uma visão combinada | a aba é a fronteira entre as fontes, como já eram as duas abas internas da Entrega 3 (5.8) |
+| Cada aba declara a fonte e a **unidade monitorada** | *paciente* nos leitos e nas consultas, *sujeito* na movimentação; a unidade muda porque a fonte muda |
+| O rodapé nomeia os quatro datasets e afirma que não há indivíduo em comum | a ressalva precisa estar diante de quem usa a tela, não apenas neste relatório |
+| O rodapé repete que o alerta é **triagem**, não decisão | a mesma exigência que a tela da Entrega 3 já tinha (5.9) |
+
+As abas **não reimplementam nada**: cada uma chama a mesma função de montagem que a app
+da respectiva entrega usa.
+
+![Tela do sistema recém-aberta, na aba de alertas](figures/screenshots/gradio_dashboard.png)
+
+> **Figura 1.** A tela como o profissional a encontra ao abrir. As três abas seguem a
+> ordem das entregas — vídeo, áudio, anomalias —, mas a **terceira é a que está
+> selecionada**: é a decisão de projeto descrita acima, e o que se vê é a fila de plantão,
+> não a primeira entrega. Dentro dela, as duas abas internas da Entrega 3 mantêm separadas
+> as duas fontes (leitos e movimentação). A fila aparece **vazia** porque a coorte ainda
+> não foi carregada: pontuar os pacientes é a primeira ação do usuário, e o resultado
+> desse carregamento é o que a Figura 17 mostra. A legenda das siglas clínicas fica logo
+> abaixo da fila, onde é lida junto com ela.
+
 ---
 
 ## 3. Entrega 1 — Análise de Vídeo (OpenPose)
@@ -251,7 +294,7 @@ vídeo com escrita dos keypoints em JSON (um arquivo por frame).
 | Saída | 1 JSON por frame | `pose_keypoints_2d = [x0,y0,c0, ...]` |
 
 **Desempenho e subamostragem.** Na GPU local onde os testes foram realizados (NVIDIA MX330, 2 GB), o OpenPose processa a
-~1,2 s/frame (medido: `1.22s/frame` na execução da Figura 2). Processar os 5.191 frames de
+~1,2 s/frame (medido: `1.22s/frame` na execução da Figura 3). Processar os 5.191 frames de
 PM_008 levaria ~1h45. Para viabilizar a execução local, o vídeo é **subamostrado para 1 a
 cada 3 frames** (opção `--frame-step 3` do CLI; 10 fps efetivos, 1.731 frames), reduzindo o
 tempo do OpenPose para os 45:20 medidos (o pipeline reporta o tempo no output e no
@@ -261,7 +304,7 @@ cruzamento correto com os rótulos (ver 3.8).
 
 ![Uso da GPU local durante a extração de pose](figures/screenshots/uso_gpu_local.png)
 
-> **Figura 1.** Gerenciador de Tarefas durante a extração do PM_008. A MX330 opera em
+> **Figura 2.** Gerenciador de Tarefas durante a extração do PM_008. A MX330 opera em
 > **90% de utilização a 71 °C**, com **1,4 dos 2,0 GB** de memória dedicada ocupados — é
 > essa margem estreita de VRAM que justifica o `--net_resolution 320x176` da tabela acima:
 > resoluções maiores não cabem. A carga está na GPU dedicada, não na integrada (Intel Iris
@@ -472,7 +515,7 @@ gerado.
 
 ![Execução do CLI sobre o vídeo PM_008](figures/screenshots/cli_PM_008-Camera17-30fps.png)
 
-> **Figura 2.** Execução completa do CLI sobre o PM_008 (1.731 frames após subamostragem).
+> **Figura 3.** Execução completa do CLI sobre o PM_008 (1.731 frames após subamostragem).
 > A saída mostra as quatro fases, os tempos medidos — OpenPose 45:20.089, análise 00:15.541,
 > overlay e validação somando +11:06.050, total fim-a-fim 56:42.061 — e a validação contra o
 > ground-truth (corretas 0,430 · incorretas 0,614, separação OK). Ao final, lista os quatro
@@ -494,20 +537,20 @@ A sequência abaixo mostra o fluxo completo do ponto de vista de quem usa a ferr
 
 ![Vídeo original do PM_034, sem anotação](figures/screenshots/video_sem_overlay_PM_034-Camera17-30fps.png)
 
-> **Figura 3 — antes.** O material de partida: o vídeo bruto do PM_034 (abdução de perna),
+> **Figura 4 — antes.** O material de partida: o vídeo bruto do PM_034 (abdução de perna),
 > como a equipe o receberia hoje. A avaliação depende inteiramente da observação visual do
 > profissional, sem nenhuma medida objetiva de ângulo ou marcação de instantes suspeitos.
 
 ![Interface Gradio processando o PM_034](figures/screenshots/gradio_processando_PM_034-Camera17-30fps.png)
 
-> **Figura 4 — durante.** A app em processamento, com o `frame-step` em 3 e o
+> **Figura 5 — durante.** A app em processamento, com o `frame-step` em 3 e o
 > reaproveitamento de keypoints desligado (extração completa). A barra informa a etapa em
 > linguagem corrente e o progresso real ("Aplicando o Modelo OpenPose — 104/370 frames"),
 > e cada quadro já anuncia o que vai exibir ao terminar.
 
 ![Interface Gradio com o resultado do PM_034](figures/screenshots/gradio_finalizado_PM_034-Camera17-30fps.png)
 
-> **Figura 5 — depois.** O mesmo instante da Figura 3, agora processado. À esquerda, os
+> **Figura 6 — depois.** O mesmo instante da Figura 4, agora processado. À esquerda, os
 > ângulos ao longo dos 37 s com as faixas rosa marcando os instantes de desvio; à direita, o
 > vídeo com o esqueleto BODY_25 sobreposto, a borda vermelha sinalizando o frame como desvio
 > e o osso do ângulo responsável destacado em vermelho (ombro, no frame 0). Abaixo — fora do
@@ -780,7 +823,7 @@ obtido; ao final vêm os tempos por etapa no formato `mm:ss.mi`, o mesmo da Entr
 
 ![Execução do CLI sobre a consulta RES0062](figures/screenshots/cli_audio_RES0062.png)
 
-> **Figura 6.** Pipeline completo sobre o RES0062 (17,8 min de consulta). As quatro etapas
+> **Figura 7.** Pipeline completo sobre o RES0062 (17,8 min de consulta). As quatro etapas
 > nomeiam o serviço que as executou — Transcribe, Comprehend Medical, Comprehend e
 > Translate —, e a barra de progresso conta etapas concluídas. A transcrição domina o
 > tempo (01:56 de 02:18 totais), o que é esperado: é a única etapa que processa o áudio
@@ -792,12 +835,62 @@ transcritos sem tocar na AWS, produzindo a estatística agregada usada em 4.4:
 
 ![Consolidação das métricas dos quatro casos](figures/screenshots/cli_audio_consultations.png)
 
-> **Figura 7.** Modo `--report`: as quatro transcrições são lidas do cache (nenhuma chamada
+> **Figura 8.** Modo `--report`: as quatro transcrições são lidas do cache (nenhuma chamada
 > paga é feita) e as métricas, recalculadas. Permite iterar sobre a forma de medir — por
 > exemplo, ligar e desligar a contagem de hesitações, sem pagar novamente pela
 > transcrição. É também a origem do `wer_consultations.csv` versionado no repositório.
 
-### 4.9 Controle de Custo e Credenciais
+### 4.9 Interface Web de Demonstração (`app.py`)
+
+Como nas Entregas 1 e 3, o pipeline é exposto em uma app web local (Gradio,
+`python -m src.audio.app`, porta 7862), e a app **não reimplementa nada**: chama as mesmas
+funções de biblioteca que o `cli.py` usa, na mesma ordem. A tela reúne o que a equipe
+médica precisa ver junto — a gravação, os achados extraídos e o relatório — em vez de
+espalhá-los entre a saída do terminal e um arquivo em disco.
+
+O layout segue as quatro etapas do pipeline, cada uma nomeando o serviço que a executou:
+qualidade da transcrição (WER e o balanço de substituições, inserções e remoções), achados
+clínicos, sentimento e, ao final, o relatório bilíngue completo. Ao lado dos achados fica o
+player do MP3 original, porque a conferência contra a gravação é o gesto que o relatório
+bilíngue existe para permitir (4.7).
+
+**A diferença desta app para as outras duas é o custo.** Vídeo e anomalias rodam local, e
+um clique indevido custa tempo de CPU; aqui um clique num caso ainda não processado dispara
+chamadas cobradas por volume ao Transcribe, ao Comprehend Medical e ao Translate. Um
+seletor com 272 casos e um botão é, nessas condições, uma armadilha. As decisões de
+projeto decorrem daí:
+
+| Decisão | Efeito |
+|:--|:--|
+| O seletor marca cada caso como *em cache (sem custo)* ou *não processado (custa)* | o custo é visível na escolha, não depois dela |
+| Os casos já processados aparecem **primeiro** | o caso pré-selecionado, que é o que se processa ao clicar sem escolher nada, é sempre gratuito |
+| A chamada paga é **bloqueada por padrão** | processar um caso novo exige marcar uma caixa, um ato deliberado |
+| Antes do clique, a tela lista **quais etapas** seriam cobradas | é o `--dry-run` do CLI embutido na interface |
+| A regra de custo é importada do `cli.py`, não reescrita | uma segunda cópia da regra é onde um esquecimento vira cobrança indevida |
+
+Uma consequência prática: com os casos em cache a app roda **sem credenciais da AWS**, o
+que permite reproduzir a demonstração inteira sem conta na nuvem — coerente com a decisão
+de versionar os JSON brutos do serviço (4.10).
+
+![Interface Gradio com a consulta RES0029 processada](figures/screenshots/gradio_audio_RES0029.png)
+
+> **Figura 9.** A app após processar o RES0029. No alto, os dois controles: o seletor, que
+> declara o caso como *em cache (sem custo)*, e a caixa de chamadas pagas, **desmarcada** —
+> abaixo deles, o aviso que antecede o clique confirma que nenhuma chamada será cobrada. A
+> linha de tempos mostra o efeito: as quatro etapas somam 00:00.813, porque tudo veio do
+> disco; o mesmo caso processado na AWS leva cerca de 1 minuto. À esquerda, o player do MP3
+> original e o quadro de qualidade da transcrição (WER 5,37%, com o balanço de 20
+> substituições, 16 inserções e 6 remoções sobre 782 palavras de referência); à direita, os
+> achados clínicos com a confiança de cada um. Abaixo — fora do enquadramento — seguem o
+> sentimento e o relatório bilíngue completo.
+
+O quadro de achados na tela segue as mesmas regras do relatório (4.7), inclusive a
+supressão da negação conflitante: um termo afirmado numa fala e negado em outra permanece
+entre os achados, com ressalva, e **não** aparece como negado — listar a queixa principal
+como negada faria a equipe ler que ela foi descartada. Se a tela e o documento logo abaixo
+dela divergissem nesse ponto, diriam coisas diferentes sobre o mesmo paciente.
+
+### 4.10 Controle de Custo e Credenciais
 
 Transcribe, Comprehend Medical e Translate cobram por volume processado. Todo resultado é
 **cacheado em disco** (`reports/transcriptions/`, `reports/entities/`,
@@ -973,7 +1066,7 @@ como limitação medida.
   do limiar absoluto, que não garante alerta para todo paciente. Baixá-lo aumenta a
   cobertura ao custo de mais alarme falso.
 - **A agregação multivariada dilui o desvio de uma variável isolada.** O paciente
-  `p000188` (Figura 12) tem a frequência respiratória subindo de 16 para 33 ao longo da
+  `p000188` (Figura 14) tem a frequência respiratória subindo de 16 para 33 ao longo da
   internação, uma deterioração inequívoca. A normalização por paciente **captura** esse
   movimento: o z-score mediano da `Resp` vai de −0,67 nas primeiras 40 horas para 4,89 no
   bloco que antecede o início da sepse, com pico de 8,09. O alerta, porém, não dispara: o
@@ -1036,7 +1129,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Treino dos dois detectores](figures/screenshots/cli_anomaly_train.png)
 
-> **Figura 8.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
+> **Figura 10.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
 > de normalidade: 3.187 pacientes sem sepse (117.947 horas) para os sinais vitais e 4.067
 > amostras de repouso para a movimentação. A saída informa o que foi retido para teste —
 > 1.813 pacientes e 9 sujeitos, estes últimos identificados um a um e o limiar de alerta
@@ -1047,7 +1140,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Monitoramento do paciente p001123](figures/screenshots/cli_anomaly_p001123.png)
 
-> **Figura 9.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
+> **Figura 11.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
 > (5,2%) — 46, 55, 63, 66 e 86 — e a conferência mostra sepse registrada a partir da hora
 > 88, ou seja, **42 horas de antecedência**. Note que os alertas se adensam à medida que o
 > evento se aproxima. A dose prescrita foi monitorada (97 registros, entre 0,30 e 0,40) e
@@ -1055,7 +1148,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Série temporal do paciente p001123](figures/monitor_p001123.png)
 
-> **Figura 10.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
+> **Figura 12.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
 > antecede o início da sepse (linha roxa tracejada, hora 88) e as faixas vermelhas marcam
 > as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
 > de oxigênio, estável em 0,30 desde a hora 26 — sem escalonamento, coerente com a saída do
@@ -1065,7 +1158,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Monitoramento do paciente p000188](figures/screenshots/cli_anomaly_p000188.png)
 
-> **Figura 11.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
+> **Figura 13.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
 > nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
 > prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
 > primeiro deles **24 horas antes** do início. As duas reduções de dose detectadas não
@@ -1073,14 +1166,14 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Série temporal do paciente p000188](figures/monitor_p000188.png)
 
-> **Figura 12.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
+> **Figura 14.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
 > superior, o detector de vitais ficou em silêncio, enquanto os dois triângulos do painel
 > inferior marcam os escalonamentos de dose nas horas 51 e 53, ambos dentro da janela. A
 > figura expõe algo que a saída de texto não mostra: a frequência respiratória (verde) sobe
 > de forma contínua ao longo da internação, uma deterioração visível que o alerta não
 > capturou. A seção 5.4 detalha por quê.
 
-O contraste entre as Figuras 9 e 10 é a ilustração concreta do que a comparação de features
+O contraste entre as Figuras 11 e 13 é a ilustração concreta do que a comparação de features
 da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
 séries do mesmo paciente podem avisar antes. É também o argumento para que a camada de
 alerta combine as modalidades em vez de depender de uma só (5.7).
@@ -1089,7 +1182,7 @@ alerta combine as modalidades em vez de depender de uma só (5.7).
 
 ![Monitoramento do sujeito 2](figures/screenshots/cli_anomaly_subject_2.png)
 
-> **Figura 13.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
+> **Figura 15.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
 > 157 delas (52,0%), e a conferência mostra por quê: as três atividades de marcha são
 > detectadas **integralmente** (100,0% cada), enquanto o repouso permanece quase todo em
 > silêncio, `LAYING` sem nenhum alerta, `SITTING` em 2,2% e `STANDING` em 3,7%. O recall
@@ -1104,7 +1197,7 @@ métricas que orienta o peso de cada modalidade:
 
 ![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
 
-> **Figura 14.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
+> **Figura 16.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
 > lado a lado com os respectivos tempos: movimentação (4,1 s), sinais vitais (39,2 s) e
 > prescrições (0,8 s) — o restante do tempo é a leitura dos 5.000 arquivos `.psv`. A saída
 > explicita a separação treino/teste dos vitais (3.187 pacientes sem sepse no treino contra
@@ -1134,7 +1227,7 @@ triagem descrito acima.
 ### 5.8 Interface Web de Demonstração (`app.py`)
 
 As três subtarefas são expostas em uma app web local (Gradio,
-`python -m src.anomaly.app`, porta 7861. Como na Entrega 1, a app **não reimplementa nada**:
+`python -m src.anomaly.app`, porta 7861. Como nas Entregas 1 e 2, a app **não reimplementa nada**:
 chama as mesmas funções que o CLI usa. O equivalente em terminal é
 `python -m src.anomaly.cli --alerts` para a fila e `--monitor-subject` para a movimentação.
 
@@ -1157,7 +1250,7 @@ referência o gráfico não se lê de relance, ver a frequência respiratória s
 
 ![Painel de plantão com o paciente p000795 aberto](figures/screenshots/gradio_anomaly_alerts.png)
 
-> **Figura 15.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
+> **Figura 17.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
 > de plantão: 132 pacientes com alerta entre os 363 retidos (21 de prioridade ALTA, 111
 > MEDIA), ordenados por prioridade e, dentro dela, pelo alerta mais recente. A coluna
 > **Taxa** é o que distingue o evento agudo do paciente cronicamente fora do padrão, 
@@ -1173,12 +1266,12 @@ Os controles da aba de leitos são dois: o tamanho da coorte (200 a 5.000 pacien
 quais prioridades exibir.
 
 A segunda aba monitora a **movimentação**, por sujeito. A visualização aqui é diferente da
-Figura 9: em vez da taxa de alerta agregada por atividade, mostra a **sequência**, cada
+Figura 15: em vez da taxa de alerta agregada por atividade, mostra a **sequência**, cada
 janela de leitura vira uma coluna, com a atividade real em cima e o alerta embaixo.
 
 ![Aba de movimentação com o sujeito 9 monitorado](figures/screenshots/gradio_anomaly_movimentacao.png)
 
-> **Figura 16.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
+> **Figura 18.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
 > superior, a atividade real, azul para repouso e vermelha para marcha; no inferior, uma
 > faixa contínua em que vermelho indica alerta disparado e cinza, silêncio. A
 > correspondência entre os dois painéis é o resultado: os quatro blocos de marcha acendem
@@ -1265,7 +1358,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 17.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 19.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura, o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
@@ -1287,8 +1380,8 @@ entregável delas.
 
 ```
 detecção          priorização              apresentação
-IsolationForest ─► fila de plantão ──────► painel (app.py)
-regra de degrau    (alerts.py)             CLI (--alerts)
+IsolationForest ─► fila de plantão ──────► tela do sistema (dashboard, aba inicial)
+regra de degrau    (alerts.py)             app da Entrega 3 · CLI (--alerts)
 ```
 
 **Detecção.** Cada subtarefa da Entrega 3 produz instantes sinalizados: horas de
@@ -1301,8 +1394,10 @@ pacientes em que duas séries independentes concordam (5.7). É aqui que o siste
 erro mais provável de um alerta multimodal: tratar um detector de AUC 0,555 como se
 valesse o mesmo que um de AUC 0,9999.
 
-**Apresentação.** A fila chega à equipe pelo painel de plantão, em interface web ou
-terminal, com a série do paciente a um clique (5.8). Cada alerta informa **o que**
+**Apresentação.** A fila chega à equipe pelo painel de plantão, com a série do paciente a
+um clique (5.8). É a **aba que a tela do sistema abre por padrão** (2.4), justamente
+porque é o que se procura primeiro num plantão; também está disponível na app da Entrega 3
+e no terminal. Cada alerta informa **o que**
 disparou, **quando** e **com que frequência**, porque um alerta que não diz isso obriga
 quem o recebe a reabrir o caso para descobrir.
 
@@ -1389,18 +1484,23 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── comprehend.py       #   entidades clínicas e sentimento
 │   │   ├── report.py           #   relatório clínico bilíngue (Translate)
 │   │   ├── cache.py            #   cache dos resultados pagos
-│   │   └── cli.py              #   pipeline fim-a-fim (único ponto de entrada)
+│   │   ├── cli.py              #   pipeline fim-a-fim
+│   │   └── app.py              #   app web (Gradio), porta 7862
+│   ├── dashboard/              # tela do sistema para a equipe médica
+│   │   └── app.py              #   as 3 modalidades em abas (Gradio), porta 7863
 │   └── anomaly/                # Entrega 3 — detecção de anomalias (local)
 │       ├── vitals.py           #   sinais vitais; treino, persistência e inferência
 │       ├── movement.py         #   movimentação do paciente (UCI HAR)
 │       ├── prescriptions.py    #   evolução de doses (FiO2, variável derivada)
 │       ├── alerts.py           #   fila de plantão, priorizada por confiabilidade
 │       ├── report.py           #   relatório para a equipe médica + figuras
-│       ├── cli.py              #   pipeline fim-a-fim (único ponto de entrada)
+│       ├── cli.py              #   pipeline fim-a-fim
 │       └── app.py              #   app web (Gradio), porta 7861
 ├── tests/
 │   ├── test_video.py           # 9 testes, keypoints sintéticos
-│   └── test_anomaly.py         # 28 testes, séries sintéticas
+│   ├── test_anomaly.py         # 28 testes, séries sintéticas
+│   ├── test_audio_app.py       # 8 testes, trava de custo da app da Entrega 2
+│   └── test_dashboard.py       # 12 testes, montagem da tela do sistema
 ├── models/                     # detectores treinados (.joblib, não versionado)
 ├── data/                       # datasets baixados localmente (não versionado)
 ├── docs/                       # enunciado, guia de datasets e setup do OpenPose
@@ -1432,7 +1532,7 @@ resultados medidos e as armadilhas já tratadas naquele pipeline.
 | Python 3.10+ | Linguagem principal |
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
-| Gradio | App web local de demonstração (Entrega 1) |
+| Gradio | Tela do sistema (7863) e as apps por entrega (7860, 7862 e 7861) |
 | AWS (Transcribe, Comprehend Medical, Comprehend, Translate, S3) | Serviços gerenciados da Entrega 2 |
 
 ### 9.2 Bibliotecas Python
@@ -1456,7 +1556,9 @@ resultados medidos e as armadilhas já tratadas naquele pipeline.
 - Python 3.10+ e as dependências de `requirements.txt`
 - OpenPose v1.7.0 (binário portátil) — ver `docs/openpose_setup.md`
 - (Entrega 2) Conta AWS com acesso a Transcribe, Comprehend Medical e um bucket S3;
-  credenciais em `.env` ou `~/.aws/credentials`
+  credenciais em `.env` ou `~/.aws/credentials`. Só é necessária para processar **casos
+  novos**: os quatro do relatório estão em cache no repositório e podem ser reconferidos,
+  inclusive pela app, sem credenciais
 
 ### 10.2 Instalação
 
@@ -1483,7 +1585,24 @@ as quais os números deste relatório foram medidos. Para auditar os resultados:
 pip install -r requirements-lock.txt
 ```
 
-### 10.3 Execução — Entrega 1 (Análise de Vídeo)
+### 10.3 Execução — A Tela do Sistema
+
+É por aqui que se usa o sistema: as três modalidades em abas, num endereço só, abrindo na
+fila de plantão (2.4).
+
+```bash
+python -m src.dashboard.app        # abre em http://localhost:7863
+```
+
+Cada aba tem os seus próprios pré-requisitos e degrada sozinha, sem derrubar as demais: a
+de alertas exige os modelos já treinados (10.6); a de vídeo precisa do binário do OpenPose
+e dos vídeos do REHAB24-6; a de áudio funciona sem credenciais para os casos em cache.
+
+As seções seguintes cobrem cada entrega **isoladamente** — pelo terminal e pela app da
+própria entrega (portas 7860, 7862 e 7861) —, que é como se desenvolve e se audita cada
+pipeline.
+
+### 10.4 Execução — Entrega 1 (Análise de Vídeo)
 
 ```bash
 # Vídeo -> OpenPose -> relatório + vídeo anotado + validação, num comando:
@@ -1504,7 +1623,7 @@ python -m src.video.app
 A tabela completa de parâmetros do CLI está na **seção 3.10**; a interface web e seu fluxo
 de uso, na **seção 3.11**.
 
-### 10.4 Execução — Entrega 2 (Análise de Áudio)
+### 10.5 Execução — Entrega 2 (Análise de Áudio)
 
 > **Esta é a única entrega que custa dinheiro.** As quatro etapas são cobradas por volume
 > pela AWS. Todo resultado é **cacheado** em `reports/`, e nenhum caso é reprocessado sem
@@ -1532,13 +1651,19 @@ python -m src.audio.cli --cases RES0091 RES0062 RES0029 MSK0018   # lote
 ```bash
 python -m src.audio.cli --report                   # recalcula o WER a partir do cache
 python -m src.audio.cli --show-entities RES0091    # entidades já extraídas de um caso
+
+# App web local de demonstração (abre em http://localhost:7862)
+python -m src.audio.app
 ```
+
+A app abre já apontando para um caso em cache e **bloqueia a chamada paga por padrão**,
+de modo que a demonstração inteira roda sem credenciais e sem custo (4.9).
 
 O relatório de cada caso sai em `reports/audio_<caso>.md`, bilíngue. As opções
 `--no-compare` e `--no-translate` reduzem o custo quando só se quer parte do pipeline; a
-tabela completa de parâmetros está na **seção 4.8**.
+tabela completa de parâmetros está na **seção 4.8**, e a interface web na **seção 4.9**.
 
-### 10.5 Execução — Entrega 3 (Detecção de Anomalias)
+### 10.6 Execução — Entrega 3 (Detecção de Anomalias)
 
 ```bash
 # 1. Treina os dois detectores no padrão de normalidade e salva em models/
@@ -1558,17 +1683,29 @@ python -m src.anomaly.cli --only movement
 O passo 1 leva cerca de 1 minuto e o passo 3 cerca de 3 minutos, com 5.000 pacientes.
 O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 
-### 10.6 Testes
+### 10.7 Testes
 
 ```bash
 pytest -q
 ```
 
-São **37 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 28
-da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles exige os
-datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
-automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
-o dataset (4.4).
+São **57 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos), 28
+da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas), 8 da Entrega 2
+(`tests/test_audio_app.py`) e 12 da tela do sistema (`tests/test_dashboard.py`). Nenhum
+deles exige os datasets baixados, o binário do OpenPose ou credenciais da AWS.
+
+Os do painel cobrem a montagem — que é onde ele pode quebrar em silêncio. As três apps
+passaram a expor a tela por uma função de montagem separada, usada tanto pela app
+autônoma quanto pela aba do painel; se alguma voltar a montar componentes só na versão
+autônoma, ela continua funcionando sozinha e **apenas o painel** perde aquela aba. Os
+testes exigem também que o rodapé continue declarando as quatro fontes e a ausência de
+indivíduo em comum (2.4): a ressalva precisa estar na tela, não só neste relatório.
+
+Os testes da Entrega 2 cobrem a **trava de custo** da app (4.9) e a coerência entre o que a
+tela mostra e o que o relatório diz. É onde a entrega tem uma falha que não quebra nada: um
+caso processado por engano não levanta erro, apenas gera cobrança. A verificação do
+resultado clínico continua sendo a medição contra a transcrição humana que acompanha o
+dataset (4.4).
 
 ---
 

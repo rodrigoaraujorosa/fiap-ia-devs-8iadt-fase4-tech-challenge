@@ -49,14 +49,17 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── comprehend.py            #   Comprehend Medical (entidades) e Comprehend (sentimento)
 │   │   ├── report.py                #   relatório clínico bilíngue (Amazon Translate)
 │   │   ├── cache.py                 #   cache dos resultados pagos
-│   │   └── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
+│   │   ├── cli.py                   #   pipeline fim-a-fim
+│   │   └── app.py                   #   app web de demonstração (Gradio)
+│   ├── dashboard/                   # tela do sistema para a equipe médica
+│   │   └── app.py                   #   as 3 modalidades em abas (Gradio), porta 7863
 │   └── anomaly/                     # Entrega 3 — detecção de anomalias (local)
 │       ├── movement.py              #   movimentação do paciente (UCI HAR)
 │       ├── vitals.py                #   sinais vitais de UTI (Challenge 2019)
 │       ├── prescriptions.py         #   evolução de doses (FiO2, variável derivada)
 │       ├── alerts.py                #   fila de plantão, priorizada por confiabilidade
 │       ├── report.py                #   relatório para a equipe médica + figuras
-│       ├── cli.py                   #   pipeline fim-a-fim (único ponto de entrada)
+│       ├── cli.py                   #   pipeline fim-a-fim
 │       └── app.py                   #   painel de plantão (Gradio)
 ├── models/                          # detectores treinados (.joblib, NÃO versionado)
 ├── data/                            # datasets baixados localmente (NÃO versionado)
@@ -76,9 +79,11 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── docs/
 │   ├── datasets_README.md           # download e schema de cada dataset
 │   └── openpose_setup.md            # instalação do binário do OpenPose
-├── tests/                           # 37 testes, sem exigir datasets nem credenciais
+├── tests/                           # 57 testes, sem exigir datasets nem credenciais
 │   ├── test_video.py                #   9 testes, keypoints sintéticos
-│   └── test_anomaly.py              #   28 testes, séries sintéticas
+│   ├── test_anomaly.py              #   28 testes, séries sintéticas
+│   ├── test_audio_app.py            #   8 testes, trava de custo da app da Entrega 2
+│   └── test_dashboard.py            #   12 testes, montagem da tela do sistema
 ├── requirements.txt                 # pisos de versão
 ├── requirements-lock.txt            # versões exatas, para auditar os resultados
 ├── .env.example                     # modelo de configuração da AWS (sem segredos)
@@ -221,6 +226,24 @@ Nenhuma credencial é impressa; do identificador da conta aparecem só os 4 últ
 
 ## 🧪 Como executar
 
+### 🏥 A tela do sistema
+
+É por aqui que o sistema se usa: as três modalidades em abas, num endereço só, **abrindo
+na fila de plantão** — que é o que se procura primeiro num plantão.
+
+```bash
+python -m src.dashboard.app        # abre em http://localhost:7863
+```
+
+As seções seguintes cobrem cada entrega **isoladamente**, pelo terminal e pela app da
+própria entrega (portas 7860, 7862 e 7861) — é como se desenvolve e se audita cada
+pipeline.
+
+> As abas **não fundem os dados**. As quatro fontes descrevem populações distintas, sem
+> nenhum indivíduo em comum, e o rodapé da tela declara isso — junto com a ressalva de que
+> os alertas são triagem para revisão humana, não decisão. Detalhes em
+> [`src/dashboard/README.md`](src/dashboard/README.md).
+
 ### Entrega 1 — Análise de Vídeo (OpenPose)
 
 Requer o binário do OpenPose ([`docs/openpose_setup.md`](docs/openpose_setup.md)) e um
@@ -260,8 +283,13 @@ O relatório sai em `reports/audio_<caso>.md`, **bilíngue**: cada achado e cada
 citado aparecem no original em inglês seguidos da tradução para o português — o áudio-fonte
 é em inglês, e a equipe precisa poder conferir contra a gravação.
 
+Há também uma **app web local** (`python -m src.audio.app`), que reproduz a consulta,
+exibe os achados clínicos e o relatório bilíngue na tela.
+
 > 💰 As etapas de nuvem são pagas por volume. Todo resultado é **cacheado**, e nenhum caso
-> é reprocessado sem `--force`. Detalhes em [`src/audio/README.md`](src/audio/README.md).
+> é reprocessado sem `--force`. Na app, a chamada paga é **bloqueada por padrão** e o
+> seletor marca quais casos já estão em cache — com eles, a app roda **sem credenciais da
+> AWS**. Detalhes em [`src/audio/README.md`](src/audio/README.md).
 
 ### Entrega 3 — Detecção de Anomalias
 

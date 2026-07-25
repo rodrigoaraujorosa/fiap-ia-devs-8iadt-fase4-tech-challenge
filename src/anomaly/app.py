@@ -212,7 +212,7 @@ def carregar_movimentacao(sujeito: int, progress=gr.Progress()):
     return fig, "\n".join(L)
 
 
-def build_demo() -> gr.Blocks:
+def build_ui() -> None:
     """
     Duas abas, uma por fonte de dados.
 
@@ -221,86 +221,90 @@ def build_demo() -> gr.Blocks:
     três séries do mesmo paciente, o que a origem dos dados não sustenta. As abas deixam
     a fronteira explícita, e o texto de cada uma diz de onde vêm os dados.
     """
-    with gr.Blocks(title="Painel de Plantão — Entrega 3") as demo:
+    gr.Markdown(
+        "# 🚨 Painel de Plantão — Alertas Automáticos\n"
+        "Fluxo final do alerta à equipe médica, a partir das anomalias detectadas. "
+        "Cada aba corresponde a uma fonte de dados; em ambas, os indivíduos "
+        "monitorados **não participaram do treino** do respectivo modelo."
+    )
+
+    estado_serie = gr.State()
+    estado_fila = gr.State()
+
+    with gr.Tab("🛏️ Leitos — sinais vitais e prescrições"):
         gr.Markdown(
-            "# 🚨 Painel de Plantão — Alertas Automáticos\n"
-            "Fluxo final do alerta à equipe médica, a partir das anomalias detectadas. "
-            "Cada aba corresponde a uma fonte de dados; em ambas, os indivíduos "
-            "monitorados **não participaram do treino** do respectivo modelo."
+            "Pacientes de UTI do **PhysioNet Challenge 2019**. As duas subtarefas "
+            "descrevem o mesmo paciente, então compõem uma fila única."
+        )
+        with gr.Row():
+            limite = gr.Slider(200, 5000, value=DEFAULT_LIMIT, step=100,
+                               label="Pacientes na coorte (mais = mais lento)")
+            prioridades = gr.CheckboxGroup(
+                [alerts.ALTA, alerts.MEDIA], value=[alerts.ALTA, alerts.MEDIA],
+                label="Prioridades exibidas")
+        carregar_btn = gr.Button("▶ Carregar plantão", variant="primary")
+        resumo = gr.Markdown()
+
+        with gr.Row():
+            with gr.Column(scale=1):
+                gr.Markdown("**Fila de plantão** — clique numa linha para abrir "
+                            "o paciente.")
+                tabela = gr.Dataframe(interactive=False, wrap=True,
+                                      label="Alertas ativos")
+                gr.Markdown(LEGENDA)
+            with gr.Column(scale=2):
+                gr.Markdown("**Série temporal do paciente** — a faixa laranja é a "
+                            "janela de 48 h que antecede o início da sepse; as "
+                            "faixas vermelhas marcam as horas em alerta.")
+                grafico = gr.Image(label="Monitoramento", type="filepath")
+                detalhe = gr.Markdown()
+
+        gr.Markdown(
+            "---\n"
+            "A prioridade vem da confiabilidade **medida**: os sinais vitais têm "
+            "AUC 0,555 e servem de **triagem**, não de diagnóstico. Um paciente "
+            "sobe para **ALTA** quando duas séries independentes disparam."
         )
 
-        estado_serie = gr.State()
-        estado_fila = gr.State()
+    with gr.Tab("🚶 Movimentação do paciente"):
+        gr.Markdown(
+            "Sujeitos do **UCI HAR**, monitorados por acelerômetro e giroscópio. "
+            "**Outro dataset, outras pessoas** — não há correspondência com os "
+            "pacientes da aba anterior, e por isso a unidade aqui é o *sujeito*.\n\n"
+            "O modelo foi treinado **apenas** em atividades de repouso (`LAYING`, "
+            "`SITTING`, `STANDING`), que é o esperado em leito, e nunca viu marcha. "
+            "Com AUC 0,9999 é a modalidade de maior confiabilidade medida — a única "
+            "adequada a alerta automático."
+        )
+        with gr.Row():
+            sujeito = gr.Dropdown(HAR_TEST_SUBJECTS, value=HAR_TEST_SUBJECTS[0],
+                                  label="Sujeito monitorado (retidos para teste)")
+            mov_btn = gr.Button("▶ Monitorar sujeito", variant="primary")
 
-        with gr.Tab("🛏️ Leitos — sinais vitais e prescrições"):
-            gr.Markdown(
-                "Pacientes de UTI do **PhysioNet Challenge 2019**. As duas subtarefas "
-                "descrevem o mesmo paciente, então compõem uma fila única."
-            )
-            with gr.Row():
-                limite = gr.Slider(200, 5000, value=DEFAULT_LIMIT, step=100,
-                                   label="Pacientes na coorte (mais = mais lento)")
-                prioridades = gr.CheckboxGroup(
-                    [alerts.ALTA, alerts.MEDIA], value=[alerts.ALTA, alerts.MEDIA],
-                    label="Prioridades exibidas")
-            carregar_btn = gr.Button("▶ Carregar plantão", variant="primary")
-            resumo = gr.Markdown()
+        grafico_mov = gr.Image(label="Atividade real e alerta", type="filepath")
+        detalhe_mov = gr.Markdown()
 
-            with gr.Row():
-                with gr.Column(scale=1):
-                    gr.Markdown("**Fila de plantão** — clique numa linha para abrir "
-                                "o paciente.")
-                    tabela = gr.Dataframe(interactive=False, wrap=True,
-                                          label="Alertas ativos")
-                    gr.Markdown(LEGENDA)
-                with gr.Column(scale=2):
-                    gr.Markdown("**Série temporal do paciente** — a faixa laranja é a "
-                                "janela de 48 h que antecede o início da sepse; as "
-                                "faixas vermelhas marcam as horas em alerta.")
-                    grafico = gr.Image(label="Monitoramento", type="filepath")
-                    detalhe = gr.Markdown()
+        gr.Markdown(
+            "---\n"
+            "No painel superior, a atividade que o sujeito realizava em cada janela "
+            "de leitura; no inferior, se o alerta disparou. Os blocos de marcha "
+            "acendem por inteiro e os de repouso ficam quase todos apagados."
+        )
 
-            gr.Markdown(
-                "---\n"
-                "A prioridade vem da confiabilidade **medida**: os sinais vitais têm "
-                "AUC 0,555 e servem de **triagem**, não de diagnóstico. Um paciente "
-                "sobe para **ALTA** quando duas séries independentes disparam."
-            )
+    carregar_btn.click(
+        carregar, [limite, prioridades],
+        [estado_serie, estado_fila, tabela, resumo, grafico, detalhe],
+        show_progress_on=[tabela])
+    prioridades.change(filtrar, [estado_fila, prioridades], [tabela])
+    tabela.select(abrir_paciente, [estado_serie, tabela], [grafico, detalhe])
+    mov_btn.click(carregar_movimentacao, [sujeito], [grafico_mov, detalhe_mov],
+                  show_progress_on=[grafico_mov])
 
-        with gr.Tab("🚶 Movimentação do paciente"):
-            gr.Markdown(
-                "Sujeitos do **UCI HAR**, monitorados por acelerômetro e giroscópio. "
-                "**Outro dataset, outras pessoas** — não há correspondência com os "
-                "pacientes da aba anterior, e por isso a unidade aqui é o *sujeito*.\n\n"
-                "O modelo foi treinado **apenas** em atividades de repouso (`LAYING`, "
-                "`SITTING`, `STANDING`), que é o esperado em leito, e nunca viu marcha. "
-                "Com AUC 0,9999 é a modalidade de maior confiabilidade medida — a única "
-                "adequada a alerta automático."
-            )
-            with gr.Row():
-                sujeito = gr.Dropdown(HAR_TEST_SUBJECTS, value=HAR_TEST_SUBJECTS[0],
-                                      label="Sujeito monitorado (retidos para teste)")
-                mov_btn = gr.Button("▶ Monitorar sujeito", variant="primary")
 
-            grafico_mov = gr.Image(label="Atividade real e alerta", type="filepath")
-            detalhe_mov = gr.Markdown()
-
-            gr.Markdown(
-                "---\n"
-                "No painel superior, a atividade que o sujeito realizava em cada janela "
-                "de leitura; no inferior, se o alerta disparou. Os blocos de marcha "
-                "acendem por inteiro e os de repouso ficam quase todos apagados."
-            )
-
-        carregar_btn.click(
-            carregar, [limite, prioridades],
-            [estado_serie, estado_fila, tabela, resumo, grafico, detalhe],
-            show_progress_on=[tabela])
-        prioridades.change(filtrar, [estado_fila, prioridades], [tabela])
-        tabela.select(abrir_paciente, [estado_serie, tabela], [grafico, detalhe])
-        mov_btn.click(carregar_movimentacao, [sujeito], [grafico_mov, detalhe_mov],
-                      show_progress_on=[grafico_mov])
-
+def build_demo() -> gr.Blocks:
+    """App autônoma da Entrega 3 (porta 7861)."""
+    with gr.Blocks(title="Painel de Plantão — Entrega 3") as demo:
+        build_ui()
     return demo
 
 

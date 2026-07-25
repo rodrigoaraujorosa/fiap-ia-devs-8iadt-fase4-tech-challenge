@@ -30,7 +30,8 @@ direto na chamada.
 
 | Módulo | Papel |
 |---|---|
-| `cli.py` | **único ponto de entrada**: roda as quatro etapas, ou os modos sem custo |
+| `cli.py` | ponto de entrada em terminal: roda as quatro etapas, ou os modos sem custo |
+| `app.py` | app web (Gradio, porta 7862) — mesmo pipeline, para a equipe médica |
 | `consultations.py` | loader do dataset: lista casos, separa turnos por falante, isola a fala do paciente |
 | `transcribe.py` | upload ao S3, job do Transcribe, diarização e medição de WER contra a referência humana |
 | `comprehend.py` | entidades clínicas, sentimento e comparação entre as duas transcrições |
@@ -38,7 +39,7 @@ direto na chamada.
 | `cache.py` | cache em disco dos resultados pagos, comum aos módulos |
 
 > `transcribe.py`, `comprehend.py` e `report.py` são **bibliotecas, sem CLI própria** —
-> mesma organização da Entrega 1, onde apenas `cli.py` e `app.py` são executáveis.
+> mesma organização das Entregas 1 e 3, onde apenas `cli.py` e `app.py` são executáveis.
 
 ## Dataset: consultas médicas simuladas
 
@@ -59,6 +60,21 @@ apenas exibir o resultado.
 > loader detecta a codificação pelo BOM.
 
 ## Uso
+
+### App web (demonstração)
+
+```bash
+python -m src.audio.app        # abre em http://localhost:7862
+```
+
+Mesmo pipeline do CLI, em tela: ouvir a consulta, ver os achados clínicos e ler o
+relatório bilíngue. Chama as mesmas funções de biblioteca — não reimplementa nada.
+
+> 💳 **Esta é a única das três apps em que processar custa dinheiro.** Vídeo e anomalias
+> rodam local. Aqui o seletor marca cada caso como *em cache (sem custo)* ou *não
+> processado (custa)*, os já processados vêm primeiro, a chamada paga é **bloqueada por
+> padrão** e a tela lista as etapas que seriam cobradas **antes** do clique — é o
+> `--dry-run` embutido. Com os casos em cache a app roda **sem credenciais da AWS**.
 
 ### Tudo de uma vez
 
