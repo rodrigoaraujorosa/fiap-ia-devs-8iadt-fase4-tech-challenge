@@ -1,6 +1,6 @@
 # Relatório de análise de áudio — consulta RES0029
 
-*Gerado em 18/07/2026 às 22:48. Documento de apoio: não substitui a avaliação clínica.*
+*Gerado em 23/07/2026 às 19:57. Documento de apoio: não substitui a avaliação clínica.*
 
 O áudio original está em inglês. Cada termo e cada trecho aparecem no **original**, seguidos da **tradução para o português**.
 

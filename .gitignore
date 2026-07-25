@@ -41,6 +41,7 @@ azure_credentials.json
 docs/HANDOFF.md
 # Enunciado do desafio: material da FIAP, não redistribuir no repositório público.
 docs/*.pdf
+reports/*.pdf
 
 # ===== Configuração local de ferramentas =====
 .claude/
