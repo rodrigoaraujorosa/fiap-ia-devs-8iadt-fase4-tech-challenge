@@ -161,6 +161,27 @@ mas participam da decisão e por isso constam aqui):
 | Separação treino/teste por paciente | `anomaly/vitals.py` | garante que nenhum paciente avaliado tenha participado do treino |
 | Regra de prioridade da fila | `anomaly/alerts.py` | pondera as modalidades pela confiabilidade medida e eleva a ALTA quando duas séries concordam |
 
+### 2.4 Camada de Apresentação: o Painel Unificado
+
+Cada entrega tem a sua interface web local (3.11, 4.9 e 5.8). Sobre elas há um **painel
+unificado** (`python -m src.dashboard.app`, porta 7863) que reúne as três em uma tela, uma
+aba por modalidade.
+
+O painel é **camada de apresentação, não de fusão** — e a distinção é a mesma que a seção
+2.2 estabelece. Uma tela única é o lugar mais fácil de sugerir, sem dizer, que as três
+séries pertencem ao mesmo paciente; como não pertencem, o painel se organiza para não
+afirmar isso:
+
+| Regra | Por quê |
+|:--|:--|
+| Uma aba por modalidade, nunca uma visão combinada | a aba é a fronteira entre as fontes, como já eram as duas abas internas da Entrega 3 (5.8) |
+| Cada aba declara a fonte e a **unidade monitorada** | *paciente* nos leitos e nas consultas, *sujeito* na movimentação; a unidade muda porque a fonte muda |
+| O rodapé nomeia os quatro datasets e afirma que não há indivíduo em comum | a ressalva precisa estar diante de quem usa a tela, não apenas neste relatório |
+
+As abas **não reimplementam nada**: cada uma chama a mesma função de montagem que a app
+autônoma da respectiva entrega usa. As três continuam funcionando isoladamente, nas portas
+7860, 7862 e 7861 — o painel é uma porta de entrada adicional, não um substituto.
+
 ---
 
 ## 3. Entrega 1 — Análise de Vídeo (OpenPose)
@@ -1441,6 +1462,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── cache.py            #   cache dos resultados pagos
 │   │   ├── cli.py              #   pipeline fim-a-fim
 │   │   └── app.py              #   app web (Gradio), porta 7862
+│   ├── dashboard/              # painel unificado — as 3 entregas em abas
+│   │   └── app.py              #   camada de apresentação (Gradio), porta 7863
 │   └── anomaly/                # Entrega 3 — detecção de anomalias (local)
 │       ├── vitals.py           #   sinais vitais; treino, persistência e inferência
 │       ├── movement.py         #   movimentação do paciente (UCI HAR)
@@ -1452,7 +1475,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── tests/
 │   ├── test_video.py           # 9 testes, keypoints sintéticos
 │   ├── test_anomaly.py         # 28 testes, séries sintéticas
-│   └── test_audio_app.py       # 8 testes, trava de custo da app da Entrega 2
+│   ├── test_audio_app.py       # 8 testes, trava de custo da app da Entrega 2
+│   └── test_dashboard.py       # 10 testes, montagem do painel unificado
 ├── models/                     # detectores treinados (.joblib, não versionado)
 ├── data/                       # datasets baixados localmente (não versionado)
 ├── docs/                       # enunciado, guia de datasets e setup do OpenPose
@@ -1484,7 +1508,7 @@ resultados medidos e as armadilhas já tratadas naquele pipeline.
 | Python 3.10+ | Linguagem principal |
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
-| Gradio | Apps web locais de demonstração, uma por entrega (portas 7860, 7862 e 7861) |
+| Gradio | Apps web locais: uma por entrega (7860, 7862 e 7861) e o painel unificado (7863) |
 | AWS (Transcribe, Comprehend Medical, Comprehend, Translate, S3) | Serviços gerenciados da Entrega 2 |
 
 ### 9.2 Bibliotecas Python
@@ -1537,7 +1561,21 @@ as quais os números deste relatório foram medidos. Para auditar os resultados:
 pip install -r requirements-lock.txt
 ```
 
-### 10.3 Execução — Entrega 1 (Análise de Vídeo)
+### 10.3 Execução — Painel Unificado
+
+A forma mais direta de ver o sistema inteiro: as três entregas em abas, num endereço só
+(2.4).
+
+```bash
+python -m src.dashboard.app        # abre em http://localhost:7863
+```
+
+Cada aba tem os seus próprios pré-requisitos e degrada sozinha, sem derrubar as demais: a
+de vídeo precisa do binário do OpenPose e dos vídeos do REHAB24-6; a de áudio funciona
+sem credenciais para os casos em cache; a de anomalias exige os modelos já treinados
+(10.6). As apps individuais seguem disponíveis nas portas 7860, 7862 e 7861.
+
+### 10.4 Execução — Entrega 1 (Análise de Vídeo)
 
 ```bash
 # Vídeo -> OpenPose -> relatório + vídeo anotado + validação, num comando:
@@ -1558,7 +1596,7 @@ python -m src.video.app
 A tabela completa de parâmetros do CLI está na **seção 3.10**; a interface web e seu fluxo
 de uso, na **seção 3.11**.
 
-### 10.4 Execução — Entrega 2 (Análise de Áudio)
+### 10.5 Execução — Entrega 2 (Análise de Áudio)
 
 > **Esta é a única entrega que custa dinheiro.** As quatro etapas são cobradas por volume
 > pela AWS. Todo resultado é **cacheado** em `reports/`, e nenhum caso é reprocessado sem
@@ -1598,7 +1636,7 @@ O relatório de cada caso sai em `reports/audio_<caso>.md`, bilíngue. As opçõ
 `--no-compare` e `--no-translate` reduzem o custo quando só se quer parte do pipeline; a
 tabela completa de parâmetros está na **seção 4.8**, e a interface web na **seção 4.9**.
 
-### 10.5 Execução — Entrega 3 (Detecção de Anomalias)
+### 10.6 Execução — Entrega 3 (Detecção de Anomalias)
 
 ```bash
 # 1. Treina os dois detectores no padrão de normalidade e salva em models/
@@ -1618,16 +1656,23 @@ python -m src.anomaly.cli --only movement
 O passo 1 leva cerca de 1 minuto e o passo 3 cerca de 3 minutos, com 5.000 pacientes.
 O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 
-### 10.6 Testes
+### 10.7 Testes
 
 ```bash
 pytest -q
 ```
 
-São **45 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos), 28
-da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas) e 8 da Entrega 2
-(`tests/test_audio_app.py`). Nenhum deles exige os datasets baixados, o binário do OpenPose
-ou credenciais da AWS.
+São **55 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos), 28
+da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas), 8 da Entrega 2
+(`tests/test_audio_app.py`) e 10 do painel unificado (`tests/test_dashboard.py`). Nenhum
+deles exige os datasets baixados, o binário do OpenPose ou credenciais da AWS.
+
+Os do painel cobrem a montagem — que é onde ele pode quebrar em silêncio. As três apps
+passaram a expor a tela por uma função de montagem separada, usada tanto pela app
+autônoma quanto pela aba do painel; se alguma voltar a montar componentes só na versão
+autônoma, ela continua funcionando sozinha e **apenas o painel** perde aquela aba. Os
+testes exigem também que o rodapé continue declarando as quatro fontes e a ausência de
+indivíduo em comum (2.4): a ressalva precisa estar na tela, não só neste relatório.
 
 Os testes da Entrega 2 cobrem a **trava de custo** da app (4.9) e a coerência entre o que a
 tela mostra e o que o relatório diz. É onde a entrega tem uma falha que não quebra nada: um
