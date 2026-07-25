@@ -1,17 +1,21 @@
 """
-Painel unificado do Sistema de Monitoramento Hospitalar Multimodal.
+Tela do Sistema de Monitoramento Hospitalar Multimodal.
 
-Reúne as três entregas numa única tela, uma aba por modalidade — vídeo, áudio e
-detecção de anomalias. É a camada de **apresentação** do sistema: quem demonstra o
-trabalho abre um endereço só, em vez de três.
+É a **interface do sistema para a equipe médica**: o ponto único por onde o profissional
+acompanha o paciente internado, com uma aba por modalidade de monitoramento — plantão e
+alertas, sessão de reabilitação em vídeo e consulta em áudio.
 
-**O que este painel NÃO é: uma fusão dos dados.** As três modalidades continuam
-independentes, e a razão está nos datasets: REHAB24-6, consultas simuladas, Challenge
-2019 e UCI HAR descrevem **populações distintas**, sem nenhum indivíduo em comum (ver
-1.4 e 2.2 do relatório técnico). Uma tela que somasse as três séries num único
-"paciente" afirmaria uma correspondência que as fontes abertas não oferecem.
+A tela abre na aba de **alertas**, e não na primeira entrega. Quem abre um sistema de
+monitoramento em plantão quer saber, antes de tudo, se há paciente precisando de atenção;
+as demais abas são consultadas a partir de uma pergunta, o alerta chega sem ser pedido. A
+ordem das abas continua sendo a das entregas, para preservar a correspondência com o
+enunciado e com o relatório técnico.
 
-Daí as duas regras de projeto desta tela:
+**O que esta tela NÃO faz: fundir os dados das três modalidades.** REHAB24-6, consultas
+simuladas, Challenge 2019 e UCI HAR descrevem **populações distintas**, sem nenhum
+indivíduo em comum (1.4 e 2.2 do relatório técnico). A consequência aqui é clínica, não
+estética: uma tela que somasse as três séries num único "paciente" levaria a equipe a ler
+como um histórico o que são pessoas diferentes. Daí as duas regras:
 
 1. **Uma aba por modalidade, nunca uma visão combinada.** A aba é a fronteira entre as
    fontes, como já eram as duas abas internas da Entrega 3 (5.8).
@@ -20,17 +24,17 @@ Daí as duas regras de projeto desta tela:
    muda.
 
 As abas **não reimplementam nada**: cada uma chama a ``build_ui()`` da app da respectiva
-entrega, que é a mesma montagem usada pelas apps autônomas. As três continuam
-funcionando isoladamente, nas portas de sempre (7860, 7862 e 7861) — este painel é uma
-porta de entrada adicional, não um substituto.
+entrega. Essas apps individuais continuam existindo, nas portas 7860, 7862 e 7861, como
+**pontos de entrada por entrega** — úteis para desenvolver e para demonstrar uma
+modalidade isolada. Para a equipe médica, porém, o sistema é esta tela.
 
 Uso:
     python -m src.dashboard.app        # abre em http://localhost:7863
 
 Requisitos por aba (cada uma degrada sozinha, sem derrubar as demais):
+    Alertas    modelos treinados (python -m src.anomaly.cli --train --limit 5000)
     Vídeo      binário do OpenPose e os vídeos do REHAB24-6 em data/video/
     Áudio      nada, para os casos em cache; credenciais da AWS para casos novos
-    Anomalias  modelos treinados (python -m src.anomaly.cli --train --limit 5000)
 """
 from __future__ import annotations
 
@@ -43,54 +47,59 @@ from ..anomaly.report import FIGURES_DIR
 from ..audio.app import build_ui as build_audio_ui
 from ..video.app import build_ui as build_video_ui
 
-# 7860, 7861 e 7862 são das apps autônomas — o painel não toma a porta de nenhuma
-# delas, para que as quatro possam ficar abertas ao mesmo tempo na demonstração.
+# 7860, 7861 e 7862 são das apps por entrega — a tela do sistema não toma a porta de
+# nenhuma delas, para que todas possam ficar abertas ao mesmo tempo.
 PORT = 7863
 
-CABECALHO = """
-# 🏥 Sistema de Monitoramento Hospitalar Multimodal
+# A aba que o sistema mostra ao abrir. Ver a justificativa no docstring do módulo.
+ABA_INICIAL = "alertas"
 
-Três modalidades de monitoramento do paciente internado, uma aba para cada:
-**vídeo** de sessões de reabilitação, **áudio** de consultas e **detecção de anomalias**
-em séries temporais.
+CABECALHO = """
+# 🏥 Monitoramento Hospitalar Multimodal
+
+Acompanhamento do paciente internado. Cada aba é uma modalidade de monitoramento:
+**alertas** de sinais vitais, dose prescrita e movimentação; **vídeo** de sessões de
+reabilitação; e **áudio** de consultas.
 """
 
 RODAPE = """
 ---
-### Sobre as fontes de dados
+### Origem dos dados monitorados
 
-As três modalidades usam **datasets públicos distintos e não há indivíduo em comum entre
+Cada modalidade vem de um **dataset público distinto, e não há indivíduo em comum entre
 eles** — é a prática usual quando cada modalidade tem sua própria fonte aberta.
 
 | Aba | Dataset | Unidade monitorada |
 |:--|:--|:--|
+| Alertas — leitos | PhysioNet/CinC Challenge 2019 | paciente de UTI |
+| Alertas — movimentação | UCI HAR | sujeito |
 | Vídeo | REHAB24-6 (reabilitação física) | paciente em sessão |
 | Áudio | Consultas médicas simuladas (figshare) | paciente em consulta |
-| Anomalias — leitos | PhysioNet/CinC Challenge 2019 | paciente de UTI |
-| Anomalias — movimentação | UCI HAR | sujeito |
 
-Por isso este painel **não combina** as três num único paciente: cada aba é
-autocontida, e o que as une é a arquitetura comum — mesma estrutura de módulos, mesma
-disciplina de validação contra *ground-truth* e o mesmo baseline não supervisionado onde
-ele cabe.
+Por isso as abas **não se combinam** num histórico único: o que aparece numa aba não
+descreve a mesma pessoa que aparece na outra. Cada aba é autocontida, e o que as une é a
+arquitetura comum — mesma estrutura de módulos, mesma disciplina de validação contra
+*ground-truth* e o mesmo baseline não supervisionado onde ele cabe.
 
-> **Uso exclusivamente acadêmico.** Nenhuma das saídas constitui diagnóstico ou conduta
-> clínica. Os alertas da aba de anomalias são **triagem para revisão humana**.
+> **Uso exclusivamente acadêmico.** Nenhuma saída desta tela constitui diagnóstico ou
+> conduta clínica. Os alertas são **triagem para revisão humana**: os sinais vitais têm
+> AUC 0,555 e servem para ordenar a atenção, não para decidir.
 """
 
 
 def build_demo() -> gr.Blocks:
-    """Monta o painel: cabeçalho, uma aba por modalidade e o rodapé sobre as fontes."""
+    """Monta a tela: cabeçalho, uma aba por modalidade e o rodapé sobre as fontes."""
     with gr.Blocks(title="Monitoramento Hospitalar Multimodal") as demo:
         gr.Markdown(CABECALHO)
 
-        with gr.Tabs():
-            # A ordem é a das entregas no enunciado e no relatório técnico.
-            with gr.Tab("🎥 Vídeo"):
+        # A ordem das abas é a das entregas (vídeo, áudio, anomalias), mas a aba aberta
+        # por padrão é a de alertas — é o que a equipe procura primeiro.
+        with gr.Tabs(selected=ABA_INICIAL):
+            with gr.Tab("🎥 Vídeo", id="video"):
                 build_video_ui()
-            with gr.Tab("🎙️ Áudio"):
+            with gr.Tab("🎙️ Áudio", id="audio"):
                 build_audio_ui()
-            with gr.Tab("🚨 Anomalias e alertas"):
+            with gr.Tab("🚨 Anomalias e alertas", id=ABA_INICIAL):
                 build_anomaly_ui()
 
         gr.Markdown(RODAPE)
@@ -98,8 +107,8 @@ def build_demo() -> gr.Blocks:
 
 
 def main() -> None:
-    # A aba de anomalias grava as figuras do monitoramento em disco; sem o diretório,
-    # o primeiro clique falharia. Mesma preparação que a app autônoma faz.
+    # A aba de alertas grava as figuras do monitoramento em disco; sem o diretório, o
+    # primeiro clique falharia. Mesma preparação que a app da Entrega 3 faz.
     Path(FIGURES_DIR).mkdir(parents=True, exist_ok=True)
     build_demo().launch(server_port=PORT)
 

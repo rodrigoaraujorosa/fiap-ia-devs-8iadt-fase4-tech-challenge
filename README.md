@@ -51,8 +51,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── cache.py                 #   cache dos resultados pagos
 │   │   ├── cli.py                   #   pipeline fim-a-fim
 │   │   └── app.py                   #   app web de demonstração (Gradio)
-│   ├── dashboard/                   # painel unificado — as 3 entregas em abas
-│   │   └── app.py                   #   camada de apresentação (Gradio), porta 7863
+│   ├── dashboard/                   # tela do sistema para a equipe médica
+│   │   └── app.py                   #   as 3 modalidades em abas (Gradio), porta 7863
 │   └── anomaly/                     # Entrega 3 — detecção de anomalias (local)
 │       ├── movement.py              #   movimentação do paciente (UCI HAR)
 │       ├── vitals.py                #   sinais vitais de UTI (Challenge 2019)
@@ -79,11 +79,11 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 ├── docs/
 │   ├── datasets_README.md           # download e schema de cada dataset
 │   └── openpose_setup.md            # instalação do binário do OpenPose
-├── tests/                           # 55 testes, sem exigir datasets nem credenciais
+├── tests/                           # 57 testes, sem exigir datasets nem credenciais
 │   ├── test_video.py                #   9 testes, keypoints sintéticos
 │   ├── test_anomaly.py              #   28 testes, séries sintéticas
 │   ├── test_audio_app.py            #   8 testes, trava de custo da app da Entrega 2
-│   └── test_dashboard.py            #   10 testes, montagem do painel unificado
+│   └── test_dashboard.py            #   12 testes, montagem da tela do sistema
 ├── requirements.txt                 # pisos de versão
 ├── requirements-lock.txt            # versões exatas, para auditar os resultados
 ├── .env.example                     # modelo de configuração da AWS (sem segredos)
@@ -226,18 +226,22 @@ Nenhuma credencial é impressa; do identificador da conta aparecem só os 4 últ
 
 ## 🧪 Como executar
 
-### 🏥 Painel unificado — as três entregas em uma tela
+### 🏥 A tela do sistema
+
+É por aqui que o sistema se usa: as três modalidades em abas, num endereço só, **abrindo
+na fila de plantão** — que é o que se procura primeiro num plantão.
 
 ```bash
 python -m src.dashboard.app        # abre em http://localhost:7863
 ```
 
-Uma aba por modalidade, num endereço só. É a forma mais rápida de ver o sistema inteiro
-funcionando — e as apps individuais continuam disponíveis nas portas de sempre (7860,
-7862 e 7861).
+As seções seguintes cobrem cada entrega **isoladamente**, pelo terminal e pela app da
+própria entrega (portas 7860, 7862 e 7861) — é como se desenvolve e se audita cada
+pipeline.
 
 > As abas **não fundem os dados**. As quatro fontes descrevem populações distintas, sem
-> nenhum indivíduo em comum, e o rodapé do painel declara isso. Detalhes em
+> nenhum indivíduo em comum, e o rodapé da tela declara isso — junto com a ressalva de que
+> os alertas são triagem para revisão humana, não decisão. Detalhes em
 > [`src/dashboard/README.md`](src/dashboard/README.md).
 
 ### Entrega 1 — Análise de Vídeo (OpenPose)

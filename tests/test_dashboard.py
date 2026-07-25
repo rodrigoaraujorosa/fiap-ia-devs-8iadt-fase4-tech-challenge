@@ -65,13 +65,14 @@ def test_portas_nao_colidem():
 
 def test_rodape_declara_a_fronteira_entre_as_fontes():
     """
-    SEGURANÇA DE INTERPRETAÇÃO: uma tela única é o lugar mais fácil de sugerir que as
-    três modalidades descrevem o mesmo paciente — o que os datasets não sustentam
-    (1.4 e 2.2 do relatório). O rodapé precisa dizer isso na própria tela.
+    SEGURANÇA DE INTERPRETAÇÃO: sendo a tela do sistema para a equipe médica, é aqui que
+    ler três fontes como um histórico único teria consequência clínica — e os datasets
+    não sustentam essa leitura (1.4 e 2.2 do relatório). O rodapé precisa dizer isso na
+    própria tela, não apenas no documento.
     """
     rodape = dashboard.RODAPE
     assert "não há indivíduo em comum" in rodape
-    assert "não combina" in rodape
+    assert "não se combinam" in rodape
     # a unidade monitorada muda junto com a fonte: paciente nos leitos, sujeito no HAR
     assert "sujeito" in rodape and "paciente" in rodape
     # e as quatro fontes precisam estar nomeadas, não só aludidas
@@ -79,13 +80,40 @@ def test_rodape_declara_a_fronteira_entre_as_fontes():
         assert fonte in rodape, f"fonte não declarada no rodapé: {fonte}"
 
 
+def test_rodape_declara_o_papel_de_triagem():
+    """
+    A ressalva de que o alerta é triagem, e não decisão, já era exigida na tela da
+    Entrega 3 (5.9). Sendo esta a tela que a equipe abre, ela precisa continuar aqui.
+    """
+    assert "triagem" in dashboard.RODAPE
+    assert "acadêmico" in dashboard.RODAPE.lower()
+
+
+def _abas(demo: gr.Blocks) -> list[gr.Tab]:
+    return [filha for c in demo.children if isinstance(c, gr.Tabs)
+            for filha in c.children if isinstance(filha, gr.Tab)]
+
+
 def test_uma_aba_por_modalidade():
     """Três abas, uma por entrega — nunca uma visão combinada."""
-    demo = dashboard.build_demo()
-    rotulos = [c.label for c in demo.children
-               if isinstance(c, gr.Tabs)
-               for c in c.children if isinstance(c, gr.Tab)]
+    rotulos = [aba.label for aba in _abas(dashboard.build_demo())]
     assert len(rotulos) == 3
     assert any("Vídeo" in r for r in rotulos)
     assert any("Áudio" in r for r in rotulos)
     assert any("Anomalias" in r for r in rotulos)
+
+
+def test_abre_na_aba_de_alertas():
+    """
+    A tela do sistema abre no plantão, não na primeira entrega.
+
+    Quem abre um sistema de monitoramento quer saber antes de tudo se há paciente
+    precisando de atenção; as outras abas são consultadas a partir de uma pergunta, o
+    alerta chega sem ser pedido. A ordem das abas continua sendo a das entregas, então
+    a aba inicial **não** é a primeira — é isto que o teste fixa.
+    """
+    abas = _abas(dashboard.build_demo())
+    inicial = [aba for aba in abas if aba.id == dashboard.ABA_INICIAL]
+    assert len(inicial) == 1, "a aba inicial declarada não existe na tela"
+    assert "Anomalias" in inicial[0].label or "alertas" in inicial[0].label.lower()
+    assert abas[0].id != dashboard.ABA_INICIAL, "a ordem por entrega foi perdida"

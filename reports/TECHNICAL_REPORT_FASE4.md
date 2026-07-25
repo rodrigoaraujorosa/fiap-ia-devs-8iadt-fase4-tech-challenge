@@ -161,26 +161,37 @@ mas participam da decisão e por isso constam aqui):
 | Separação treino/teste por paciente | `anomaly/vitals.py` | garante que nenhum paciente avaliado tenha participado do treino |
 | Regra de prioridade da fila | `anomaly/alerts.py` | pondera as modalidades pela confiabilidade medida e eleva a ALTA quando duas séries concordam |
 
-### 2.4 Camada de Apresentação: o Painel Unificado
+### 2.4 A Tela do Sistema
 
-Cada entrega tem a sua interface web local (3.11, 4.9 e 5.8). Sobre elas há um **painel
-unificado** (`python -m src.dashboard.app`, porta 7863) que reúne as três em uma tela, uma
-aba por modalidade.
+O sistema tem uma **interface única para a equipe médica** (`python -m src.dashboard.app`,
+porta 7863): o ponto por onde o profissional acompanha o paciente internado, com uma aba
+por modalidade de monitoramento.
 
-O painel é **camada de apresentação, não de fusão** — e a distinção é a mesma que a seção
-2.2 estabelece. Uma tela única é o lugar mais fácil de sugerir, sem dizer, que as três
-séries pertencem ao mesmo paciente; como não pertencem, o painel se organiza para não
-afirmar isso:
+Cada entrega também tem a sua própria interface (3.11, 4.9 e 5.8). Elas continuam
+existindo, nas portas 7860, 7862 e 7861, como **pontos de entrada por entrega** — úteis
+para desenvolver e para demonstrar uma modalidade isolada. Para o usuário do sistema,
+porém, o sistema é esta tela.
+
+**A tela abre na aba de alertas**, e não na primeira entrega. Quem abre um sistema de
+monitoramento em plantão quer saber, antes de tudo, se há paciente precisando de atenção;
+as demais abas são consultadas a partir de uma pergunta que o profissional já tem,
+enquanto o alerta chega sem ser pedido. A *ordem* das abas continua sendo a das entregas,
+para preservar a correspondência com o enunciado e com este relatório.
+
+**A tela não funde as modalidades**, e aqui a razão da seção 2.2 deixa de ser um argumento
+de arquitetura e passa a ser de segurança clínica: como os datasets descrevem populações
+distintas (1.4), uma tela que somasse as três séries num único "paciente" levaria a equipe
+a ler como um histórico o que são pessoas diferentes. Daí as regras:
 
 | Regra | Por quê |
 |:--|:--|
 | Uma aba por modalidade, nunca uma visão combinada | a aba é a fronteira entre as fontes, como já eram as duas abas internas da Entrega 3 (5.8) |
 | Cada aba declara a fonte e a **unidade monitorada** | *paciente* nos leitos e nas consultas, *sujeito* na movimentação; a unidade muda porque a fonte muda |
 | O rodapé nomeia os quatro datasets e afirma que não há indivíduo em comum | a ressalva precisa estar diante de quem usa a tela, não apenas neste relatório |
+| O rodapé repete que o alerta é **triagem**, não decisão | a mesma exigência que a tela da Entrega 3 já tinha (5.9) |
 
 As abas **não reimplementam nada**: cada uma chama a mesma função de montagem que a app
-autônoma da respectiva entrega usa. As três continuam funcionando isoladamente, nas portas
-7860, 7862 e 7861 — o painel é uma porta de entrada adicional, não um substituto.
+da respectiva entrega usa.
 
 ---
 
@@ -1358,8 +1369,8 @@ entregável delas.
 
 ```
 detecção          priorização              apresentação
-IsolationForest ─► fila de plantão ──────► painel (app.py)
-regra de degrau    (alerts.py)             CLI (--alerts)
+IsolationForest ─► fila de plantão ──────► tela do sistema (dashboard, aba inicial)
+regra de degrau    (alerts.py)             app da Entrega 3 · CLI (--alerts)
 ```
 
 **Detecção.** Cada subtarefa da Entrega 3 produz instantes sinalizados: horas de
@@ -1372,8 +1383,10 @@ pacientes em que duas séries independentes concordam (5.7). É aqui que o siste
 erro mais provável de um alerta multimodal: tratar um detector de AUC 0,555 como se
 valesse o mesmo que um de AUC 0,9999.
 
-**Apresentação.** A fila chega à equipe pelo painel de plantão, em interface web ou
-terminal, com a série do paciente a um clique (5.8). Cada alerta informa **o que**
+**Apresentação.** A fila chega à equipe pelo painel de plantão, com a série do paciente a
+um clique (5.8). É a **aba que a tela do sistema abre por padrão** (2.4), justamente
+porque é o que se procura primeiro num plantão; também está disponível na app da Entrega 3
+e no terminal. Cada alerta informa **o que**
 disparou, **quando** e **com que frequência**, porque um alerta que não diz isso obriga
 quem o recebe a reabrir o caso para descobrir.
 
@@ -1462,8 +1475,8 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── cache.py            #   cache dos resultados pagos
 │   │   ├── cli.py              #   pipeline fim-a-fim
 │   │   └── app.py              #   app web (Gradio), porta 7862
-│   ├── dashboard/              # painel unificado — as 3 entregas em abas
-│   │   └── app.py              #   camada de apresentação (Gradio), porta 7863
+│   ├── dashboard/              # tela do sistema para a equipe médica
+│   │   └── app.py              #   as 3 modalidades em abas (Gradio), porta 7863
 │   └── anomaly/                # Entrega 3 — detecção de anomalias (local)
 │       ├── vitals.py           #   sinais vitais; treino, persistência e inferência
 │       ├── movement.py         #   movimentação do paciente (UCI HAR)
@@ -1476,7 +1489,7 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   ├── test_video.py           # 9 testes, keypoints sintéticos
 │   ├── test_anomaly.py         # 28 testes, séries sintéticas
 │   ├── test_audio_app.py       # 8 testes, trava de custo da app da Entrega 2
-│   └── test_dashboard.py       # 10 testes, montagem do painel unificado
+│   └── test_dashboard.py       # 12 testes, montagem da tela do sistema
 ├── models/                     # detectores treinados (.joblib, não versionado)
 ├── data/                       # datasets baixados localmente (não versionado)
 ├── docs/                       # enunciado, guia de datasets e setup do OpenPose
@@ -1508,7 +1521,7 @@ resultados medidos e as armadilhas já tratadas naquele pipeline.
 | Python 3.10+ | Linguagem principal |
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
-| Gradio | Apps web locais: uma por entrega (7860, 7862 e 7861) e o painel unificado (7863) |
+| Gradio | Tela do sistema (7863) e as apps por entrega (7860, 7862 e 7861) |
 | AWS (Transcribe, Comprehend Medical, Comprehend, Translate, S3) | Serviços gerenciados da Entrega 2 |
 
 ### 9.2 Bibliotecas Python
@@ -1561,19 +1574,22 @@ as quais os números deste relatório foram medidos. Para auditar os resultados:
 pip install -r requirements-lock.txt
 ```
 
-### 10.3 Execução — Painel Unificado
+### 10.3 Execução — A Tela do Sistema
 
-A forma mais direta de ver o sistema inteiro: as três entregas em abas, num endereço só
-(2.4).
+É por aqui que se usa o sistema: as três modalidades em abas, num endereço só, abrindo na
+fila de plantão (2.4).
 
 ```bash
 python -m src.dashboard.app        # abre em http://localhost:7863
 ```
 
 Cada aba tem os seus próprios pré-requisitos e degrada sozinha, sem derrubar as demais: a
-de vídeo precisa do binário do OpenPose e dos vídeos do REHAB24-6; a de áudio funciona
-sem credenciais para os casos em cache; a de anomalias exige os modelos já treinados
-(10.6). As apps individuais seguem disponíveis nas portas 7860, 7862 e 7861.
+de alertas exige os modelos já treinados (10.6); a de vídeo precisa do binário do OpenPose
+e dos vídeos do REHAB24-6; a de áudio funciona sem credenciais para os casos em cache.
+
+As seções seguintes cobrem cada entrega **isoladamente** — pelo terminal e pela app da
+própria entrega (portas 7860, 7862 e 7861) —, que é como se desenvolve e se audita cada
+pipeline.
 
 ### 10.4 Execução — Entrega 1 (Análise de Vídeo)
 
@@ -1662,9 +1678,9 @@ O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 pytest -q
 ```
 
-São **55 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos), 28
+São **57 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos), 28
 da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas), 8 da Entrega 2
-(`tests/test_audio_app.py`) e 10 do painel unificado (`tests/test_dashboard.py`). Nenhum
+(`tests/test_audio_app.py`) e 12 da tela do sistema (`tests/test_dashboard.py`). Nenhum
 deles exige os datasets baixados, o binário do OpenPose ou credenciais da AWS.
 
 Os do painel cobrem a montagem — que é onde ele pode quebrar em silêncio. As três apps
