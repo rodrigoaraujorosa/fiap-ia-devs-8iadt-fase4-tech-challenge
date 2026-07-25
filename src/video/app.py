@@ -127,36 +127,48 @@ def process(video_file: str, frame_step: int, use_seg: bool, reuse_json: bool,
     return fig, validation_md, report_md, overlay_path
 
 
+def build_ui() -> None:
+    """
+    Monta os componentes no contexto ``gr.Blocks`` ativo.
+
+    Separada de :func:`build_demo` para que a mesma tela sirva à app autônoma (porta
+    7860) e à aba de vídeo do painel unificado (`src/dashboard/app.py`), sem duplicar
+    a montagem — duas cópias divergiriam na primeira alteração.
+    """
+    gr.Markdown("# 🎥 Análise Postural em Vídeo (Usando o Modelo OpenPose) — demo local\n"
+                "Selecione um vídeo do REHAB24-6, processe e veja o esqueleto, os "
+                "desvios e o relatório.")
+    with gr.Row():
+        video_dd = gr.Dropdown(_list_videos(), label="Vídeo (data/video/rehab24-6)")
+        frame_step = gr.Slider(1, 5, value=3, step=1,
+                               label="frame-step (subamostragem p/ GPU fraca)")
+    with gr.Row():
+        use_seg = gr.Checkbox(value=True, label="Validar contra o ground-truth")
+        reuse = gr.Checkbox(value=True, label="Reaproveitar JSONs já extraídos")
+    run_btn = gr.Button("▶ Processar", variant="primary")
+    with gr.Row():
+        with gr.Column():
+            gr.Markdown("**Ângulos Posturais** — ao final, aparece aqui o "
+                        "gráfico dos ângulos ao longo do tempo, com os desvios em vermelho.")
+            graph = gr.Image(label="Ângulos posturais", type="filepath")
+        with gr.Column():
+            gr.Markdown("**Vídeo com Overlay (esqueleto + desvios)** — ao final, "
+                        "aparece aqui o vídeo com o esqueleto sobreposto ao paciente.")
+            overlay = gr.Video(label="Overlay (esqueleto + desvios)")
+    validation = gr.Markdown()
+    report = gr.Markdown()
+    # show_progress_on: sem isso o Gradio desenha uma barra em CADA output —
+    # inclusive nos Markdown (validação e relatório), que não têm altura fixa e
+    # deixam as barras flutuando sobre o texto. Só os dois quadros visuais mostram.
+    run_btn.click(process, [video_dd, frame_step, use_seg, reuse],
+                  [graph, validation, report, overlay],
+                  show_progress_on=[graph, overlay])
+
+
 def build_demo() -> gr.Blocks:
+    """App autônoma da Entrega 1 (porta 7860)."""
     with gr.Blocks(title="Monitoramento Postural — Entrega 1") as demo:
-        gr.Markdown("# 🎥 Análise Postural em Vídeo (Usando o Modelo OpenPose) — demo local\n"
-                    "Selecione um vídeo do REHAB24-6, processe e veja o esqueleto, os "
-                    "desvios e o relatório.")
-        with gr.Row():
-            video_dd = gr.Dropdown(_list_videos(), label="Vídeo (data/video/rehab24-6)")
-            frame_step = gr.Slider(1, 5, value=3, step=1,
-                                   label="frame-step (subamostragem p/ GPU fraca)")
-        with gr.Row():
-            use_seg = gr.Checkbox(value=True, label="Validar contra o ground-truth")
-            reuse = gr.Checkbox(value=True, label="Reaproveitar JSONs já extraídos")
-        run_btn = gr.Button("▶ Processar", variant="primary")
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("**Ângulos Posturais** — ao final, aparece aqui o "
-                            "gráfico dos ângulos ao longo do tempo, com os desvios em vermelho.")
-                graph = gr.Image(label="Ângulos posturais", type="filepath")
-            with gr.Column():
-                gr.Markdown("**Vídeo com Overlay (esqueleto + desvios)** — ao final, "
-                            "aparece aqui o vídeo com o esqueleto sobreposto ao paciente.")
-                overlay = gr.Video(label="Overlay (esqueleto + desvios)")
-        validation = gr.Markdown()
-        report = gr.Markdown()
-        # show_progress_on: sem isso o Gradio desenha uma barra em CADA output —
-        # inclusive nos Markdown (validação e relatório), que não têm altura fixa e
-        # deixam as barras flutuando sobre o texto. Só os dois quadros visuais mostram.
-        run_btn.click(process, [video_dd, frame_step, use_seg, reuse],
-                      [graph, validation, report, overlay],
-                      show_progress_on=[graph, overlay])
+        build_ui()
     return demo
 
 

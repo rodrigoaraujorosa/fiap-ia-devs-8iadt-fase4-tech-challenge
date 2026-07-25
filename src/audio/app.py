@@ -321,58 +321,70 @@ def process(case: str, allow_paid: bool, root: str = DEFAULT_ROOT,
             _findings_md(case, comparacao), _sentiment_md(sentimento), md)
 
 
-def build_demo(root: str = DEFAULT_ROOT) -> gr.Blocks:
+def build_ui(root: str = DEFAULT_ROOT) -> None:
+    """
+    Monta os componentes no contexto ``gr.Blocks`` ativo.
+
+    Separada de :func:`build_demo` para que a mesma tela sirva à app autônoma
+    (porta 7862) e à aba de áudio do painel unificado (`src/dashboard/app.py`),
+    sem duplicar a montagem — em especial a trava de custo, que uma segunda
+    cópia poderia perder de vista.
+    """
     escolhas = _case_choices(root)
     inicial = escolhas[0][1] if escolhas else None
 
+    gr.Markdown(
+        "# 🎙️ Análise de Áudio de Consultas (AWS) — demo local\n"
+        "Transcreve a consulta com o **Amazon Transcribe**, extrai os achados "
+        "clínicos da fala do paciente com o **Comprehend Medical**, mede o tom do "
+        "relato com o **Comprehend** e monta um relatório bilíngue com o "
+        "**Translate**."
+    )
+
+    with gr.Row():
+        case_dd = gr.Dropdown(escolhas, value=inicial, label="Consulta",
+                              info="Casos em cache aparecem primeiro e não geram custo")
+        allow_paid = gr.Checkbox(
+            value=False, label="Permitir chamadas pagas à AWS",
+            info="Necessário apenas para casos ainda não processados")
+    custo = gr.Markdown(cost_notice(inicial, False))
+    run_btn = gr.Button("▶ Processar consulta", variant="primary")
+
+    resumo = gr.Markdown()
+    with gr.Row():
+        with gr.Column():
+            gr.Markdown("**Áudio da consulta** — a gravação original, para conferir "
+                        "os achados contra o que foi dito.")
+            # interactive=False: sem isso o Gradio monta o componente no modo de
+            # entrada, com botão de gravação e pedido de acesso ao microfone — aqui
+            # ele só reproduz o arquivo do dataset.
+            player = gr.Audio(label="Consulta (MP3)", type="filepath",
+                              interactive=False)
+            metricas = gr.Markdown()
+        with gr.Column():
+            achados = gr.Markdown()
+            sentimento = gr.Markdown()
+
+    gr.Markdown("---\n### 4. Relatório clínico bilíngue\n"
+                "Cada termo aparece **no original em inglês seguido da tradução**: o "
+                "áudio-fonte é em inglês, e traduzir sem mostrar o original impediria "
+                "a equipe de conferir contra a gravação.")
+    relatorio = gr.Markdown()
+    gr.Markdown(AVISO)
+
+    case_dd.change(cost_notice, [case_dd, allow_paid], [custo])
+    allow_paid.change(cost_notice, [case_dd, allow_paid], [custo])
+    # show_progress_on: sem isso o Gradio desenha uma barra em cada output, inclusive
+    # nos Markdown, que não têm altura fixa — mesma razão da app da Entrega 1.
+    run_btn.click(process, [case_dd, allow_paid],
+                  [player, resumo, metricas, achados, sentimento, relatorio],
+                  show_progress_on=[player])
+
+
+def build_demo(root: str = DEFAULT_ROOT) -> gr.Blocks:
+    """App autônoma da Entrega 2 (porta 7862)."""
     with gr.Blocks(title="Análise de Áudio de Consultas — Entrega 2") as demo:
-        gr.Markdown(
-            "# 🎙️ Análise de Áudio de Consultas (AWS) — demo local\n"
-            "Transcreve a consulta com o **Amazon Transcribe**, extrai os achados "
-            "clínicos da fala do paciente com o **Comprehend Medical**, mede o tom do "
-            "relato com o **Comprehend** e monta um relatório bilíngue com o "
-            "**Translate**."
-        )
-
-        with gr.Row():
-            case_dd = gr.Dropdown(escolhas, value=inicial, label="Consulta",
-                                  info="Casos em cache aparecem primeiro e não geram custo")
-            allow_paid = gr.Checkbox(
-                value=False, label="Permitir chamadas pagas à AWS",
-                info="Necessário apenas para casos ainda não processados")
-        custo = gr.Markdown(cost_notice(inicial, False))
-        run_btn = gr.Button("▶ Processar consulta", variant="primary")
-
-        resumo = gr.Markdown()
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("**Áudio da consulta** — a gravação original, para conferir "
-                            "os achados contra o que foi dito.")
-                # interactive=False: sem isso o Gradio monta o componente no modo de
-                # entrada, com botão de gravação e pedido de acesso ao microfone — aqui
-                # ele só reproduz o arquivo do dataset.
-                player = gr.Audio(label="Consulta (MP3)", type="filepath",
-                                  interactive=False)
-                metricas = gr.Markdown()
-            with gr.Column():
-                achados = gr.Markdown()
-                sentimento = gr.Markdown()
-
-        gr.Markdown("---\n### 4. Relatório clínico bilíngue\n"
-                    "Cada termo aparece **no original em inglês seguido da tradução**: o "
-                    "áudio-fonte é em inglês, e traduzir sem mostrar o original impediria "
-                    "a equipe de conferir contra a gravação.")
-        relatorio = gr.Markdown()
-        gr.Markdown(AVISO)
-
-        case_dd.change(cost_notice, [case_dd, allow_paid], [custo])
-        allow_paid.change(cost_notice, [case_dd, allow_paid], [custo])
-        # show_progress_on: sem isso o Gradio desenha uma barra em cada output, inclusive
-        # nos Markdown, que não têm altura fixa — mesma razão da app da Entrega 1.
-        run_btn.click(process, [case_dd, allow_paid],
-                      [player, resumo, metricas, achados, sentimento, relatorio],
-                      show_progress_on=[player])
-
+        build_ui(root)
     return demo
 
 
