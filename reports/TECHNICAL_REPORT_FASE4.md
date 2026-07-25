@@ -193,6 +193,17 @@ a ler como um histórico o que são pessoas diferentes. Daí as regras:
 As abas **não reimplementam nada**: cada uma chama a mesma função de montagem que a app
 da respectiva entrega usa.
 
+![Tela do sistema recém-aberta, na aba de alertas](figures/screenshots/gradio_dashboard.png)
+
+> **Figura 1.** A tela como o profissional a encontra ao abrir. As três abas seguem a
+> ordem das entregas — vídeo, áudio, anomalias —, mas a **terceira é a que está
+> selecionada**: é a decisão de projeto descrita acima, e o que se vê é a fila de plantão,
+> não a primeira entrega. Dentro dela, as duas abas internas da Entrega 3 mantêm separadas
+> as duas fontes (leitos e movimentação). A fila aparece **vazia** porque a coorte ainda
+> não foi carregada: pontuar os pacientes é a primeira ação do usuário, e o resultado
+> desse carregamento é o que a Figura 17 mostra. A legenda das siglas clínicas fica logo
+> abaixo da fila, onde é lida junto com ela.
+
 ---
 
 ## 3. Entrega 1 — Análise de Vídeo (OpenPose)
@@ -283,7 +294,7 @@ vídeo com escrita dos keypoints em JSON (um arquivo por frame).
 | Saída | 1 JSON por frame | `pose_keypoints_2d = [x0,y0,c0, ...]` |
 
 **Desempenho e subamostragem.** Na GPU local onde os testes foram realizados (NVIDIA MX330, 2 GB), o OpenPose processa a
-~1,2 s/frame (medido: `1.22s/frame` na execução da Figura 2). Processar os 5.191 frames de
+~1,2 s/frame (medido: `1.22s/frame` na execução da Figura 3). Processar os 5.191 frames de
 PM_008 levaria ~1h45. Para viabilizar a execução local, o vídeo é **subamostrado para 1 a
 cada 3 frames** (opção `--frame-step 3` do CLI; 10 fps efetivos, 1.731 frames), reduzindo o
 tempo do OpenPose para os 45:20 medidos (o pipeline reporta o tempo no output e no
@@ -293,7 +304,7 @@ cruzamento correto com os rótulos (ver 3.8).
 
 ![Uso da GPU local durante a extração de pose](figures/screenshots/uso_gpu_local.png)
 
-> **Figura 1.** Gerenciador de Tarefas durante a extração do PM_008. A MX330 opera em
+> **Figura 2.** Gerenciador de Tarefas durante a extração do PM_008. A MX330 opera em
 > **90% de utilização a 71 °C**, com **1,4 dos 2,0 GB** de memória dedicada ocupados — é
 > essa margem estreita de VRAM que justifica o `--net_resolution 320x176` da tabela acima:
 > resoluções maiores não cabem. A carga está na GPU dedicada, não na integrada (Intel Iris
@@ -504,7 +515,7 @@ gerado.
 
 ![Execução do CLI sobre o vídeo PM_008](figures/screenshots/cli_PM_008-Camera17-30fps.png)
 
-> **Figura 2.** Execução completa do CLI sobre o PM_008 (1.731 frames após subamostragem).
+> **Figura 3.** Execução completa do CLI sobre o PM_008 (1.731 frames após subamostragem).
 > A saída mostra as quatro fases, os tempos medidos — OpenPose 45:20.089, análise 00:15.541,
 > overlay e validação somando +11:06.050, total fim-a-fim 56:42.061 — e a validação contra o
 > ground-truth (corretas 0,430 · incorretas 0,614, separação OK). Ao final, lista os quatro
@@ -526,20 +537,20 @@ A sequência abaixo mostra o fluxo completo do ponto de vista de quem usa a ferr
 
 ![Vídeo original do PM_034, sem anotação](figures/screenshots/video_sem_overlay_PM_034-Camera17-30fps.png)
 
-> **Figura 3 — antes.** O material de partida: o vídeo bruto do PM_034 (abdução de perna),
+> **Figura 4 — antes.** O material de partida: o vídeo bruto do PM_034 (abdução de perna),
 > como a equipe o receberia hoje. A avaliação depende inteiramente da observação visual do
 > profissional, sem nenhuma medida objetiva de ângulo ou marcação de instantes suspeitos.
 
 ![Interface Gradio processando o PM_034](figures/screenshots/gradio_processando_PM_034-Camera17-30fps.png)
 
-> **Figura 4 — durante.** A app em processamento, com o `frame-step` em 3 e o
+> **Figura 5 — durante.** A app em processamento, com o `frame-step` em 3 e o
 > reaproveitamento de keypoints desligado (extração completa). A barra informa a etapa em
 > linguagem corrente e o progresso real ("Aplicando o Modelo OpenPose — 104/370 frames"),
 > e cada quadro já anuncia o que vai exibir ao terminar.
 
 ![Interface Gradio com o resultado do PM_034](figures/screenshots/gradio_finalizado_PM_034-Camera17-30fps.png)
 
-> **Figura 5 — depois.** O mesmo instante da Figura 3, agora processado. À esquerda, os
+> **Figura 6 — depois.** O mesmo instante da Figura 4, agora processado. À esquerda, os
 > ângulos ao longo dos 37 s com as faixas rosa marcando os instantes de desvio; à direita, o
 > vídeo com o esqueleto BODY_25 sobreposto, a borda vermelha sinalizando o frame como desvio
 > e o osso do ângulo responsável destacado em vermelho (ombro, no frame 0). Abaixo — fora do
@@ -812,7 +823,7 @@ obtido; ao final vêm os tempos por etapa no formato `mm:ss.mi`, o mesmo da Entr
 
 ![Execução do CLI sobre a consulta RES0062](figures/screenshots/cli_audio_RES0062.png)
 
-> **Figura 6.** Pipeline completo sobre o RES0062 (17,8 min de consulta). As quatro etapas
+> **Figura 7.** Pipeline completo sobre o RES0062 (17,8 min de consulta). As quatro etapas
 > nomeiam o serviço que as executou — Transcribe, Comprehend Medical, Comprehend e
 > Translate —, e a barra de progresso conta etapas concluídas. A transcrição domina o
 > tempo (01:56 de 02:18 totais), o que é esperado: é a única etapa que processa o áudio
@@ -824,7 +835,7 @@ transcritos sem tocar na AWS, produzindo a estatística agregada usada em 4.4:
 
 ![Consolidação das métricas dos quatro casos](figures/screenshots/cli_audio_consultations.png)
 
-> **Figura 7.** Modo `--report`: as quatro transcrições são lidas do cache (nenhuma chamada
+> **Figura 8.** Modo `--report`: as quatro transcrições são lidas do cache (nenhuma chamada
 > paga é feita) e as métricas, recalculadas. Permite iterar sobre a forma de medir — por
 > exemplo, ligar e desligar a contagem de hesitações, sem pagar novamente pela
 > transcrição. É também a origem do `wer_consultations.csv` versionado no repositório.
@@ -863,7 +874,7 @@ de versionar os JSON brutos do serviço (4.10).
 
 ![Interface Gradio com a consulta RES0029 processada](figures/screenshots/gradio_audio_RES0029.png)
 
-> **Figura 8.** A app após processar o RES0029. No alto, os dois controles: o seletor, que
+> **Figura 9.** A app após processar o RES0029. No alto, os dois controles: o seletor, que
 > declara o caso como *em cache (sem custo)*, e a caixa de chamadas pagas, **desmarcada** —
 > abaixo deles, o aviso que antecede o clique confirma que nenhuma chamada será cobrada. A
 > linha de tempos mostra o efeito: as quatro etapas somam 00:00.813, porque tudo veio do
@@ -1055,7 +1066,7 @@ como limitação medida.
   do limiar absoluto, que não garante alerta para todo paciente. Baixá-lo aumenta a
   cobertura ao custo de mais alarme falso.
 - **A agregação multivariada dilui o desvio de uma variável isolada.** O paciente
-  `p000188` (Figura 13) tem a frequência respiratória subindo de 16 para 33 ao longo da
+  `p000188` (Figura 14) tem a frequência respiratória subindo de 16 para 33 ao longo da
   internação, uma deterioração inequívoca. A normalização por paciente **captura** esse
   movimento: o z-score mediano da `Resp` vai de −0,67 nas primeiras 40 horas para 4,89 no
   bloco que antecede o início da sepse, com pico de 8,09. O alerta, porém, não dispara: o
@@ -1118,7 +1129,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Treino dos dois detectores](figures/screenshots/cli_anomaly_train.png)
 
-> **Figura 9.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
+> **Figura 10.** Treino sobre 5.000 pacientes, em 43,1 s. Cada detector recebe a sua coorte
 > de normalidade: 3.187 pacientes sem sepse (117.947 horas) para os sinais vitais e 4.067
 > amostras de repouso para a movimentação. A saída informa o que foi retido para teste —
 > 1.813 pacientes e 9 sujeitos, estes últimos identificados um a um e o limiar de alerta
@@ -1129,7 +1140,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Monitoramento do paciente p001123](figures/screenshots/cli_anomaly_p001123.png)
 
-> **Figura 10.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
+> **Figura 11.** Paciente retido do conjunto de teste. O detector sinaliza 5 das 97 horas
 > (5,2%) — 46, 55, 63, 66 e 86 — e a conferência mostra sepse registrada a partir da hora
 > 88, ou seja, **42 horas de antecedência**. Note que os alertas se adensam à medida que o
 > evento se aproxima. A dose prescrita foi monitorada (97 registros, entre 0,30 e 0,40) e
@@ -1137,7 +1148,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Série temporal do paciente p001123](figures/monitor_p001123.png)
 
-> **Figura 11.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
+> **Figura 12.** A mesma execução em série temporal. A faixa laranja é a janela de 48 h que
 > antecede o início da sepse (linha roxa tracejada, hora 88) e as faixas vermelhas marcam
 > as horas em alerta: **todas caem dentro da janela**. O painel inferior mostra a dose
 > de oxigênio, estável em 0,30 desde a hora 26 — sem escalonamento, coerente com a saída do
@@ -1147,7 +1158,7 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Monitoramento do paciente p000188](figures/screenshots/cli_anomaly_p000188.png)
 
-> **Figura 12.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
+> **Figura 13.** O mesmo modelo, sobre outro paciente retido, não emite **nenhum** alerta
 > nas 84 horas de internação, embora o paciente desenvolva sepse na hora 75. A subtarefa de
 > prescrições, no entanto, registra dois escalonamentos de FiO2 — horas 51 e 53 —, o
 > primeiro deles **24 horas antes** do início. As duas reduções de dose detectadas não
@@ -1155,14 +1166,14 @@ rótulo é exibido apenas na seção de conferência, nunca entra na pontuação
 
 ![Série temporal do paciente p000188](figures/monitor_p000188.png)
 
-> **Figura 13.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
+> **Figura 14.** O mesmo paciente em série temporal. Não há nenhuma faixa vermelha no painel
 > superior, o detector de vitais ficou em silêncio, enquanto os dois triângulos do painel
 > inferior marcam os escalonamentos de dose nas horas 51 e 53, ambos dentro da janela. A
 > figura expõe algo que a saída de texto não mostra: a frequência respiratória (verde) sobe
 > de forma contínua ao longo da internação, uma deterioração visível que o alerta não
 > capturou. A seção 5.4 detalha por quê.
 
-O contraste entre as Figuras 10 e 12 é a ilustração concreta do que a comparação de features
+O contraste entre as Figuras 11 e 13 é a ilustração concreta do que a comparação de features
 da seção 5.4 indicou de forma agregada: a alteração dos sinais vitais é tardia, e outras
 séries do mesmo paciente podem avisar antes. É também o argumento para que a camada de
 alerta combine as modalidades em vez de depender de uma só (5.7).
@@ -1171,7 +1182,7 @@ alerta combine as modalidades em vez de depender de uma só (5.7).
 
 ![Monitoramento do sujeito 2](figures/screenshots/cli_anomaly_subject_2.png)
 
-> **Figura 14.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
+> **Figura 15.** Sujeito 2 do conjunto de teste, 302 janelas de leitura. O detector sinaliza
 > 157 delas (52,0%), e a conferência mostra por quê: as três atividades de marcha são
 > detectadas **integralmente** (100,0% cada), enquanto o repouso permanece quase todo em
 > silêncio, `LAYING` sem nenhum alerta, `SITTING` em 2,2% e `STANDING` em 3,7%. O recall
@@ -1186,7 +1197,7 @@ métricas que orienta o peso de cada modalidade:
 
 ![Avaliação completa das três subtarefas](figures/screenshots/cli_anomaly_avaliacao.png)
 
-> **Figura 15.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
+> **Figura 16.** Avaliação sobre 5.000 pacientes, em 1,5 min. As três subtarefas aparecem
 > lado a lado com os respectivos tempos: movimentação (4,1 s), sinais vitais (39,2 s) e
 > prescrições (0,8 s) — o restante do tempo é a leitura dos 5.000 arquivos `.psv`. A saída
 > explicita a separação treino/teste dos vitais (3.187 pacientes sem sepse no treino contra
@@ -1239,7 +1250,7 @@ referência o gráfico não se lê de relance, ver a frequência respiratória s
 
 ![Painel de plantão com o paciente p000795 aberto](figures/screenshots/gradio_anomaly_alerts.png)
 
-> **Figura 16.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
+> **Figura 17.** A app com a coorte já processada e um paciente aberto. À esquerda, a fila
 > de plantão: 132 pacientes com alerta entre os 363 retidos (21 de prioridade ALTA, 111
 > MEDIA), ordenados por prioridade e, dentro dela, pelo alerta mais recente. A coluna
 > **Taxa** é o que distingue o evento agudo do paciente cronicamente fora do padrão, 
@@ -1255,12 +1266,12 @@ Os controles da aba de leitos são dois: o tamanho da coorte (200 a 5.000 pacien
 quais prioridades exibir.
 
 A segunda aba monitora a **movimentação**, por sujeito. A visualização aqui é diferente da
-Figura 14: em vez da taxa de alerta agregada por atividade, mostra a **sequência**, cada
+Figura 15: em vez da taxa de alerta agregada por atividade, mostra a **sequência**, cada
 janela de leitura vira uma coluna, com a atividade real em cima e o alerta embaixo.
 
 ![Aba de movimentação com o sujeito 9 monitorado](figures/screenshots/gradio_anomaly_movimentacao.png)
 
-> **Figura 17.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
+> **Figura 18.** Sujeito 9 do conjunto de teste, 288 janelas de leitura. No painel
 > superior, a atividade real, azul para repouso e vermelha para marcha; no inferior, uma
 > faixa contínua em que vermelho indica alerta disparado e cinza, silêncio. A
 > correspondência entre os dois painéis é o resultado: os quatro blocos de marcha acendem
@@ -1347,7 +1358,7 @@ registra cada chamada `DetectEntitiesV2`.
 
 ![Tarefas de transcrição no console do Amazon Transcribe](figures/screenshots/audio_jobs_transcribe.png)
 
-> **Figura 18.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
+> **Figura 19.** Console do Amazon Transcribe com as quatro tarefas submetidas por este
 > trabalho, uma delas **em andamento** no momento da captura, o RES0062, cujo áudio de
 > 17,8 min é o mais longo do recorte. O registro no console é independente do código: cada
 > tarefa traz nome, status, idioma detectado e horário de criação, o que permite auditar a
