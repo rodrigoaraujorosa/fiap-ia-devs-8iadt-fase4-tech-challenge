@@ -42,6 +42,8 @@ docs/HANDOFF.md
 # Enunciado do desafio: material da FIAP, não redistribuir no repositório público.
 docs/*.pdf
 reports/*.pdf
+# Roteiro do vídeo de apresentação: material de gravação da equipe, uso interno.
+ROTEIRO_VIDEO_FASE4.md
 
 # ===== Configuração local de ferramentas =====
 .claude/
