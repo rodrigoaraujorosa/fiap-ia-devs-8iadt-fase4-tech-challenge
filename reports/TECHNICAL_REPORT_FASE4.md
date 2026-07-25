@@ -797,7 +797,45 @@ transcritos sem tocar na AWS, produzindo a estatística agregada usada em 4.4:
 > exemplo, ligar e desligar a contagem de hesitações, sem pagar novamente pela
 > transcrição. É também a origem do `wer_consultations.csv` versionado no repositório.
 
-### 4.9 Controle de Custo e Credenciais
+### 4.9 Interface Web de Demonstração (`app.py`)
+
+Como nas Entregas 1 e 3, o pipeline é exposto em uma app web local (Gradio,
+`python -m src.audio.app`, porta 7862), e a app **não reimplementa nada**: chama as mesmas
+funções de biblioteca que o `cli.py` usa, na mesma ordem. A tela reúne o que a equipe
+médica precisa ver junto — a gravação, os achados extraídos e o relatório — em vez de
+espalhá-los entre a saída do terminal e um arquivo em disco.
+
+O layout segue as quatro etapas do pipeline, cada uma nomeando o serviço que a executou:
+qualidade da transcrição (WER e o balanço de substituições, inserções e remoções), achados
+clínicos, sentimento e, ao final, o relatório bilíngue completo. Ao lado dos achados fica o
+player do MP3 original, porque a conferência contra a gravação é o gesto que o relatório
+bilíngue existe para permitir (4.7).
+
+**A diferença desta app para as outras duas é o custo.** Vídeo e anomalias rodam local, e
+um clique indevido custa tempo de CPU; aqui um clique num caso ainda não processado dispara
+chamadas cobradas por volume ao Transcribe, ao Comprehend Medical e ao Translate. Um
+seletor com 272 casos e um botão é, nessas condições, uma armadilha. As decisões de
+projeto decorrem daí:
+
+| Decisão | Efeito |
+|:--|:--|
+| O seletor marca cada caso como *em cache (sem custo)* ou *não processado (custa)* | o custo é visível na escolha, não depois dela |
+| Os casos já processados aparecem **primeiro** | o caso pré-selecionado, que é o que se processa ao clicar sem escolher nada, é sempre gratuito |
+| A chamada paga é **bloqueada por padrão** | processar um caso novo exige marcar uma caixa, um ato deliberado |
+| Antes do clique, a tela lista **quais etapas** seriam cobradas | é o `--dry-run` do CLI embutido na interface |
+| A regra de custo é importada do `cli.py`, não reescrita | uma segunda cópia da regra é onde um esquecimento vira cobrança indevida |
+
+Uma consequência prática: com os casos em cache a app roda **sem credenciais da AWS**, o
+que permite reproduzir a demonstração inteira sem conta na nuvem — coerente com a decisão
+de versionar os JSON brutos do serviço (4.10).
+
+O quadro de achados na tela segue as mesmas regras do relatório (4.7), inclusive a
+supressão da negação conflitante: um termo afirmado numa fala e negado em outra permanece
+entre os achados, com ressalva, e **não** aparece como negado — listar a queixa principal
+como negada faria a equipe ler que ela foi descartada. Se a tela e o documento logo abaixo
+dela divergissem nesse ponto, diriam coisas diferentes sobre o mesmo paciente.
+
+### 4.10 Controle de Custo e Credenciais
 
 Transcribe, Comprehend Medical e Translate cobram por volume processado. Todo resultado é
 **cacheado em disco** (`reports/transcriptions/`, `reports/entities/`,
@@ -1134,7 +1172,7 @@ triagem descrito acima.
 ### 5.8 Interface Web de Demonstração (`app.py`)
 
 As três subtarefas são expostas em uma app web local (Gradio,
-`python -m src.anomaly.app`, porta 7861. Como na Entrega 1, a app **não reimplementa nada**:
+`python -m src.anomaly.app`, porta 7861. Como nas Entregas 1 e 2, a app **não reimplementa nada**:
 chama as mesmas funções que o CLI usa. O equivalente em terminal é
 `python -m src.anomaly.cli --alerts` para a fila e `--monitor-subject` para a movimentação.
 
@@ -1389,18 +1427,20 @@ fiap-ia-devs-8iadt-fase4-tech-challenge/
 │   │   ├── comprehend.py       #   entidades clínicas e sentimento
 │   │   ├── report.py           #   relatório clínico bilíngue (Translate)
 │   │   ├── cache.py            #   cache dos resultados pagos
-│   │   └── cli.py              #   pipeline fim-a-fim (único ponto de entrada)
+│   │   ├── cli.py              #   pipeline fim-a-fim
+│   │   └── app.py              #   app web (Gradio), porta 7862
 │   └── anomaly/                # Entrega 3 — detecção de anomalias (local)
 │       ├── vitals.py           #   sinais vitais; treino, persistência e inferência
 │       ├── movement.py         #   movimentação do paciente (UCI HAR)
 │       ├── prescriptions.py    #   evolução de doses (FiO2, variável derivada)
 │       ├── alerts.py           #   fila de plantão, priorizada por confiabilidade
 │       ├── report.py           #   relatório para a equipe médica + figuras
-│       ├── cli.py              #   pipeline fim-a-fim (único ponto de entrada)
+│       ├── cli.py              #   pipeline fim-a-fim
 │       └── app.py              #   app web (Gradio), porta 7861
 ├── tests/
 │   ├── test_video.py           # 9 testes, keypoints sintéticos
-│   └── test_anomaly.py         # 28 testes, séries sintéticas
+│   ├── test_anomaly.py         # 28 testes, séries sintéticas
+│   └── test_audio_app.py       # 8 testes, trava de custo da app da Entrega 2
 ├── models/                     # detectores treinados (.joblib, não versionado)
 ├── data/                       # datasets baixados localmente (não versionado)
 ├── docs/                       # enunciado, guia de datasets e setup do OpenPose
@@ -1432,7 +1472,7 @@ resultados medidos e as armadilhas já tratadas naquele pipeline.
 | Python 3.10+ | Linguagem principal |
 | OpenPose v1.7.0 (BODY_25) | Estimação de pose 2D (binário externo) |
 | GPU local NVIDIA MX330 (2 GB) | Execução local do OpenPose |
-| Gradio | App web local de demonstração (Entrega 1) |
+| Gradio | Apps web locais de demonstração, uma por entrega (portas 7860, 7862 e 7861) |
 | AWS (Transcribe, Comprehend Medical, Comprehend, Translate, S3) | Serviços gerenciados da Entrega 2 |
 
 ### 9.2 Bibliotecas Python
@@ -1456,7 +1496,9 @@ resultados medidos e as armadilhas já tratadas naquele pipeline.
 - Python 3.10+ e as dependências de `requirements.txt`
 - OpenPose v1.7.0 (binário portátil) — ver `docs/openpose_setup.md`
 - (Entrega 2) Conta AWS com acesso a Transcribe, Comprehend Medical e um bucket S3;
-  credenciais em `.env` ou `~/.aws/credentials`
+  credenciais em `.env` ou `~/.aws/credentials`. Só é necessária para processar **casos
+  novos**: os quatro do relatório estão em cache no repositório e podem ser reconferidos,
+  inclusive pela app, sem credenciais
 
 ### 10.2 Instalação
 
@@ -1532,11 +1574,17 @@ python -m src.audio.cli --cases RES0091 RES0062 RES0029 MSK0018   # lote
 ```bash
 python -m src.audio.cli --report                   # recalcula o WER a partir do cache
 python -m src.audio.cli --show-entities RES0091    # entidades já extraídas de um caso
+
+# App web local de demonstração (abre em http://localhost:7862)
+python -m src.audio.app
 ```
+
+A app abre já apontando para um caso em cache e **bloqueia a chamada paga por padrão**,
+de modo que a demonstração inteira roda sem credenciais e sem custo (4.9).
 
 O relatório de cada caso sai em `reports/audio_<caso>.md`, bilíngue. As opções
 `--no-compare` e `--no-translate` reduzem o custo quando só se quer parte do pipeline; a
-tabela completa de parâmetros está na **seção 4.8**.
+tabela completa de parâmetros está na **seção 4.8**, e a interface web na **seção 4.9**.
 
 ### 10.5 Execução — Entrega 3 (Detecção de Anomalias)
 
@@ -1564,11 +1612,16 @@ O `--limit` controla o tamanho da coorte; sem ele, o padrão é 300 pacientes.
 pytest -q
 ```
 
-São **37 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos) e 28
-da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas). Nenhum deles exige os
-datasets baixados, o binário do OpenPose ou credenciais da AWS. A Entrega 2 não tem testes
-automatizados; sua verificação é a medição de WER contra a transcrição humana que acompanha
-o dataset (4.4).
+São **45 testes**: 9 da Entrega 1 (`tests/test_video.py`, sobre keypoints sintéticos), 28
+da Entrega 3 (`tests/test_anomaly.py`, sobre séries sintéticas) e 8 da Entrega 2
+(`tests/test_audio_app.py`). Nenhum deles exige os datasets baixados, o binário do OpenPose
+ou credenciais da AWS.
+
+Os testes da Entrega 2 cobrem a **trava de custo** da app (4.9) e a coerência entre o que a
+tela mostra e o que o relatório diz. É onde a entrega tem uma falha que não quebra nada: um
+caso processado por engano não levanta erro, apenas gera cobrança. A verificação do
+resultado clínico continua sendo a medição contra a transcrição humana que acompanha o
+dataset (4.4).
 
 ---
 

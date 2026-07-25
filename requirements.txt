@@ -29,9 +29,10 @@ boto3>=1.34                            # Transcribe (transcrição) + Comprehend
 # ----- Entrega 3: Detecção de Anomalias -----
 # usa numpy/pandas/scikit-learn já listados acima
 
-# ----- Interface de demonstração (Entrega 1) -----
-gradio>=5.0              # app web local p/ o vídeo-demo (src/video/app.py);
-                         # >=5.0 por causa do show_progress_on em app.py
+# ----- Interface de demonstração (uma app por entrega) -----
+gradio>=5.0              # apps web locais: src/video/app.py (7860), src/audio/app.py (7862)
+                         # e src/anomaly/app.py (7861);
+                         # >=5.0 por causa do show_progress_on usado nas três
 
 # ----- Notebooks / exploração -----
 jupyter>=1.0
