@@ -135,7 +135,7 @@ def build_ui() -> None:
     7860) e à aba de vídeo do painel unificado (`src/dashboard/app.py`), sem duplicar
     a montagem — duas cópias divergiriam na primeira alteração.
     """
-    gr.Markdown("# 🎥 Análise Postural em Vídeo (Usando o Modelo OpenPose) — demo local\n"
+    gr.Markdown("# 🎥 Análise Postural em Vídeo (Usando o Modelo OpenPose)\n"
                 "Selecione um vídeo do REHAB24-6, processe e veja o esqueleto, os "
                 "desvios e o relatório.")
     with gr.Row():

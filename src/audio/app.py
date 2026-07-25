@@ -334,7 +334,7 @@ def build_ui(root: str = DEFAULT_ROOT) -> None:
     inicial = escolhas[0][1] if escolhas else None
 
     gr.Markdown(
-        "# 🎙️ Análise de Áudio de Consultas (AWS) — demo local\n"
+        "# 🎙️ Análise de Áudio de Consultas (AWS)\n"
         "Transcreve a consulta com o **Amazon Transcribe**, extrai os achados "
         "clínicos da fala do paciente com o **Comprehend Medical**, mede o tom do "
         "relato com o **Comprehend** e monta um relatório bilíngue com o "
