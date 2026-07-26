@@ -55,8 +55,8 @@ Desenvolver um sistema que:
 | Entregável | Link |
 |:---|:---|
 | Este Relatório | `reports/TECHNICAL_REPORT_FASE4.md` |
-| Repositório | https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge |
-| Vídeo (até 15 min) | (a publicar — YouTube/Vimeo) |
+| Repositório | [rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge](https://github.com/rodrigoaraujorosa/fiap-ia-devs-8iadt-fase4-tech-challenge) |
+| Vídeo | [Sistema Monitoramento Hospitalar Multimodal - GRUPO 30](https://youtu.be/UE_ZqH9F-ew) |
 
 ### 1.3 Visão Geral das Três Entregas
 

@@ -1,0 +1,162 @@
+{
+ "sentiment": "NEGATIVE",
+ "scores": {
+  "Positive": 0.0188,
+  "Negative": 0.9758,
+  "Neutral": 0.0029,
+  "Mixed": 0.0024
+ },
+ "chunks": 1,
+ "by_turn": [
+  {
+   "order": 2,
+   "text": "Yeah, I have this pain in my chest.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9371
+  },
+  {
+   "order": 4,
+   "text": "It's just right  over on the on the left side.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0132
+  },
+  {
+   "order": 8,
+   "text": "I was just shovelling the driveway and it came on.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.1188
+  },
+  {
+   "order": 10,
+   "text": "No, it just came on suddenly and it's uh, uh, I'm sorry. Yeah the pain has been there this whole time and it's gotten worse ever since it started.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9887
+  },
+  {
+   "order": 12,
+   "text": "It feels dull. I feel like there's a lot of pressure on my chest.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9975
+  },
+  {
+   "order": 16,
+   "text": "No, I've never had any chest pain before.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0157
+  },
+  {
+   "order": 18,
+   "text": "No, I'm kind of just feeling it right here. On the left side.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0299
+  },
+  {
+   "order": 20,
+   "text": "Uh. I think it's a bit bit worse if I'm moving around or when I was walking in here. I think it it made it a bit worse, but nothing has seemed to make it any better since it starting.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9897
+  },
+  {
+   "order": 22,
+   "text": "I think it's a little bit worse when I when I'm laying down.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9897
+  },
+  {
+   "order": 24,
+   "text": "Uh, I've felt a little bit uh short of breath or having difficulty breathing since yesterday when the sorry since the pain started, but uh just the difficulty breathing.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.6425
+  },
+  {
+   "order": 26,
+   "text": "I do I play rugby and was tackled by another player yesterday. But but my chest felt fine after that.",
+   "sentiment": "MIXED",
+   "negative": 0.0431
+  },
+  {
+   "order": 34,
+   "text": "No nausea or vomiting, but I do feel a little bit hot today.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0215
+  },
+  {
+   "order": 36,
+   "text": "Uh I did and it was 38 degrees.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0402
+  },
+  {
+   "order": 40,
+   "text": "No, my energy has been good. D; Have you been having any kind of thumping or palpitations or feel like your heart has been racing at all?",
+   "sentiment": "POSITIVE",
+   "negative": 0.0098
+  },
+  {
+   "order": 41,
+   "text": "It uhh it does feel like it's beating faster right now. It usually only feels like this when I'm playing sports.",
+   "sentiment": "POSITIVE",
+   "negative": 0.1339
+  },
+  {
+   "order": 45,
+   "text": "Uh few weeks ago I was a little runny, but that went away on its own. I haven't had any cough.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0081
+  },
+  {
+   "order": 47,
+   "text": "No dizziness and uh no I haven't fainted at all.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0013
+  },
+  {
+   "order": 49,
+   "text": "Yeah, I've been told I have high cholesterol and high blood pressure.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.2964
+  },
+  {
+   "order": 51,
+   "text": "Um, I do take medications for both blood pressure and cholesterol, Rosuvastatin and um Lisinopril and I take a multi vitamin.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0014
+  },
+  {
+   "order": 61,
+   "text": "I I live in a house with um, my parents.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0013
+  },
+  {
+   "order": 63,
+   "text": "Yeah, I I drive a bus for the city.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.002
+  },
+  {
+   "order": 65,
+   "text": "Uhh yeah, usually on Sundays I'll go for a run.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0023
+  },
+  {
+   "order": 67,
+   "text": "Uhh, usually I feel like it's fairly balanced overall, I might I eat out a little bit too often, but try to eat as many vegetables as I can.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0019
+  },
+  {
+   "order": 69,
+   "text": "I do yes. Been smoking for the last 20 years roughly.",
+   "sentiment": "POSITIVE",
+   "negative": 0.007
+  },
+  {
+   "order": 71,
+   "text": "About a half a pack to a pack a day.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0323
+  }
+ ]
+}

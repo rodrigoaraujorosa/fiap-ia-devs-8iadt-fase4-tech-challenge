@@ -1,0 +1,2023 @@
+[
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1238,
+  "traits": [],
+  "negated": false,
+  "begin": 33,
+  "end": 35
+ },
+ {
+  "text": "chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 62,
+  "end": 67
+ },
+ {
+  "text": "chest pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 62,
+  "end": 72
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4933,
+  "traits": [],
+  "negated": false,
+  "begin": 124,
+  "end": 126
+ },
+ {
+  "text": "OK. Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3027,
+  "traits": [],
+  "negated": false,
+  "begin": 128,
+  "end": 134
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.7006,
+  "traits": [],
+  "negated": false,
+  "begin": 151,
+  "end": 153
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3328,
+  "traits": [],
+  "negated": false,
+  "begin": 173,
+  "end": 175
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2941,
+  "traits": [],
+  "negated": false,
+  "begin": 196,
+  "end": 198
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4257,
+  "traits": [],
+  "negated": false,
+  "begin": 230,
+  "end": 232
+ },
+ {
+  "text": "male",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "GENDER",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 240,
+  "end": 244
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1759,
+  "traits": [],
+  "negated": false,
+  "begin": 250,
+  "end": 252
+ },
+ {
+  "text": "chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8617,
+  "traits": [],
+  "negated": false,
+  "begin": 276,
+  "end": 281
+ },
+ {
+  "text": "chest pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 276,
+  "end": 286
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2034,
+  "traits": [],
+  "negated": false,
+  "begin": 294,
+  "end": 296
+ },
+ {
+  "text": "last night",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 309,
+  "end": 319
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.397,
+  "traits": [],
+  "negated": false,
+  "begin": 321,
+  "end": 323
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4603,
+  "traits": [],
+  "negated": false,
+  "begin": 360,
+  "end": 362
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 377,
+  "end": 381
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.6488,
+  "traits": [],
+  "negated": false,
+  "begin": 391,
+  "end": 393
+ },
+ {
+  "text": "left side of my chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 415,
+  "end": 436
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.0992,
+  "traits": [],
+  "negated": false,
+  "begin": 508,
+  "end": 510
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3128,
+  "traits": [],
+  "negated": false,
+  "begin": 523,
+  "end": 525
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2512,
+  "traits": [],
+  "negated": false,
+  "begin": 649,
+  "end": 651
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.09,
+  "traits": [],
+  "negated": false,
+  "begin": 653,
+  "end": 655
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4645,
+  "traits": [],
+  "negated": false,
+  "begin": 670,
+  "end": 672
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 759,
+  "end": 763
+ },
+ {
+  "text": "burning",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 813,
+  "end": 820
+ },
+ {
+  "text": "achy",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 822,
+  "end": 826
+ },
+ {
+  "text": "since last night",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 930,
+  "end": 946
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 963,
+  "end": 967
+ },
+ {
+  "text": "laying down makes the pain worse",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1022,
+  "end": 1054
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1102,
+  "end": 1106
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1193,
+  "end": 1197
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1378,
+  "end": 1382
+ },
+ {
+  "text": "hurt yourself",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8216,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 1605,
+  "end": 1618
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2158,
+  "traits": [],
+  "negated": false,
+  "begin": 1662,
+  "end": 1664
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1694,
+  "end": 1698
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1743,
+  "end": 1747
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1799,
+  "end": 1803
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1875,
+  "end": 1879
+ },
+ {
+  "text": "symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1919,
+  "end": 1927
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5032,
+  "traits": [],
+  "negated": false,
+  "begin": 1929,
+  "end": 1931
+ },
+ {
+  "text": "lightheaded",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1949,
+  "end": 1960
+ },
+ {
+  "text": "trouble breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 1981,
+  "end": 1998
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.0662,
+  "traits": [],
+  "negated": false,
+  "begin": 2004,
+  "end": 2006
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1655,
+  "traits": [],
+  "negated": false,
+  "begin": 2008,
+  "end": 2010
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1491,
+  "traits": [],
+  "negated": false,
+  "begin": 2022,
+  "end": 2024
+ },
+ {
+  "text": "loss of consciousness",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2037,
+  "end": 2058
+ },
+ {
+  "text": "racing of the heart",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2113,
+  "end": 2132
+ },
+ {
+  "text": "heart",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 2127,
+  "end": 2132
+ },
+ {
+  "text": "sweaty",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2200,
+  "end": 2206
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2502,
+  "traits": [],
+  "negated": false,
+  "begin": 2215,
+  "end": 2217
+ },
+ {
+  "text": "issues breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2257,
+  "end": 2273
+ },
+ {
+  "text": "issues breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2300,
+  "end": 2316
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1874,
+  "traits": [],
+  "negated": false,
+  "begin": 2324,
+  "end": 2326
+ },
+ {
+  "text": "pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 2332,
+  "end": 2336
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.8632,
+  "traits": [],
+  "negated": false,
+  "begin": 2355,
+  "end": 2357
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5834,
+  "traits": [],
+  "negated": false,
+  "begin": 2364,
+  "end": 2366
+ },
+ {
+  "text": "recently",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 2368,
+  "end": 2376
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1299,
+  "traits": [],
+  "negated": false,
+  "begin": 2396,
+  "end": 2398
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2938,
+  "traits": [],
+  "negated": false,
+  "begin": 2427,
+  "end": 2429
+ },
+ {
+  "text": "immobilized",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2447,
+  "end": 2458
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2975,
+  "traits": [],
+  "negated": false,
+  "begin": 2484,
+  "end": 2486
+ },
+ {
+  "text": "able to move",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2493,
+  "end": 2505
+ },
+ {
+  "text": "able to move around",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2493,
+  "end": 2512
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1707,
+  "traits": [],
+  "negated": false,
+  "begin": 2532,
+  "end": 2534
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2783,
+  "traits": [],
+  "negated": false,
+  "begin": 2541,
+  "end": 2543
+ },
+ {
+  "text": "feeling sick",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2559,
+  "end": 2571
+ },
+ {
+  "text": "infectious symptoms",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2584,
+  "end": 2603
+ },
+ {
+  "text": "nausea",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2630,
+  "end": 2636
+ },
+ {
+  "text": "vomiting",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2640,
+  "end": 2648
+ },
+ {
+  "text": "fevers",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2658,
+  "end": 2664
+ },
+ {
+  "text": "chills",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2672,
+  "end": 2678
+ },
+ {
+  "text": "Uh, uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ID",
+  "score": 0.2757,
+  "traits": [],
+  "negated": false,
+  "begin": 2688,
+  "end": 2694
+ },
+ {
+  "text": "abdominal",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8617,
+  "traits": [],
+  "negated": false,
+  "begin": 2710,
+  "end": 2719
+ },
+ {
+  "text": "abdominal pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2710,
+  "end": 2724
+ },
+ {
+  "text": "urinary",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 2739,
+  "end": 2746
+ },
+ {
+  "text": "urinary problems",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2739,
+  "end": 2755
+ },
+ {
+  "text": "bowel",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8922,
+  "traits": [],
+  "negated": false,
+  "begin": 2764,
+  "end": 2769
+ },
+ {
+  "text": "bowel problems",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2764,
+  "end": 2778
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1134,
+  "traits": [],
+  "negated": false,
+  "begin": 2792,
+  "end": 2794
+ },
+ {
+  "text": "cough",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9585,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2811,
+  "end": 2816
+ },
+ {
+  "text": "brought up any blood with the cough",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2846,
+  "end": 2881
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2104,
+  "traits": [],
+  "negated": false,
+  "begin": 2892,
+  "end": 2894
+ },
+ {
+  "text": "wheeze",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2911,
+  "end": 2917
+ },
+ {
+  "text": "difficulty breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2933,
+  "end": 2953
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.0861,
+  "traits": [],
+  "negated": false,
+  "begin": 2955,
+  "end": 2957
+ },
+ {
+  "text": "changes, uh, To the, like, breath sounds",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 2992,
+  "end": 3032
+ },
+ {
+  "text": "noisy breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3050,
+  "end": 3065
+ },
+ {
+  "text": "trouble breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.795,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3114,
+  "end": 3131
+ },
+ {
+  "text": "night sweats",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8617,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3255,
+  "end": 3267
+ },
+ {
+  "text": "rashes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3308,
+  "end": 3314
+ },
+ {
+  "text": "skin",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 3318,
+  "end": 3322
+ },
+ {
+  "text": "skin changes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3318,
+  "end": 3330
+ },
+ {
+  "text": "rashes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3339,
+  "end": 3345
+ },
+ {
+  "text": "neck",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 3372,
+  "end": 3376
+ },
+ {
+  "text": "swollen",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 3398,
+  "end": 3405
+ },
+ {
+  "text": "neck",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8617,
+  "traits": [],
+  "negated": false,
+  "begin": 3431,
+  "end": 3435
+ },
+ {
+  "text": "neck pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3431,
+  "end": 3440
+ },
+ {
+  "text": "accidents",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 3477,
+  "end": 3486
+ },
+ {
+  "text": "car accident",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.7172,
+  "traits": [
+   "NEGATION",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 3503,
+  "end": 3515
+ },
+ {
+  "text": "jerked your neck",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 3545,
+  "end": 3561
+ },
+ {
+  "text": "neck",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 3557,
+  "end": 3561
+ },
+ {
+  "text": "trauma",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 3583,
+  "end": 3589
+ },
+ {
+  "text": "chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 3604,
+  "end": 3609
+ },
+ {
+  "text": "back",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 3617,
+  "end": 3621
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.26,
+  "traits": [],
+  "negated": false,
+  "begin": 3631,
+  "end": 3633
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.297,
+  "traits": [],
+  "negated": false,
+  "begin": 3639,
+  "end": 3641
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3542,
+  "traits": [],
+  "negated": false,
+  "begin": 3687,
+  "end": 3689
+ },
+ {
+  "text": "medical conditions",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION",
+   "SIGN"
+  ],
+  "negated": true,
+  "begin": 3716,
+  "end": 3734
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2591,
+  "traits": [],
+  "negated": false,
+  "begin": 3744,
+  "end": 3746
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.149,
+  "traits": [],
+  "negated": false,
+  "begin": 3753,
+  "end": 3755
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.178,
+  "traits": [],
+  "negated": false,
+  "begin": 3795,
+  "end": 3797
+ },
+ {
+  "text": "surgeries",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "PROCEDURE_NAME",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3805,
+  "end": 3814
+ },
+ {
+  "text": "medications",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3840,
+  "end": 3851
+ },
+ {
+  "text": "allergies",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALLERGIES",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3933,
+  "end": 3942
+ },
+ {
+  "text": "allergies to medications",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALLERGIES",
+  "score": 0.5971,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 3933,
+  "end": 3957
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3848,
+  "traits": [],
+  "negated": false,
+  "begin": 3980,
+  "end": 3982
+ },
+ {
+  "text": "immunizations",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 3988,
+  "end": 4001
+ },
+ {
+  "text": "up to date",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4014,
+  "end": 4024
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.8416,
+  "traits": [],
+  "negated": false,
+  "begin": 4026,
+  "end": 4028
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2335,
+  "traits": [],
+  "negated": false,
+  "begin": 4065,
+  "end": 4067
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1751,
+  "traits": [],
+  "negated": false,
+  "begin": 4103,
+  "end": 4105
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2539,
+  "traits": [],
+  "negated": false,
+  "begin": 4132,
+  "end": 4134
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.7982,
+  "traits": [],
+  "negated": false,
+  "begin": 4194,
+  "end": 4196
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.7355,
+  "traits": [],
+  "negated": false,
+  "begin": 4209,
+  "end": 4211
+ },
+ {
+  "text": "OK",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.6092,
+  "traits": [],
+  "negated": false,
+  "begin": 4239,
+  "end": 4241
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.7573,
+  "traits": [],
+  "negated": false,
+  "begin": 4243,
+  "end": 4245
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.461,
+  "traits": [],
+  "negated": false,
+  "begin": 4252,
+  "end": 4254
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4588,
+  "traits": [],
+  "negated": false,
+  "begin": 4285,
+  "end": 4287
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5653,
+  "traits": [],
+  "negated": false,
+  "begin": 4302,
+  "end": 4304
+ },
+ {
+  "text": "accountant",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "PROFESSION",
+  "score": 0.4872,
+  "traits": [],
+  "negated": false,
+  "begin": 4313,
+  "end": 4323
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.3382,
+  "traits": [],
+  "negated": false,
+  "begin": 4368,
+  "end": 4370
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1041,
+  "traits": [],
+  "negated": false,
+  "begin": 4395,
+  "end": 4397
+ },
+ {
+  "text": "smoke cigarettes",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4411,
+  "end": 4427
+ },
+ {
+  "text": "cigarettes",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4417,
+  "end": 4427
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2405,
+  "traits": [],
+  "negated": false,
+  "begin": 4466,
+  "end": 4468
+ },
+ {
+  "text": "smoke",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 4472,
+  "end": 4477
+ },
+ {
+  "text": "smoking",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 4529,
+  "end": 4536
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.5024,
+  "traits": [],
+  "negated": false,
+  "begin": 4542,
+  "end": 4544
+ },
+ {
+  "text": "smoke",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 4590,
+  "end": 4595
+ },
+ {
+  "text": "cannabis",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 4601,
+  "end": 4609
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4322,
+  "traits": [],
+  "negated": false,
+  "begin": 4611,
+  "end": 4613
+ },
+ {
+  "text": "marijuana",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 4644,
+  "end": 4653
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1995,
+  "traits": [],
+  "negated": false,
+  "begin": 4700,
+  "end": 4702
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.5504,
+  "traits": [],
+  "negated": false,
+  "begin": 4741,
+  "end": 4743
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.2495,
+  "traits": [],
+  "negated": false,
+  "begin": 4750,
+  "end": 4752
+ },
+ {
+  "text": "recreational drugs",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 4775,
+  "end": 4793
+ },
+ {
+  "text": "cocaine",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.795,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 4799,
+  "end": 4806
+ },
+ {
+  "text": "crystal meth",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.795,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 4808,
+  "end": 4820
+ },
+ {
+  "text": "opioids",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.6603,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 4826,
+  "end": 4833
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1213,
+  "traits": [],
+  "negated": false,
+  "begin": 4843,
+  "end": 4845
+ },
+ {
+  "text": "IV drugs",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "REC_DRUG_USE",
+  "score": 0.5331,
+  "traits": [
+   "NEGATION"
+  ],
+  "negated": true,
+  "begin": 4861,
+  "end": 4869
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1525,
+  "traits": [],
+  "negated": false,
+  "begin": 4886,
+  "end": 4888
+ },
+ {
+  "text": "drink alcohol",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 4901,
+  "end": 4914
+ },
+ {
+  "text": "alcohol",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 4907,
+  "end": 4914
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1456,
+  "traits": [],
+  "negated": false,
+  "begin": 4926,
+  "end": 4928
+ },
+ {
+  "text": "alcohol",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 4939,
+  "end": 4946
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3562,
+  "traits": [],
+  "negated": false,
+  "begin": 4981,
+  "end": 4983
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1412,
+  "traits": [],
+  "negated": false,
+  "begin": 4999,
+  "end": 5001
+ },
+ {
+  "text": "drinks",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 5053,
+  "end": 5059
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.2158,
+  "traits": [],
+  "negated": false,
+  "begin": 5423,
+  "end": 5425
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.221,
+  "traits": [],
+  "negated": false,
+  "begin": 5448,
+  "end": 5450
+ },
+ {
+  "text": "activity",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 5452,
+  "end": 5460
+ },
+ {
+  "text": "diet",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 5469,
+  "end": 5473
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1614,
+  "traits": [],
+  "negated": false,
+  "begin": 5483,
+  "end": 5485
+ },
+ {
+  "text": "heart",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 5586,
+  "end": 5591
+ },
+ {
+  "text": "heart attack",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 5586,
+  "end": 5598
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.4489,
+  "traits": [],
+  "negated": false,
+  "begin": 5607,
+  "end": 5609
+ },
+ {
+  "text": "heart",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 5642,
+  "end": 5647
+ },
+ {
+  "text": "heart attack",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 5642,
+  "end": 5654
+ },
+ {
+  "text": "45",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "AGE",
+  "score": 0.9914,
+  "traits": [],
+  "negated": false,
+  "begin": 5667,
+  "end": 5669
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1337,
+  "traits": [],
+  "negated": false,
+  "begin": 5712,
+  "end": 5714
+ },
+ {
+  "text": "cholesterol problems",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.5971,
+  "traits": [
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 5716,
+  "end": 5736
+ },
+ {
+  "text": "Um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3953,
+  "traits": [],
+  "negated": false,
+  "begin": 5738,
+  "end": 5740
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.1036,
+  "traits": [],
+  "negated": false,
+  "begin": 5817,
+  "end": 5819
+ },
+ {
+  "text": "stroke",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 5820,
+  "end": 5826
+ },
+ {
+  "text": "strokes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 5831,
+  "end": 5838
+ },
+ {
+  "text": "stroke",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 5843,
+  "end": 5849
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.1649,
+  "traits": [],
+  "negated": false,
+  "begin": 5865,
+  "end": 5867
+ },
+ {
+  "text": "cancers",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 5873,
+  "end": 5880
+ },
+ {
+  "text": "um",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3192,
+  "traits": [],
+  "negated": false,
+  "begin": 5958,
+  "end": 5960
+ },
+ {
+  "text": "Uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "ADDRESS",
+  "score": 0.3393,
+  "traits": [],
+  "negated": false,
+  "begin": 6011,
+  "end": 6013
+ }
+]

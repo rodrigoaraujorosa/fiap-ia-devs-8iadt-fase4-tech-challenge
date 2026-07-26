@@ -1,0 +1,108 @@
+{
+ "sentiment": "POSITIVE",
+ "scores": {
+  "Positive": 0.7665,
+  "Negative": 0.0042,
+  "Neutral": 0.2053,
+  "Mixed": 0.0239
+ },
+ "chunks": 1,
+ "by_turn": [
+  {
+   "order": 2,
+   "text": "Sure, I'm I'm just having a lot of chest pain and and so I thought I should get it checked out.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.151
+  },
+  {
+   "order": 6,
+   "text": "It started last night, but it's becoming sharper.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0219
+  },
+  {
+   "order": 8,
+   "text": "It's located on the left side of my chest.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0275
+  },
+  {
+   "order": 10,
+   "text": "So I guess it would be a couple of hours now, maybe like 8.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0017
+  },
+  {
+   "order": 12,
+   "text": "I would say it's been pretty constant, yeah.",
+   "sentiment": "POSITIVE",
+   "negative": 0.0565
+  },
+  {
+   "order": 26,
+   "text": "I mean, I was moving some furniture around, but, that I've done that before.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0047
+  },
+  {
+   "order": 30,
+   "text": "I'd say it's like a seven or eight. It's pretty bad.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.9758
+  },
+  {
+   "order": 32,
+   "text": "I feel a little lightheaded and I'm having some trouble breathing.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.8956
+  },
+  {
+   "order": 62,
+   "text": "No. Well, I guess if when I'm really having trouble breathing, yeah.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0758
+  },
+  {
+   "order": 68,
+   "text": "No rashes, but I guess like my neck seems to be a little swollen.",
+   "sentiment": "MIXED",
+   "negative": 0.1986
+  },
+  {
+   "order": 88,
+   "text": "Sure, I live in an apartment by myself. I, uh, yep, that's about it.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0008
+  },
+  {
+   "order": 100,
+   "text": "Per week, maybe about 5 milligrams. Not that much.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.4117
+  },
+  {
+   "order": 108,
+   "text": "Uhm about I would say I have like one or two drinks a day, so about 10 drinks a week.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.0054
+  },
+  {
+   "order": 110,
+   "text": "Sure, I try to eat healthy for dinner at least, but most of my lunches are, uh I eat out. And then in terms of exercise, I try to exercise every other day, I run for about half an hour. D; OK, well that's great that you've been working on the the activity and the diet as well. So has anything like this happened in your family before?",
+   "sentiment": "POSITIVE",
+   "negative": 0.0005
+  },
+  {
+   "order": 113,
+   "text": "Actually, yes, my father had a heart attack when he was 45.",
+   "sentiment": "NEGATIVE",
+   "negative": 0.6088
+  },
+  {
+   "order": 121,
+   "text": "No, I don't think so. I think you asked me everything.",
+   "sentiment": "NEUTRAL",
+   "negative": 0.3498
+  }
+ ]
+}

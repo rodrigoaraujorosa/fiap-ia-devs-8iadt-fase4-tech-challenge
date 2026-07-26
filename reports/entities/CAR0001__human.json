@@ -1,0 +1,256 @@
+[
+ {
+  "text": "chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 35,
+  "end": 40
+ },
+ {
+  "text": "chest pain",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 35,
+  "end": 45
+ },
+ {
+  "text": "male",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "GENDER",
+  "score": 0.7614,
+  "traits": [],
+  "negated": false,
+  "begin": 111,
+  "end": 115
+ },
+ {
+  "text": "last night",
+  "category": "TIME_EXPRESSION",
+  "type": "TIME_TO_DX_NAME",
+  "score": 0.5331,
+  "traits": [],
+  "negated": false,
+  "begin": 128,
+  "end": 138
+ },
+ {
+  "text": "left side of my chest",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 187,
+  "end": 208
+ },
+ {
+  "text": "lightheaded",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9202,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 606,
+  "end": 617
+ },
+ {
+  "text": "trouble breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8922,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 638,
+  "end": 655
+ },
+ {
+  "text": "issues breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.795,
+  "traits": [
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 711,
+  "end": 727
+ },
+ {
+  "text": "trouble breathing",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8435,
+  "traits": [
+   "HYPOTHETICAL",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 842,
+  "end": 859
+ },
+ {
+  "text": "rashes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9351,
+  "traits": [
+   "NEGATION",
+   "SYMPTOM"
+  ],
+  "negated": true,
+  "begin": 878,
+  "end": 884
+ },
+ {
+  "text": "neck",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.8216,
+  "traits": [],
+  "negated": false,
+  "begin": 906,
+  "end": 910
+ },
+ {
+  "text": "swollen",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "LOW_CONFIDENCE",
+   "SYMPTOM"
+  ],
+  "negated": false,
+  "begin": 932,
+  "end": 939
+ },
+ {
+  "text": "uh",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "NAME",
+  "score": 0.4483,
+  "traits": [],
+  "negated": false,
+  "begin": 1043,
+  "end": 1045
+ },
+ {
+  "text": "accountant",
+  "category": "PROTECTED_HEALTH_INFORMATION",
+  "type": "PROFESSION",
+  "score": 0.1576,
+  "traits": [],
+  "negated": false,
+  "begin": 1076,
+  "end": 1086
+ },
+ {
+  "text": "smoke",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "TOBACCO_USE",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 1096,
+  "end": 1101
+ },
+ {
+  "text": "drinks",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.5971,
+  "traits": [],
+  "negated": false,
+  "begin": 1275,
+  "end": 1281
+ },
+ {
+  "text": "drinks",
+  "category": "BEHAVIORAL_ENVIRONMENTAL_SOCIAL",
+  "type": "ALCOHOL_CONSUMPTION",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 1301,
+  "end": 1307
+ },
+ {
+  "text": "exercise",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.6603,
+  "traits": [],
+  "negated": false,
+  "begin": 1446,
+  "end": 1454
+ },
+ {
+  "text": "activity",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.7172,
+  "traits": [],
+  "negated": false,
+  "begin": 1563,
+  "end": 1571
+ },
+ {
+  "text": "diet",
+  "category": "TEST_TREATMENT_PROCEDURE",
+  "type": "TREATMENT_NAME",
+  "score": 0.8435,
+  "traits": [],
+  "negated": false,
+  "begin": 1580,
+  "end": 1584
+ },
+ {
+  "text": "heart",
+  "category": "ANATOMY",
+  "type": "SYSTEM_ORGAN_SITE",
+  "score": 0.795,
+  "traits": [],
+  "negated": false,
+  "begin": 1687,
+  "end": 1692
+ },
+ {
+  "text": "heart attack",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.9063,
+  "traits": [
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": false,
+  "begin": 1687,
+  "end": 1699
+ },
+ {
+  "text": "strokes",
+  "category": "MEDICAL_CONDITION",
+  "type": "DX_NAME",
+  "score": 0.8775,
+  "traits": [
+   "NEGATION",
+   "PERTAINS_TO_FAMILY",
+   "DIAGNOSIS"
+  ],
+  "negated": true,
+  "begin": 1742,
+  "end": 1749
+ }
+]
